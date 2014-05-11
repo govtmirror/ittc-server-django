@@ -1,0 +1,43 @@
+<head>
+  <title>{{ title }}</title>
+  <style>
+    table {width: 750px; background:black;}
+    table.menu {background: #888;}
+    table tr {height: 60px; background:white;}
+    table tr:nth-child(even) {background:NavajoWhite;}
+    table tr:nth-child(odd) {background:LightSteelBlue;}
+    table tr.head {background:#AAA;}
+    table tr.menurow {background:white;height:44px;}
+    table tr th {width:100px;}
+    table tr td {width:100px;}
+    table tr.menurow th {background:blue}
+    table tr.menurow th:hover {color:black;background:cornflowerBlue;}
+    table tr.menurow th a {font-family:sans-serif;color:white;text-decoration:none;display:block;}
+    table tr.menurow th:hover a{color:black;}
+  </style>
+</head>
+<body>
+<table class="menu">
+  <tr class="menurow">
+    <th><a href="{% url 'index' %}" style="font-size:16px;">Index</a></th>
+    <th><a href="{% url 'capabilities_all' 'html' %}" style="font-size:16px;">All<br>Services</a></th>
+    <th><a href="{% url 'capabilities_regular' 'html' %}" style="font-size:16px;">Regular<br>Services</a></th>
+    <th><a href="{% url 'capabilities_flipped' 'html' %}" style="font-size:16px;">Flipped<br>Services</a></th>
+  </tr>
+</table>
+
+<h2>{{ title }} (<a href="{% url 'capabilities_all' 'xml' %}">XML</a>)</h2>
+<table>
+  <tr class="head"><th>Layer</th><th>Service Type</th><th>SRS</th><th>URL</th><th>View in<br>iD</th><th>View in<br>JOSM</th></tr>
+  {% for tileservice in tileservices %}
+  <tr>
+    <td style="text-align:center;">{{ tileservice.layer.name}}</td>
+    <td style="text-align:center;">{{ tileservice.serviceType.name }}</td>
+    <td style="text-align:center;">{{ tileservice.srs }}</td>
+    <td style="text-align:center;">{{ tileservice.url_base }}</td>
+    <td style="text-align:center;">{% if tileservice.url_id %}<a href="{{ tileservice.url_id }}">View</a>{% endif %}</td>
+    <td style="text-align:center;"><a href="{{ tileservice.url_josm }}">View</a></td>
+  </tr>
+  {% endfor %}
+</table>
+</body>

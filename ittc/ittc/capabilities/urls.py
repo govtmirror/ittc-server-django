@@ -6,16 +6,16 @@ js_info_dict = {
 }
 
 urlpatterns = patterns('ittc.capabilities.views',
-    url(r'^$', 'capabilities_all', name='capabilities_all'),
-
-    url(r'^all\.xml?$', 'capabilities_all', name='capabilities_all'),
-    url(r'^regular\.xml?$', 'capabilities_regular', name='capabilities_regular'),
-    url(r'^flipped\.xml?$', 'capabilities_flipped', name='capabilities_flipped'),
+    url(r'^$', 'capabilities_all_xml', name='capabilities_all_xml'),
+    url(r'^index\.html$', 'index', name='index'),
+    url(r'^all\.(?P<extension>(xml|html))$', 'capabilities_all', name='capabilities_all'),
+    url(r'^regular\.(?P<extension>(xml|html))$', 'capabilities_regular', name='capabilities_regular'),
+    url(r'^flipped\.(?P<extension>(xml|html))$', 'capabilities_flipped', name='capabilities_flipped'),
 
     url(r'^service/(?P<slug>[^/]+)/?$', 'capabilities_service', name='capabilities_service'),
 
     url(r'^collection/(?P<slug>[^/]+)/?$', 'capabilities_collection_all', name='capabilities_collection_all'),
-    url(r'^collection/(?P<slug>[^/]+)/all\.xml?$', 'capabilities_collection_all', name='capabilities_collection_all'),
-    url(r'^collection/(?P<slug>[^/]+)/regular\.xml?$', 'capabilities_collection_regular', name='capabilities_collection_regular'),
-    url(r'^collection/(?P<slug>[^/]+)/flipped\.xml?$', 'capabilities_collection_flipped', name='capabilities_collection_flipped'),
+    url(r'^collection/(?P<slug>[^/]+)/all\.(?P<extension>(xml|html))$', 'capabilities_collection_all', name='capabilities_collection_all'),
+    url(r'^collection/(?P<slug>[^/]+)/regular\.xml$', 'capabilities_collection_regular', name='capabilities_collection_regular'),
+    url(r'^collection/(?P<slug>[^/]+)/flipped\.xml$', 'capabilities_collection_flipped', name='capabilities_collection_flipped'),
 )

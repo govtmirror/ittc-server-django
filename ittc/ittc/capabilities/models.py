@@ -91,7 +91,7 @@ class TileService(models.Model):
     layer = models.ForeignKey(Layer, help_text=_('The related layer'))
     serviceType = models.ForeignKey(TileServiceType, help_text=_('The type of tile service (e.g., TMS, TMS-Flipped, Bing, etc.).'))
     srs = models.CharField(max_length=20)
-    url_capabilities = models.CharField(max_length=255, help_text=_('The url for the service capabilities document if remote.'))
+    url_serverless = models.CharField(max_length=255, help_text=_('The url for the service capabilities document if remote.'))
     #=#
     server = models.ForeignKey(Server,null=True,blank=True,help_text=_('The server hosting the tile servie'))
     slug = models.CharField(max_length=100,null=True,blank=True)
@@ -107,11 +107,40 @@ class TileService(models.Model):
         verbose_name_plural = _("Tile Services")
 
     @property
-    def url(self):
-        if (not (self.url_capabilities is None)) and (len(self.url_capabilities) > 0):
-            return self.url_capabilities
+    def url_base(self):
+        if (not (self.url_serverless is None)) and (len(self.url_serverless) > 0):
+            return self.url_serverless
         elif (not (self.server is None)) and (not (self.slug is None)) and (len(self.slug) > 0):
             return self.server.url+self.slug+"/"
 
+    @property
+    def url_id(self):
+        if self.serviceType.identifier=="tms_flipped":
+            domain = "https://www.openstreetmap.org"
+            ctx = "edit"
+            qs1 = []
+            qs1.append("editor=id")
+            qs2 = []
+            qs2.append("map=16/3.5984011529259/32.038879393252")
+            qs2.append("background=custom:"+self.url_base+"{z}/{x}/{y}."+self.imageType.extension)
+            return domain+"/"+ctx+"?"+("&".join(qs1))+"#"+("&".join(qs2))
+        else:
+            return None
+
+    @property
+    def url_josm(self):
+        if self.serviceType.identifier=="tms_flipped" or self.serviceType.identifier=="tms":
+            domain = "http://127.0.0.1:8111"
+            ctx = "imagery"
+            qs = []
+            qs.append("title="+self.layer.name)
+            qs.append("type=tms")
+            if self.serviceType.identifier=="tms_flipped":
+                qs.append("url=tms[22]:"+self.url_base+"{zoom}/{x}/{y}."+self.imageType.extension)
+            elif self.serviceType.identifier=="tms":
+                qs.append("url=tms[22]:"+self.url_base+"{zoom}/{x}/{-y}."+self.imageType.extension)
+            return domain+"/"+ctx+"?"+("&".join(qs))
+        else:
+            return None
 
 
