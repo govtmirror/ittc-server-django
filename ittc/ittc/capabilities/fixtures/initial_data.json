@@ -1,0 +1,52 @@
+[
+    {
+        "pk": 1,
+        "model": "capabilities.imagetype",
+        "fields": {
+           "identifier": "jpeg",
+           "name": "JPEG",
+           "description": "JPEG",
+           "mimeType": "image/jpeg",
+           "extension": "jpg"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "capabilities.imagetype",
+        "fields": {
+           "identifier": "png",
+           "name": "PNG",
+           "description": "PNG",
+           "mimeType": "image/png",
+           "extension": "png"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "capabilities.tileservicetype",
+        "fields": {
+           "identifier": "tms",
+           "name": "Tile_Map_Service (TMS)",
+           "description": "Tile Map Service"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "capabilities.tileservicetype",
+        "fields": {
+           "identifier": "tms_flipped",
+           "name": "Tile Map Service (TMS) Fllipped",
+           "description": "Tile Map Service / Flipped"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "capabilities.server",
+        "fields": {
+           "name": "NV01",
+           "description": "NextView Imagery Services",
+           "url": "http://hiu-maps.net/hot/1.0.0/"
+        }
+    }
+]
+

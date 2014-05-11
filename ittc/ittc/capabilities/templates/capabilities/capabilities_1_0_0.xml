@@ -1,0 +1,6 @@
+<TileMapService version="1.0.0">
+  <TileMaps>
+{% for tileservice in tileservices %}    <TileMap href="{{ tileservice.url }}" srs="{{ tileservice.srs }}" title="{{ tileservice.layer.name }}" profile="none"/>{% if not forloop.last %}
+{% endif %}{% endfor %}
+  </TileMaps>
+</TileMapService>
