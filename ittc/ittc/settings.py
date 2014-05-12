@@ -40,10 +40,12 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-#)
+
+    'corsheaders',
 ) + ITTC_APPS
 
 MIDDLEWARE_CLASSES = (
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,3 +95,5 @@ ITTC_SERVER = {
 }
 
 SITEURL = "http://localhost:8000/"
+
+CORS_ORIGIN_ALLOW_ALL = True
