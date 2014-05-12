@@ -10,7 +10,7 @@ The Humanitarian Information Unit has been developing a sophisticated geographic
 
 ## Installation
 
-As root, execute the following commands:
+As root (`sudo su -`), execute the following commands:
 
 ```
 apt-get update
