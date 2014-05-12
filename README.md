@@ -10,7 +10,17 @@ The Humanitarian Information Unit has been developing a sophisticated geographic
 
 ## Installation
 
+As root, execute the following commands:
 
+```
+apt-get update
+apt-get install -y curl vim git apache2 libapache2-mod-python
+```
+
+As root, execute the following commands:
+
+
+https://github.com/state-hiu/ittc-server-django.git
 ## Usage
 
 ## Contributing
