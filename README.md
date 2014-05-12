@@ -10,7 +10,32 @@ The Humanitarian Information Unit has been developing a sophisticated geographic
 
 ## Installation
 
+As root (`sudo su -`), execute the following commands:
 
+```
+apt-get update
+apt-get install -y curl vim git apache2 libapache2-mod-python python-pip
+pip install django
+```
+
+Then, as ubuntu, execute the following commands:
+
+```
+cd ~
+git clone https://github.com/state-hiu/ittc-server-django.git ittc-server-django.git
+
+```
+Then, update SITEURL (e.g., http://hiu-maps.net/) in settings.py:
+
+```
+vim ittc-server-django.git/ittc/ittc/settings.py
+```
+
+python syncdb
+python manage.py runserver [::]:8000
+```
+cd ittc-server-django.git/ittc
+```
 ## Usage
 
 ## Contributing
