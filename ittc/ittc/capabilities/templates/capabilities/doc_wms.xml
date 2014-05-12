@@ -36,9 +36,11 @@
       <Title>TileCache Layers</Title>
 {% for tileservice in tileservices %}      <Layer queryable="0" opaque="0" cascaded="1">
         <Name>{{ tileservice.slug }}</Name>
-        <Title>{{ tileservice.slug }}</Title>
-        <SRS> {{tileservice.srs }}</SRS>
+        <Title>{{ tileservice.name }}</Title>
+        <SRS> {{ tileservice.srs }}</SRS>
+        <Abstract> {{ tileservice.layer.description }}</Abstract>
         <BoundingBox SRS="EPSG:900913" minx="-20037508.340000" miny="-20037508.340000" maxx="20037508.340000" maxy="20037508.340000"/>
+        <URL>{{ tileservice.server.url }}</URL>
       </Layer>{% if not forloop.last %}
 {% endif %}{% endfor %}
     </Layer>
