@@ -23,11 +23,19 @@ Then, as ubuntu, execute the following commands:
 ```
 cd ~
 git clone https://github.com/state-hiu/ittc-server-django.git ittc-server-django.git
-cd ittc-server-django.git/ittc/ittc
+
+```
+Then, update SITEURL (e.g., http://hiu-maps.net/) in settings.py:
+
+```
+vim ittc-server-django.git/ittc/ittc/settings.py
+```
+
 python syncdb
 python manage.py runserver [::]:8000
 ```
-
+cd ittc-server-django.git/ittc
+```
 ## Usage
 
 ## Contributing
