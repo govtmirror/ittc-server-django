@@ -1,0 +1,46 @@
+<WMT_MS_Capabilities version="1.1.1">
+  <Service>
+    <Name>OGC:WMS</Name>
+    <Title/>
+    <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://hiu-maps.net/hot/1.0.0/?"/>
+  </Service>
+  <Capability>
+    <Request>
+      <GetCapabilities>
+        <Format>application/vnd.ogc.wms_xml</Format>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://hiu-maps.net/hot/1.0.0/?"/>
+            </Get>
+          </HTTP>
+        </DCPType>
+      </GetCapabilities>
+      <GetMap>
+        <Format>image/png</Format>
+        <Format>image/jpeg</Format>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://hiu-maps.net/hot/1.0.0/?"/>
+            </Get>
+          </HTTP>
+        </DCPType>
+      </GetMap>
+    </Request>
+    <Exception>
+      <Format>text/plain</Format>
+    </Exception>
+    <UserDefinedSymbolization SupportSLD="0" UserLayer="0" UserStyle="0" RemoteWFS="0"/>
+    <Layer>
+      <Title>TileCache Layers</Title>
+{% for tileservice in tileservices %}      <Layer queryable="0" opaque="0" cascaded="1">
+        <Name>{{ tileservice.slug }}</Name>
+        <Title>{{ tileservice.slug }}</Title>
+        <SRS> {{tileservice.srs }}</SRS>
+        <BoundingBox SRS="EPSG:900913" minx="-20037508.340000" miny="-20037508.340000" maxx="20037508.340000" maxy="20037508.340000"/>
+      </Layer>{% if not forloop.last %}
+{% endif %}{% endfor %}
+    </Layer>
+  </Capability>
+</WMT_MS_Capabilities>

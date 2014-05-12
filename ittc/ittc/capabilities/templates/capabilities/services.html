@@ -25,9 +25,10 @@
     <th><a href="{% url 'capabilities' 'flipped' 'html' %}" style="font-size:16px;">Flipped<br>Services</a></th>
   </tr>
 </table>
+
 {% if collection %}
-  <h2>{{ title }} (<a href="{% url 'capabilities_collection' collection.slug type 'xml' %}">XML</a>,  <a href="{% url 'gpx_collection' collection.slug %}">GPX</a>)</h2>
-  <div><b style="padding:4px;display:inline-block;">Filter by Type:</b><a href="{% url 'capabilities_collection' collection.slug 'all' 'html' %}">All</a>, <a href="{% url 'capabilities_collection' collection.slug 'regular' 'html' %}">Regular</a>, <a href="{% url 'capabilities_collection' collection.slug 'flipped' 'html' %}">Flipped</a></div>
+  <h2>{{ title }} (<a href="{% url 'capabilities_collection_doc' collection.slug type 'xml' 'wms' %}">XML</a>,  <a href="{% url 'gpx_collection' collection.slug %}">GPX</a>)</h2>
+  <div><b style="padding:4px;display:inline-block;">Filter by Type:</b><a href="{% url 'capabilities_collection_html' collection.slug 'all' 'html' %}">All</a>, <a href="{% url 'capabilities_collection_html' collection.slug 'regular' 'html' %}">Regular</a>, <a href="{% url 'capabilities_collection_html' collection.slug 'flipped' 'html' %}">Flipped</a></div>
 {% elif layer %}
   <h2>{{ title }} (<a href="{% url 'capabilities_layer' layer.slug type 'xml' %}">XML</a>, <a href="{% url 'gpx_layer' layer.slug %}">GPX</a>)</h2>
   <div><b style="padding:4px;display:inline-block;">Filter by Type:</b><a href="{% url 'capabilities_layer' layer.slug 'all' 'html' %}">All</a>, <a href="{% url 'capabilities_layer' layer.slug 'regular' 'html' %}">Regular</a>, <a href="{% url 'capabilities_layer' layer.slug 'flipped' 'html' %}">Flipped</a></div>

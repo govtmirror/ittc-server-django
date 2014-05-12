@@ -85,7 +85,13 @@ def capabilities(request, template=None, type="all", extension="xml"):
             template ='capabilities/services.html'
         return render(request,template,ctx)
 
-def capabilities_collection(request, template=None, slug=None, type="all", extension="xml"):
+def capabilities_collection_doc(request, template=None, slug=None, type="all", extension="xml", docType="tms"):
+    return capabilities_collection(request, template, slug, type, extension, docType)
+
+def capabilities_collection_html(request, template=None, slug=None, type="all", extension="xml"):
+    return capabilities_collection(request, template, slug, type, extension, None)
+
+def capabilities_collection(request, template=None, slug=None, type="all", extension="xml", docType="tms"):
     collection = Collection.objects.get(slug=slug)
     layers = ([member.layer for member in CollectionMember.objects.filter(collection__slug=slug)])
 
@@ -100,7 +106,12 @@ def capabilities_collection(request, template=None, slug=None, type="all", exten
 
     if extension=="xml":
         if template is None:
-            template = 'capabilities/capabilities_1_0_0.xml'
+            if docType=="tms":
+                template = 'capabilities/capabilities_1_0_0.xml'
+            elif docType=="wms":
+                template = 'capabilities/doc_wms.xml'
+            else:
+                template = 'capabilities/capabilities_1_0_0.xml'
         return render(request,template,ctx,'text/xml')
     else:
         if template is None:

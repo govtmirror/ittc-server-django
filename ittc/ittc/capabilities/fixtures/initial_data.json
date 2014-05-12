@@ -26,7 +26,7 @@
         "model": "capabilities.tileservicetype",
         "fields": {
            "identifier": "tms",
-           "name": "Tile_Map_Service (TMS)",
+           "name": "Tile Map Service (TMS)",
            "description": "Tile Map Service"
         }
     },
@@ -47,6 +47,71 @@
            "description": "NextView Imagery Services",
            "url": "http://hiu-maps.net/hot/1.0.0/"
         }
+    },
+    {
+        "pk": 1,
+        "model": "capabilities.collection",
+        "fields": {
+           "name": "ROGUE Technical Demonstration 4",
+           "description": "This imagery is provided for ROGUE Technical Demonstration 4",
+           "slug": "td4"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "capabilities.layer",
+        "fields": {
+           "name": "Tegucigalpa",
+           "description": "Tegucigalpa, Honduras",
+           "slug": "tegu",
+           "extent": 1
+        }
+    },
+    {
+        "pk": 1,
+        "model": "capabilities.extent",
+        "fields": {
+            "left": -87.3000,
+            "bottom": 14.0018,
+            "right": -87.0999,
+            "top": 14.1500
+        }
+    },
+    {
+        "pk": 1,
+        "model": "capabilities.tileservice",
+        "fields": {
+            "name":"tegu",
+            "layer": 1,
+            "serviceType": 1,
+            "srs": "EPSG:900913",
+            "url_serverless": "http://hiu-maps.net/hot/1.0.0/tegu/",
+            "imageType": 2,
+            "tileWidth": 256,
+            "tileHeight": 256
+        }
+    },
+    {
+        "pk": 2,
+        "model": "capabilities.tileservice",
+        "fields": {
+            "name": "tegu_flipped",
+            "layer": 1,
+            "serviceType": 2,
+            "srs": "EPSG:900913",
+            "server": 1,
+            "slug": "tegu_flipped",
+            "imageType": 2,
+            "tileWidth": 256,
+            "tileHeight": 256
+        }
+    },
+    {
+        "pk": 1,
+        "model": "capabilities.collectionmember",
+        "fields": {
+           "collection": 1,
+           "layer": 1
+        }
     }
 ]
-

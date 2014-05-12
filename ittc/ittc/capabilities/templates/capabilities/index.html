@@ -38,7 +38,7 @@
     <td style="text-align:center;">{{ collection.slug }}</td>
     <td style="text-align:left;">{{ collection.description }}</td>
     <td style="text-align:center;">{{ collection.extent.bbox }}{% if collection.extent.valid %}<br>(<a href="{{ collection.extent.link_hiu.url }}">{{ collection.extent.link_hiu.label }}</a>, <a href="{% url 'gpx_collection' collection.slug %}">GPX</a>){% endif %}</td>
-    <td style="text-align:center;"><a href="{% url 'capabilities_collection' collection.slug 'all' 'html'%}">HTML</a>, <a href="{% url 'capabilities_collection' collection.slug 'all' 'xml'%}">XML</a></td>
+    <td style="text-align:center;"><a href="{% url 'capabilities_collection_html' collection.slug 'all' 'html'%}">HTML</a>, <a href="{% url 'capabilities_collection_doc' collection.slug 'all' 'xml' 'wms' %}">XML</a></td>
   </tr>
   {% endfor %}
 </table>
