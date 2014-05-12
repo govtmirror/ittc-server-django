@@ -14,13 +14,20 @@ As root, execute the following commands:
 
 ```
 apt-get update
-apt-get install -y curl vim git apache2 libapache2-mod-python
+apt-get install -y curl vim git apache2 libapache2-mod-python apt-get install python-pip
+pip install django
 ```
 
-As root, execute the following commands:
+Then, as ubuntu, execute the following commands:
 
+```
+cd ~
+git clone https://github.com/state-hiu/ittc-server-django.git ittc-server-django.git
+cd ittc-server-django.git/ittc/ittc
+python syncdb
+python manage.py runserver [::]:8000
+```
 
-https://github.com/state-hiu/ittc-server-django.git
 ## Usage
 
 ## Contributing
