@@ -16,6 +16,7 @@ As root (`sudo su -`), execute the following commands:
 apt-get update
 apt-get install -y curl vim git apache2 libapache2-mod-python python-pip
 pip install django
+pip install django-cors-headers
 ```
 
 Then, as ubuntu, execute the following commands:
