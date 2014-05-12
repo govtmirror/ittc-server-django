@@ -92,3 +92,4 @@ ITTC_SERVER = {
   'name': 'NextView Imagery Services'
 }
 
+SITEURL = "http://localhost:8000/"

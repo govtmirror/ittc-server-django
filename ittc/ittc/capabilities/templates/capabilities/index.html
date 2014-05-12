@@ -8,8 +8,8 @@
     table tr:nth-child(odd) {background:LightSteelBlue;}
     table tr.head {background:#AAA;}
     table tr.menurow {background:white;height:44px;}
-    table tr th {width:100px;}
-    table tr td {width:100px;}
+    table tr th {width:60px;}
+    table tr td {width:60px;}
     table tr.menurow th {background:blue}
     table tr.menurow th:hover {color:black;background:cornflowerBlue;}
     table tr.menurow th a {font-family:sans-serif;color:white;text-decoration:none;display:block;}
@@ -17,12 +17,13 @@
   </style>
 </head>
 <body>
+
 <table class="menu">
   <tr class="menurow">
     <th><a href="{% url 'index' %}" style="font-size:16px;">Index</a></th>
-    <th><a href="{% url 'capabilities_all' 'html' %}" style="font-size:16px;">All<br>Services</a></th>
-    <th><a href="{% url 'capabilities_regular' 'html' %}" style="font-size:16px;">Regular<br>Services</a></th>
-    <th><a href="{% url 'capabilities_flipped' 'html' %}" style="font-size:16px;">Flipped<br>Services</a></th>
+    <th><a href="{% url 'capabilities' 'all' 'html' %}" style="font-size:16px;">All<br>Services</a></th>
+    <th><a href="{% url 'capabilities' 'regular' 'html' %}" style="font-size:16px;">Regular<br>Services</a></th>
+    <th><a href="{% url 'capabilities' 'flipped' 'html' %}" style="font-size:16px;">Flipped<br>Services</a></th>
   </tr>
 </table>
 
@@ -30,39 +31,46 @@
 <hr>
 <h2>Collections</h2>
 <table>
-  <tr class="head"><th>Name</th><th>Description</th><th>Slug</th><th>View Services</th></tr>
+  <tr class="head"><th>Name</th><th>Slug</th><th style="width:180px;">Description</th><th>Extent</th><th>View Services</th></tr>
   {% for collection in collections %}
   <tr height=60>
     <td style="text-align:center;">{{ collection.name}}</td>
-    <td style="text-align:left;">{{ collection.description }}</td>
     <td style="text-align:center;">{{ collection.slug }}</td>
-    <td style="text-align:center;"><a href="{% url 'capabilities_collection_all' collection.slug 'html'%}">HTML</a>, <a href="{% url 'capabilities_collection_all' collection.slug 'xml'%}">XML</a></td>
+    <td style="text-align:left;">{{ collection.description }}</td>
+    <td style="text-align:center;">{{ collection.extent.bbox }}{% if collection.extent.valid %}<br>(<a href="{{ collection.extent.link_hiu.url }}">{{ collection.extent.link_hiu.label }}</a>, <a href="{% url 'gpx_collection' collection.slug %}">GPX</a>){% endif %}</td>
+    <td style="text-align:center;"><a href="{% url 'capabilities_collection' collection.slug 'all' 'html'%}">HTML</a>, <a href="{% url 'capabilities_collection' collection.slug 'all' 'xml'%}">XML</a></td>
   </tr>
   {% endfor %}
 </table>
 <hr>
 <h2>Layers</h2>
 <table>
-  <tr class="head"><th>Name</th><th>Description</th></tr>
+  <tr class="head"><th>Name</th><th>Slug</th><th style="width:180px;">Description</th><th>Extent</th><th>View Services</th></tr>
   {% for layer in layers %}
   <tr>
-    <td style="text-align:center;">{{ layer.name}}</td>
+    <td style="text-align:center;">{{ layer.name }}</td>
+    <td style="text-align:center;">{{ layer.slug }}</td>
     <td style="text-align:left;">{{ layer.description }}</td>
+    <td style="text-align:center;">{{ layer.extent.bbox }}{% if layer.extent.valid %}<br>(<a href="{{ layer.extent.link_hiu.url }}">{{ layer.extent.link_hiu.label }}</a>, <a href="{% url 'gpx_layer' layer.slug %}">GPX</a>){% endif %}</td>
+<td style="text-align:center;"><a href="{% url 'capabilities_layer' layer.slug 'all' 'html'%}">HTML</a>, <a href="{% url 'capabilities_layer' layer.slug 'all' 'xml'%}">XML</a></td>
   </tr>
   {% endfor %}
 </table>
 <hr>
-<h2>Tile Services (<a href="{% url 'capabilities_all' 'html' %}">HTML</a>, <a href="{% url 'capabilities_all' 'xml' %}">XML</a>)</h2>
+<h2>Tile Services (<a href="{% url 'capabilities' 'all' 'html' %}">HTML</a>, <a href="{% url 'capabilities' 'all' 'xml' %}">XML</a>)</h2>
 <table>
-  <tr class="head"><th>Layer</th><th>Service Type</th><th>SRS</th><th>URL</th><th>View in<br>iD</th><th>View in<br>JOSM</th></tr>
+  <tr class="head"><th>Layer</th><th>Service Type</th><th>SRS</th><th>URL</th><th>View<br>With</th></tr>
   {% for tileservice in tileservices %}
   <tr>
     <td style="text-align:center;">{{ tileservice.layer.name}}</td>
     <td style="text-align:center;">{{ tileservice.serviceType.name }}</td>
     <td style="text-align:center;">{{ tileservice.srs }}</td>
     <td style="text-align:center;">{{ tileservice.url_base }}</td>
-    <td style="text-align:center;">{% if tileservice.url_id %}<a href="{{ tileservice.url_id }}">View</a>{% endif %}</td>
-    <td style="text-align:center;"><a href="{{ tileservice.url_josm }}">View</a></td>
+    <td style="text-align:center;">
+       {% for link in tileservice.links %}
+         <a href="{{ link.url }}">{{ link.label }}</a>{% if not forloop.last %}, {% endif %}
+       {% endfor %}
+    </td>
   </tr>
   {% endfor %}
 </table>

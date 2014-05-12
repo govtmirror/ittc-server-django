@@ -1,0 +1,13 @@
+<gpx xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <link href=""/>
+    <text>{{ name }}</text>
+    <time>{{ time }}</time>
+  </metadata>
+  {% for track in tracks %}
+  <trk>
+    <name>{{ track.name }}</name>
+    {% for seg in track.segments %}<trkseg>{% for pt in seg.points %}<trkpt lon="{{ pt.x }}" lat="{{ pt.y }}"></trkpt>{% endfor %}</trkseg>{% endfor %}
+  </trk>
+  {% endfor %}
+</gpx>

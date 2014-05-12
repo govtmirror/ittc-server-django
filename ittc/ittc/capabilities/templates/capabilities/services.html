@@ -20,23 +20,34 @@
 <table class="menu">
   <tr class="menurow">
     <th><a href="{% url 'index' %}" style="font-size:16px;">Index</a></th>
-    <th><a href="{% url 'capabilities_all' 'html' %}" style="font-size:16px;">All<br>Services</a></th>
-    <th><a href="{% url 'capabilities_regular' 'html' %}" style="font-size:16px;">Regular<br>Services</a></th>
-    <th><a href="{% url 'capabilities_flipped' 'html' %}" style="font-size:16px;">Flipped<br>Services</a></th>
+    <th><a href="{% url 'capabilities' 'all' 'html' %}" style="font-size:16px;">All<br>Services</a></th>
+    <th><a href="{% url 'capabilities' 'regular' 'html' %}" style="font-size:16px;">Regular<br>Services</a></th>
+    <th><a href="{% url 'capabilities' 'flipped' 'html' %}" style="font-size:16px;">Flipped<br>Services</a></th>
   </tr>
 </table>
-
-<h2>{{ title }} (<a href="{% url 'capabilities_all' 'xml' %}">XML</a>)</h2>
+{% if collection %}
+  <h2>{{ title }} (<a href="{% url 'capabilities_collection' collection.slug type 'xml' %}">XML</a>,  <a href="{% url 'gpx_collection' collection.slug %}">GPX</a>)</h2>
+  <div><b style="padding:4px;display:inline-block;">Filter by Type:</b><a href="{% url 'capabilities_collection' collection.slug 'all' 'html' %}">All</a>, <a href="{% url 'capabilities_collection' collection.slug 'regular' 'html' %}">Regular</a>, <a href="{% url 'capabilities_collection' collection.slug 'flipped' 'html' %}">Flipped</a></div>
+{% elif layer %}
+  <h2>{{ title }} (<a href="{% url 'capabilities_layer' layer.slug type 'xml' %}">XML</a>, <a href="{% url 'gpx_layer' layer.slug %}">GPX</a>)</h2>
+  <div><b style="padding:4px;display:inline-block;">Filter by Type:</b><a href="{% url 'capabilities_layer' layer.slug 'all' 'html' %}">All</a>, <a href="{% url 'capabilities_layer' layer.slug 'regular' 'html' %}">Regular</a>, <a href="{% url 'capabilities_layer' layer.slug 'flipped' 'html' %}">Flipped</a></div>
+{% else %}
+  <h2>{{ title }} (<a href="{% url 'capabilities' type 'xml' %}">XML</a>)</h2>
+  <div><b style="padding:4px;display:inline-block;">Filter by Type:</b><a href="{% url 'capabilities' 'all' 'html' %}">All</a>, <a href="{% url 'capabilities' 'regular' 'html' %}">Regular</a>, <a href="{% url 'capabilities' 'flipped' 'html' %}">Flipped</a></div>
+{% endif%}
 <table>
-  <tr class="head"><th>Layer</th><th>Service Type</th><th>SRS</th><th>URL</th><th>View in<br>iD</th><th>View in<br>JOSM</th></tr>
+  <tr class="head"><th>Layer</th><th>Service Type</th><th>SRS</th><th>URL</th><th>View<br>With</th></tr>
   {% for tileservice in tileservices %}
   <tr>
     <td style="text-align:center;">{{ tileservice.layer.name}}</td>
     <td style="text-align:center;">{{ tileservice.serviceType.name }}</td>
     <td style="text-align:center;">{{ tileservice.srs }}</td>
     <td style="text-align:center;">{{ tileservice.url_base }}</td>
-    <td style="text-align:center;">{% if tileservice.url_id %}<a href="{{ tileservice.url_id }}">View</a>{% endif %}</td>
-    <td style="text-align:center;"><a href="{{ tileservice.url_josm }}">View</a></td>
+    <td style="text-align:center;">
+       {% for link in tileservice.links %}
+         <a href="{{ link.url }}">{{ link.label }}</a>{% if not forloop.last %}, {% endif %}
+       {% endfor %}
+    </td>
   </tr>
   {% endfor %}
 </table>
