@@ -85,7 +85,7 @@ def capabilities(request, template=None, type="all", extension="xml"):
             template ='capabilities/services.html'
         return render(request,template,ctx)
 
-def capabilities_collection_doc(request, template=None, slug=None, type="all", extension="xml", docType="tms"):
+def capabilities_collection_doc(request, template=None, slug=None, type="all", extension="xml", docType="wms"):
     return capabilities_collection(request, template, slug, type, extension, docType)
 
 def capabilities_collection_html(request, template=None, slug=None, type="all", extension="xml"):

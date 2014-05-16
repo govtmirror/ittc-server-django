@@ -15,6 +15,7 @@ urlpatterns = patterns('ittc.capabilities.views',
     url(r'^collection/(?P<slug>[^/]+)/export.gpx$', 'gpx_collection', name='gpx_collection'),
     url(r'^collection/(?P<slug>[^/]+)/?$', 'capabilities_collection', name='capabilities_collection_all'),
     url(r'^collection/(?P<slug>[^/]+)/(?P<type>(all|regular|flipped))\.(?P<extension>(html))$', 'capabilities_collection_html', name='capabilities_collection_html'),
+    url(r'^collection/(?P<slug>[^/]+)/(?P<type>(all|regular|flipped))/$', 'capabilities_collection_doc', name='capabilities_collection_doc'),
     url(r'^collection/(?P<slug>[^/]+)/(?P<type>(all|regular|flipped))/(?P<extension>(xml))/(?P<docType>(tms|wms))/$', 'capabilities_collection_doc', name='capabilities_collection_doc'),
 
     url(r'^layer/(?P<slug>[^/]+)/export.gpx$', 'gpx_layer', name='gpx_layer'),
