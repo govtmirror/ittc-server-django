@@ -15,7 +15,7 @@ As root (`sudo su -`), execute the following commands:
 ```
 apt-get update
 apt-get install -y curl vim git apache2
-apt-get install -y memcached
+apt-get install -y memcached zlib1g-dev libjpeg-dev 
 apt-get install -y libapache2-mod-python python-dev python-pip
 pip install django
 pip install django-cors-headers
