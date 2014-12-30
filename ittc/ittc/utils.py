@@ -81,6 +81,7 @@ def forward_mercator(lonlat):
     return (x, y)
 
 
+# Flipping in both directions is the same equation
 def flip_y(x,y,z,size=256,bbox=[-20037508.34,-20037508.34,20037508.34,20037508.34]):
     res = resolutions[int(z)]
     maxY = int(

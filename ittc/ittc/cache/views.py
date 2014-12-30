@@ -62,8 +62,11 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, ext=None):
     tileservice = get_object_or_404(TileService, slug=slug)
     tilesource = tileservice.tileSource
 
-    if tileservice.serviceType == TYPE_TMS_FLIPPED:
-        iy = flip_y(ix,iy,iz,256,webmercator_bbox)
+    if tileservice.serviceType != tilesource.type:
+        if tileservice.serviceType == TYPE_TMS_FLIPPED and tilesource.type == TYPE_TMS: 
+            iy = flip_y(ix,iy,iz,256,webmercator_bbox):
+        elif tileservice.serviceType == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
+            iy = flip_y(ix,iy,iz,256,webmercator_bbox):
 
     tile = None
     if iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
