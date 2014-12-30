@@ -14,7 +14,8 @@ As root (`sudo su -`), execute the following commands:
 
 ```
 apt-get update
-apt-get install -y curl vim git apache2 libapache2-mod-python python-pip
+apt-get install -y curl vim git apache2
+apt-get install -y libapache2-mod-python python-dev python-pip
 pip install django
 pip install django-cors-headers
 pip install Pillow
