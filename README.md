@@ -56,7 +56,7 @@ python manage.py runserver [::]:8000
 
 ## Contributing
 
-HIU is currently not accepting pull requests for this repository.
+HIU is currently accepting pull requests for this repository. Please provide a human-readable description of the changes in the pull request. Additionally, update the README.md file as needed.
 
 ## License
 This project constitutes a work of the United States Government and is not subject to domestic copyright protection under 17 USC § 105.
