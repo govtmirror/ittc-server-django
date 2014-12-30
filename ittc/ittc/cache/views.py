@@ -52,6 +52,8 @@ def capabilities_service(request, template='capabilities/capabilities_service_1_
 
 def tile_tms(request, slug=None, z=None, x=None, y=None, ext=None):
 
+    verbose = True
+
     ix = int(x)
     iy = int(y)
     iz = int(z)
@@ -64,16 +66,21 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, ext=None):
         iy = flip_y(ix,iy,iz,256,webmercator_bbox)
 
     tile = None
-    if z>= settings.ITTC_SERVER['cache']['memory']['minZoom'] and z <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
+    if iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         tile = tilecache.get(key)
         if tile:
-            image = Image.open(StringIO.StringIO(tile))
+            if verbose:
+                print "cache hit for "+key
         else:
+            if verbose:
+                print "cache miss for "+key
             tile = tilesource.requestTile(ix,iy,iz,ext,True)
             tilecache.set(key, tile)
 
     else:
+        if verbose:
+            print "cache bypass for "+slug+","+x+","+y+","+z
         tile = tilesource.requestTile(ix,iy,iz,ext,True)
 
     image = Image.open(StringIO.StringIO(tile))        
