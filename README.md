@@ -38,7 +38,15 @@ vim ittc-server-django.git/ittc/ittc/settings.py
 
 ## Usage
 
-To run the server in development mode, execute the following:
+To run the server in development mode, execute the following.
+
+You first need to start memcached with the following command.  The settings.py assumes the cache for the tiles is running on port 11212, instead of the default of 11211.
+
+```
+memcached -v -p11212
+```
+
+Then begin the server.
 
 ```
 cd ittc-server-django.git/ittc
