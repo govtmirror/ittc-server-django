@@ -33,13 +33,15 @@ Then, update SITEURL (e.g., http://hiu-maps.net/) in settings.py:
 vim ittc-server-django.git/ittc/ittc/settings.py
 ```
 
+## Usage
+
+To run the server in development mode, execute the following:
+
 ```
 cd ittc-server-django.git/ittc
 python manage.py syncdb
 python manage.py runserver [::]:8000
 ```
-
-## Usage
 
 ## Contributing
 
