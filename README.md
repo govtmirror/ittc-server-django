@@ -17,6 +17,7 @@ apt-get update
 apt-get install -y curl vim git apache2 libapache2-mod-python python-pip
 pip install django
 pip install django-cors-headers
+pip install Pillow
 ```
 
 Then, as ubuntu, execute the following commands:
