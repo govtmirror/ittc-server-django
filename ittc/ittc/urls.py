@@ -16,3 +16,8 @@ if 'ittc.capabilities' in settings.INSTALLED_APPS:
     urlpatterns += patterns('',
         (r'^capabilities/', include('ittc.capabilities.urls')),
     )
+
+if 'ittc.cache' in settings.INSTALLED_APPS:
+    urlpatterns += patterns('',
+        (r'^cache/', include('ittc.cache.urls')),
+    )

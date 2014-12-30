@@ -12,6 +12,8 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
+from ..source.models import TileSource
+
 class Point(models.Model):
     x = models.FloatField()
     y = models.FloatField()
@@ -156,6 +158,7 @@ class Layer(models.Model):
     description = models.TextField(null=True, blank=True)
     slug = models.CharField(max_length=100,null=True,blank=True)
     extent = models.ForeignKey(Extent,null=True,blank=True)
+    source = models.ForeignKey(TileSource,null=True,blank=True)
     
     def __unicode__(self):
         return self.name
@@ -240,7 +243,7 @@ class Server(models.Model):
         ordering = ("name",)
         verbose_name_plural = _("Servers")
 
-class TileService(models.Model):
+class TileServiceOld(models.Model):
     """
     A tile service, such as TMS, TMS-Flipped, WMTS, Bing, etc.
     """
@@ -327,3 +330,42 @@ class TileService(models.Model):
         if self.serviceType.identifier=="tms" or self.serviceType.identifier=="tms_flipped":
             links.append(Link(label="HIU",url=self.url_hiu))
         return links
+
+class TileService(models.Model):
+    """
+    A tile service, such as TMS, TMS-Flipped, WMTS, Bing, etc.
+    """
+
+    TYPE_TMS = 1
+    TYPE_TMS_FLIPPED = 2
+    TYPE_BING = 3
+    TYPE_WMS = 4
+
+    TYPE_CHOICES = [
+        (TYPE_TMS, _("TMS")),
+        (TYPE_TMS_FLIPPED, _("TMS - Flipped")),
+        (TYPE_BING, _("Bing")),
+        (TYPE_WMS, _("WMS"))
+    ]
+
+    name = models.CharField(max_length=100)
+    slug = models.CharField(max_length=100,null=True,blank=True)
+    description = models.TextField(null=True, blank=True)
+    serviceType = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
+    srs = models.CharField(max_length=20)
+    #=#
+    tileSource = models.ForeignKey(TileSource,null=True,blank=True,help_text=_('The source of the tiles.'))
+    tileWidth = models.PositiveSmallIntegerField(help_text=_('The width of the tiles in pixels.'))
+    tileHeight = models.PositiveSmallIntegerField(help_text=_('The width of the tiles in pixels.'))
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        ordering = ("name","slug",)
+        verbose_name_plural = _("Tile Services")
+
+    @property
+    def url_capabilities(self):
+        return settings.SITEURL+"cache/tms/"+self.slug
+

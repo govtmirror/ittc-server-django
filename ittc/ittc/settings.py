@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
 
 ITTC_APPS = (
     'ittc.capabilities',
+    'ittc.cache',
+    'ittc.source',
 )
 
 INSTALLED_APPS = (
@@ -88,10 +90,28 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+    },
+    'tiles': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11212',
+    }
+}
 
 ###Settings ITTC Capabilities
 ITTC_SERVER = {
-  'name': 'NextView Imagery Services'
+  'name': 'NextView Imagery Services',
+  'cache': {
+    'memory': {
+      'enabled': True,
+      'size': 1000,
+      'minZoom': 0,
+      'maxZoom': 10
+    }
+  }
 }
 
 SITEURL = "http://localhost:8000/"

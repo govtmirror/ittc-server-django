@@ -21,10 +21,16 @@ class CollectionMemberAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
     list_display = ('id','collection','layer',)
 
+#class TileServiceAdmin(admin.ModelAdmin):
+#    model = Layer
+#    list_display_links = ('id','name',)
+#    list_display = ('id','name','serviceType','imageType')
+
 class TileServiceAdmin(admin.ModelAdmin):
     model = Layer
     list_display_links = ('id','name',)
-    list_display = ('id','name','serviceType','imageType')
+    list_display = ('id','name','slug','serviceType','srs')
+
 
 class TileServiceTypeAdmin(admin.ModelAdmin):
     model = Layer
