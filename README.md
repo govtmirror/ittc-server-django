@@ -14,9 +14,13 @@ As root (`sudo su -`), execute the following commands:
 
 ```
 apt-get update
-apt-get install -y curl vim git apache2 libapache2-mod-python python-pip
+apt-get install -y curl vim git apache2
+apt-get install -y memcached zlib1g-dev libjpeg-dev 
+apt-get install -y libapache2-mod-python python-dev python-pip
 pip install django
 pip install django-cors-headers
+pip install Pillow
+pip install python-memcached
 ```
 
 Then, as ubuntu, execute the following commands:
@@ -32,12 +36,15 @@ Then, update SITEURL (e.g., http://hiu-maps.net/) in settings.py:
 vim ittc-server-django.git/ittc/ittc/settings.py
 ```
 
-python syncdb
-python manage.py runserver [::]:8000
+## Usage
+
+To run the server in development mode, execute the following:
+
 ```
 cd ittc-server-django.git/ittc
+python manage.py syncdb
+python manage.py runserver [::]:8000
 ```
-## Usage
 
 ## Contributing
 
