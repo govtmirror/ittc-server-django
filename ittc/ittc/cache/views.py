@@ -103,7 +103,7 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
 
     else:
         if verbose:
-            print "cache bypass for "+slug+","+x+","+y+","+z
+            print "cache bypass for "+slug+","+str(ix)+","+str(iy)+","+str(iz)
 
         if tilesource.type == TYPE_TMS:
             if tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
