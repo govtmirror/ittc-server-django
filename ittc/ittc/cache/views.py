@@ -56,6 +56,7 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
     verbose = True
     ix = None
     iy = None
+    iyf = None
     iz = None
 
     if verbose:
@@ -69,18 +70,21 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
         iy = int(y)
         iz = int(z)
 
+
+    print str(iz)+"/"+str(ix)+"/"+str(iy)
+
     tilecache = caches['tiles']
     tileservice = get_object_or_404(TileService, slug=slug)
     tilesource = tileservice.tileSource
 
-    if tileservice.serviceType != tilesource.type:
-        if tileservice.serviceType == TYPE_TMS_FLIPPED and tilesource.type == TYPE_TMS:
-            iy = flip_y(ix,iy,iz,256,webmercator_bbox)
-        elif tileservice.serviceType == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
-            iy = flip_y(ix,iy,iz,256,webmercator_bbox)
-
     tile = None
     if iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
+        if tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
+            iyf = iy
+            iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
+        elif tileservice.serviceType == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
+            ify = flip_y(ix,iy,iz,256,webmercator_bbox)
+
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         tile = tilecache.get(key)
         if tile:
@@ -90,13 +94,28 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
             if verbose:
                 print "cache miss for "+key
 
-            tile = tilesource.requestTile(ix,iy,iz,ext,True)
+            if tilesource.type == TYPE_TMS:
+                tile = tilesource.requestTile(ix,iy,iz,ext,True)
+            elif tilesource.type == TYPE_TMS_FLIPPED:
+                tile = tilesource.requestTile(ix,iyf,iz,ext,True)
+
             tilecache.set(key, tile)
 
     else:
         if verbose:
             print "cache bypass for "+slug+","+x+","+y+","+z
-        tile = tilesource.requestTile(ix,iy,iz,ext,True)
+
+        if tilesource.type == TYPE_TMS:
+            if tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
+                tile = tilesource.requestTile(ix,flip_y(ix,iyf,iz,256,webmercator_bbox),iz,ext,True)
+            elif tileservice.serviceType == TYPE_TMS:
+                tile = tilesource.requestTile(ix,iy,iz,ext,True)
+
+        elif tilesource.type == TYPE_TMS_FLIPPED:
+            if tileservice.serviceType == TYPE_TMS:
+                tile = tilesource.requestTile(ix,flip_y(ix,iyf,iz,256,webmercator_bbox),iz,ext,True)
+            elif tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
+                tile = tilesource.requestTile(ix,iy,iz,ext,True)
 
     image = Image.open(StringIO.StringIO(tile))        
     response = HttpResponse(content_type="image/png")
