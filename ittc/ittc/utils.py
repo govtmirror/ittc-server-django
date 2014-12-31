@@ -38,7 +38,18 @@ resolutions = [
     0.14929107084274292894,
     0.07464553542137146447
 ]
+
 webmercator_bbox = [-20037508.34,-20037508.34,20037508.34,20037508.34]
+
+D2R = math.pi / 180,
+R2D = 180 / math.pi;
+
+TYPE_TMS = 1
+TYPE_TMS_FLIPPED = 2
+TYPE_BING = 3
+TYPE_WMS = 4
+
+#===================================#
 
 def bbox_to_wkt(x0, x1, y0, y1, srid="4326"):
     if None not in [x0, x1, y0, y1]:
@@ -80,6 +91,10 @@ def forward_mercator(lonlat):
         y = math.log(n) / math.pi * 20037508.34
     return (x, y)
 
+def bbox_intersects(a,b):
+    #print "A: "+str(a)
+    #print "B: "+str(b)
+    return ( a[0] < b[2] and a[2] > b[0] ) and ( a[1] < b[3] and a[3] > b[1] )
 
 # Flipping in both directions is the same equation
 def flip_y(x,y,z,size=256,bbox=[-20037508.34,-20037508.34,20037508.34,20037508.34]):
@@ -91,6 +106,20 @@ def flip_y(x,y,z,size=256,bbox=[-20037508.34,-20037508.34,20037508.34,20037508.3
         )
     ) - 1
     return maxY - y
+
+def tms_to_bbox(x,y,z):
+    e = tile_to_lon(x+1,z)
+    w = tile_to_lon(x,z)
+    s = tile_to_lat(y+1,z)
+    n = tile_to_lat(y,z)
+    return [w, s, e, n]
+
+def tile_to_lon(x, z):
+    return (x/math.pow(2,z)*360-180);
+
+def tile_to_lat(y, z):
+    n = math.pi - 2 * math.pi * y / math.pow(2,z);
+    return ( R2D * math.atan(0.5*(math.exp(n)-math.exp(-n))));
 
 def tms_to_bing(x,y,z):
     quadKey = []
@@ -130,3 +159,13 @@ def getYCoordFromQuadKey(u):
         if ( int(u[i]) == 2 ) or ( int(u[i]) == 3 ):
             y += 1
     return y
+
+def getYValues(tileservice, tilesource, ix, iy, iz):
+
+    if tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
+        iyf = iy
+        iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
+    elif tileservice.serviceType == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
+        ify = flip_y(ix,iy,iz,256,webmercator_bbox)
+
+    return iy, iyf

@@ -73,6 +73,7 @@ class TileSource(models.Model):
     name = models.CharField(max_length=100)
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
     url = models.CharField(max_length=100)
+    extents = models.CharField(max_length=100,blank=True,null=True)
 
     def __unicode__(self):
         return self.name
