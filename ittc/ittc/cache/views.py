@@ -16,7 +16,7 @@ import StringIO
 from PIL import Image, ImageEnhance
 
 from ittc.capabilities.models import TileService
-from ittc.utils import webmercator_bbox, flip_y
+from ittc.utils import webmercator_bbox, flip_y, bing_to_tms, tms_to_bing
 from ittc.source.models import TileSource
 #from ittc.cache.models import Tile
 
@@ -35,7 +35,7 @@ def capabilities_all_xml(request, template='capabilities/capabilities_1_0_0.xml'
     return capabilities_all(request,template,'xml')
 
 def capabilities_all(request, template=None, extension=None):
-    ctx = {'tileservices': TileService.objects.all(),'title':'All Tile Services', 'SITEURL': settings.SITEURL,}
+    ctx = {'tileservices': TileService.objects.filter(serviceType__in=[TYPE_TMS,TYPE_TMS_FLIPPED]),'title':'All Tile Services', 'SITEURL': settings.SITEURL,}
     if extension=="xml":
         if template is None:
             template = 'capabilities/capabilities_1_0_0.xml'
@@ -50,23 +50,34 @@ def capabilities_service(request, template='capabilities/capabilities_service_1_
     ctx = {'tileservice': TileService.objects.get(slug=slug), 'SITEURL': settings.SITEURL, }
     return render(request,template,ctx,'text/xml')
 
-def tile_tms(request, slug=None, z=None, x=None, y=None, ext=None):
+
+def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
 
     verbose = True
+    ix = None
+    iy = None
+    iz = None
 
-    ix = int(x)
-    iy = int(y)
-    iz = int(z)
+    if verbose:
+        print request.path
+
+    if u:
+        iz, ix, iy = bing_to_tms(u)
+
+    elif x and y and z:
+        ix = int(x)
+        iy = int(y)
+        iz = int(z)
 
     tilecache = caches['tiles']
     tileservice = get_object_or_404(TileService, slug=slug)
     tilesource = tileservice.tileSource
 
     if tileservice.serviceType != tilesource.type:
-        if tileservice.serviceType == TYPE_TMS_FLIPPED and tilesource.type == TYPE_TMS: 
-            iy = flip_y(ix,iy,iz,256,webmercator_bbox):
+        if tileservice.serviceType == TYPE_TMS_FLIPPED and tilesource.type == TYPE_TMS:
+            iy = flip_y(ix,iy,iz,256,webmercator_bbox)
         elif tileservice.serviceType == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
-            iy = flip_y(ix,iy,iz,256,webmercator_bbox):
+            iy = flip_y(ix,iy,iz,256,webmercator_bbox)
 
     tile = None
     if iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
@@ -78,6 +89,7 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, ext=None):
         else:
             if verbose:
                 print "cache miss for "+key
+
             tile = tilesource.requestTile(ix,iy,iz,ext,True)
             tilecache.set(key, tile)
 
@@ -90,4 +102,3 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, ext=None):
     response = HttpResponse(content_type="image/png")
     image.save(response, "PNG")
     return response
-

@@ -91,3 +91,42 @@ def flip_y(x,y,z,size=256,bbox=[-20037508.34,-20037508.34,20037508.34,20037508.3
         )
     ) - 1
     return maxY - y
+
+def tms_to_bing(x,y,z):
+    quadKey = []
+    for i in range(z,0,-1):
+        digit = 0
+        mask = 1 << ( i - 1)
+        if ((x & mask) != 0):
+            digit += 1
+        if ((y & mask) != 0):
+            digit += 1
+            digit += 1
+        quadKey.push(digit);
+
+    return ''.join(quadKey);
+
+#u shold be a string represetnation of the quadkey digit
+def bing_to_tms(u):
+    iz = len(u)
+    ix = getXCoordFromQuadKey(u)
+    iy = getYCoordFromQuadKey(u)
+    return iz, ix, iy
+
+
+#http://www.simplehooman.co.uk/2012/09/convert-quadtree-to-tms-or-zxy/
+def getXCoordFromQuadKey(u):
+    x = 0
+    for i in range(0,len(u)):
+        x = x * 2
+        if ( int(u[i]) == 1 ) or ( int(u[i]) == 3 ):
+            x += 1
+    return x
+
+def getYCoordFromQuadKey(u):
+    y = 0
+    for i in range(0,len(u)):
+        y = y * 2
+        if ( int(u[i]) == 2 ) or ( int(u[i]) == 3 ):
+            y += 1
+    return y
