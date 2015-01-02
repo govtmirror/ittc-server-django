@@ -14,7 +14,7 @@ As root (`sudo su -`), execute the following commands:
 
 ```
 apt-get update
-apt-get install -y curl vim git apache2
+apt-get install -y curl vim git nginx
 apt-get install -y memcached zlib1g-dev libjpeg-dev 
 apt-get install -y libapache2-mod-python python-dev python-pip
 pip install django
@@ -66,6 +66,8 @@ To run the application using Gnuicorn, execute the following:
 
 ```
 gunicorn --workers=4 --worker-class gevent -b 0.0.0.0:8000 ittc.wsgi
+or
+gunicorn --workers=4 --worker-class gevent /tmp/gunicorn.sock ittc.wsgi
 ```
 
 You can learn more about gunicron configuration at [http://docs.gunicorn.org/en/develop/configure.html](http://docs.gunicorn.org/en/develop/configure.html).
