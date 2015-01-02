@@ -67,7 +67,7 @@ To run the application using Gnuicorn, execute the following:
 ```
 gunicorn --workers=4 --worker-class gevent -b 0.0.0.0:8000 ittc.wsgi
 or
-gunicorn --workers=4 --worker-class gevent -b /tmp/gunicorn.sock ittc.wsgi
+gunicorn --workers=4 --worker-class gevent -b unix:///tmp/gunicorn.sock ittc.wsgi
 ```
 
 You can learn more about gunicron configuration at [http://docs.gunicorn.org/en/develop/configure.html](http://docs.gunicorn.org/en/develop/configure.html).
