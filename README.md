@@ -21,6 +21,7 @@ pip install django
 pip install django-cors-headers
 pip install Pillow
 pip install python-memcached
+pip install gunicorn
 ```
 
 Then, as ubuntu, execute the following commands:
@@ -38,7 +39,7 @@ vim ittc-server-django.git/ittc/ittc/settings.py
 
 ## Usage
 
-To run the server in development mode, execute the following.
+The application can be run through the Django built-in development server or Gnuicron ([http://gunicorn.org/](http://gunicorn.org/)).
 
 You first need to start memcached with the following command.  The settings.py assumes the cache for the tiles is running on port 11212, instead of the default of 11211.
 
@@ -46,12 +47,18 @@ You first need to start memcached with the following command.  The settings.py a
 memcached -v -p11212
 ```
 
-Then begin the server.
+To run the application using the Django built-in development server, execute the following:
 
 ```
 cd ittc-server-django.git/ittc
 python manage.py syncdb
 python manage.py runserver [::]:8000
+```
+
+To run the application using Gnuicorn, execute the following:
+
+```
+gunicorn --workers=4 -b 0.0.0.0:8000 ittc.wsgi
 ```
 
 ## Contributing
