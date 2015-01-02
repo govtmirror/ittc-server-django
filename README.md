@@ -49,11 +49,16 @@ You first need to start memcached with the following command.  The settings.py a
 memcached -v -p11212
 ```
 
-To run the application using the Django built-in development server, execute the following:
+Then, prepare the server.
 
 ```
 cd ittc-server-django.git/ittc
 python manage.py syncdb
+```
+
+To run the application using the Django built-in development server, execute the following:
+
+```
 python manage.py runserver [::]:8000
 ```
 
