@@ -22,6 +22,8 @@ pip install django-cors-headers
 pip install Pillow
 pip install python-memcached
 pip install gunicorn
+pip install greenlet
+pip install gevent
 ```
 
 Then, as ubuntu, execute the following commands:
@@ -58,8 +60,10 @@ python manage.py runserver [::]:8000
 To run the application using Gnuicorn, execute the following:
 
 ```
-gunicorn --workers=4 -b 0.0.0.0:8000 ittc.wsgi
+gunicorn --workers=4 --worker-class gevent -b 0.0.0.0:8000 ittc.wsgi
 ```
+
+You can learn more about gunicron configuration at [http://docs.gunicorn.org/en/develop/configure.html](http://docs.gunicorn.org/en/develop/configure.html).
 
 ## Contributing
 
