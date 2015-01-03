@@ -46,7 +46,7 @@ The application can be run through the Django built-in development server or Gnu
 You first need to start memcached with the following command.  The settings.py assumes the cache for the tiles is running on port 11212, instead of the default of 11211.
 
 ```
-memcached -v -p11212
+memcached -vv -m 1024 -p 11212
 ```
 
 Then, prepare the server.
@@ -67,7 +67,7 @@ To run the application using Gnuicorn, execute the following:
 ```
 gunicorn --workers=4 --worker-class gevent -b 0.0.0.0:8000 ittc.wsgi
 or
-gunicorn --workers=4 --worker-class gevent -b unix:///tmp/gunicorn.sock ittc.wsgi
+gunicorn --workers=4 --worker-class gevent -b unix:///tmp/gunicorn.sock --error-logfile error.log ittc.wsgi
 ```
 
 You can learn more about gunicron configuration at [http://docs.gunicorn.org/en/develop/configure.html](http://docs.gunicorn.org/en/develop/configure.html).
