@@ -16,7 +16,7 @@ import StringIO
 from PIL import Image, ImageEnhance
 
 from ittc.capabilities.models import TileService
-from ittc.utils import bbox_intersects, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS
 from ittc.source.models import TileSource
 #from ittc.cache.models import Tile
 
@@ -47,6 +47,18 @@ def capabilities_service(request, template='capabilities/capabilities_service_1_
 
 
 def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
+    tileservice = get_object_or_404(TileService, slug=slug)
+
+    if tileservice:
+        tilesource = tileservice.tileSource
+        if tilesource:
+            return requestTile(request,tileservice=tileservice,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+        else:
+            return HttpResponse(RequestContext(request, {}), status=404)
+    else:
+        return HttpResponse(RequestContext(request, {}), status=404)
+
+def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=None, u=None, ext=None):
 
     verbose = True
     ix = None
@@ -65,39 +77,48 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
         iy = int(y)
         iz = int(z)
 
+    iy, iyf = getYValues(tileservice,tilesource,ix,iy,iz)
+
     tile_bbox = tms_to_bbox(ix,iy,iz)
-    print tile_bbox
-
     tilecache = caches['tiles']
-    tileservice = get_object_or_404(TileService, slug=slug)
-    tilesource = tileservice.tileSource
 
-    returnBlank = False
+    #Check if requested tile is within source's extents
+    returnBlankTile = False
+    returnErrorTile = False
+    intersects = True
     if tilesource.extents:
-        intersects = False
-        iy, iyf = getYValues(tileservice,tilesource,ix,iy,iz)
-        tile_bbox = tms_to_bbox(ix,iyf,iz)
-        for extent in tilesource.extents.split(';'):
-            if bbox_intersects(tile_bbox,map(float,extent.split(','))):
-                intersects = True
-                print "intersects"
-                break
-
+        intersects = bbox_intersects_source(tilesource,ix,iyf,iz)
         if not intersects:
-           returnBlank = True
+           returnBlankTile = True
 
-    if returnBlank:
+    validZoom = 0
+    #Check if inside source zoom levels
+    if tilesource.minZoom or tilesource.maxZoom:
+        if (tilesource.minZoom and iz < tilesource.minZoom):
+            validZoom = -1
+        elif (tilesource.maxZoom and iz > tilesource.maxZoom):
+           validZoom = 1
+
+        if validZoom != 0:
+            #returnBlank = True
+            returnErrorTile = True 
+
+    if returnBlankTile:
         print "responding with blank image"
         image = Image.new("RGBA", (256, 256), (0, 0, 0, 0) )
         response = HttpResponse(content_type="image/png")
         image.save(response, "PNG")
         return response
 
+    if returnErrorTile:
+        print "responding with a red image"
+        image = Image.new("RGBA", (256, 256), (256, 0, 0, 256) )
+        response = HttpResponse(content_type="image/png")
+        image.save(response, "PNG")
+        return response
+
     tile = None
     if iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
-        if not iyf:
-            iy, iyf = getYValues(tileservice,tilesource,ix,iy,iz)
-
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         tile = tilecache.get(key)
         if tile:
@@ -116,20 +137,14 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
 
     else:
         if verbose:
-            print "cache bypass for "+slug+","+str(ix)+","+str(iy)+","+str(iz)
+            print "cache bypass for "+tilesource.name+"/"+str(iz)+"/"+str(ix)+"/"+str(iy)
 
         if tilesource.type == TYPE_TMS:
-            if tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
-                tile = tilesource.requestTile(ix,flip_y(ix,iyf,iz,256,webmercator_bbox),iz,ext,True)
-            elif tileservice.serviceType == TYPE_TMS:
-                tile = tilesource.requestTile(ix,iy,iz,ext,True)
-
+            tile = tilesource.requestTile(ix,iy,iz,ext,True)
         elif tilesource.type == TYPE_TMS_FLIPPED:
-            if tileservice.serviceType == TYPE_TMS:
-                tile = tilesource.requestTile(ix,flip_y(ix,iyf,iz,256,webmercator_bbox),iz,ext,True)
-            elif tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
-                tile = tilesource.requestTile(ix,iy,iz,ext,True)
+            tile = tilesource.requestTile(ix,iyf,iz,ext,True)
 
+    print "yo"
     image = Image.open(StringIO.StringIO(tile))
     #Is Tile blank.  then band.getextrema should return 0,0 for band 4
     #Tile Cache watermarking is messing up bands

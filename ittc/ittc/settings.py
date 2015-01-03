@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 ITTC_APPS = (
     'ittc.capabilities',
     'ittc.cache',
+    'ittc.proxy',
     'ittc.source',
 )
 
@@ -87,8 +88,16 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
-
+#STATIC_ROOT = os.path.join(BASE_DIR, "static_root")
+STATIC_ROOT = '/var/www/ittc/static/'
 STATIC_URL = '/static/'
+#STATICFILES_DIRS = [
+#    os.path.join(BASE_DIR, "static"),
+#]
+#STATICFILES_FINDERS = (
+#    'django.contrib.staticfiles.finders.FileSystemFinder',
+#    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+#)
 
 CACHES = {
     'default': {
@@ -117,3 +126,8 @@ ITTC_SERVER = {
 SITEURL = "http://localhost:8000/"
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+PROXY_ALLOWED_HOSTS = ( 'tile.openstreetmap.org', 'tile.openstreetmap.fr', 'tiles.virtualearth.net', 'tiles.mapbox.com', 'hiu-maps.net' )
+
+PROXY_URL = '/proxy/?url='
+

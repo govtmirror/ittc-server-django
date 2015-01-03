@@ -96,6 +96,16 @@ def bbox_intersects(a,b):
     #print "B: "+str(b)
     return ( a[0] < b[2] and a[2] > b[0] ) and ( a[1] < b[3] and a[3] > b[1] )
 
+def bbox_intersects_source(tilesource,ix,iyf,iz):
+    intersects = False
+    tile_bbox = tms_to_bbox(ix,iyf,iz)
+    for extent in tilesource.extents.split(';'):
+        if bbox_intersects(tile_bbox,map(float,extent.split(','))):
+            intersects = True
+            break
+
+    return intersects
+
 # Flipping in both directions is the same equation
 def flip_y(x,y,z,size=256,bbox=[-20037508.34,-20037508.34,20037508.34,20037508.34]):
     res = resolutions[int(z)]
@@ -162,10 +172,25 @@ def getYCoordFromQuadKey(u):
 
 def getYValues(tileservice, tilesource, ix, iy, iz):
 
-    if tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
-        iyf = iy
-        iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
-    elif tileservice.serviceType == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
-        ify = flip_y(ix,iy,iz,256,webmercator_bbox)
-
+    if tileservice:
+        if tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
+            iyf = iy
+            iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
+        elif tileservice.serviceType == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
+            ify = flip_y(ix,iy,iz,256,webmercator_bbox)
+    else:
+        if tilesource.type == TYPE_TMS_FLIPPED:
+            iyf = iy
+            iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
+        elif tilesource.type == TYPE_TMS:
+            ify = flip_y(ix,iy,iz,256,webmercator_bbox)
+    
     return iy, iyf
+
+def getRegexValue(match,name):
+    value = None
+    try:
+        value = match.group(name)
+    except:
+        value = None
+    return value
