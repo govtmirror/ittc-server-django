@@ -72,6 +72,34 @@ gunicorn --workers=4 --worker-class gevent -b unix:///tmp/gunicorn.sock --error-
 
 You can learn more about gunicron configuration at [http://docs.gunicorn.org/en/develop/configure.html](http://docs.gunicorn.org/en/develop/configure.html).
 
+### Heuristics
+
+You can enable a variety of heuristics / branch prediction via the settings.py file.  The up heuristic caches all tiles parent to a requested tile.  The `nearby` heuristic caches all tiles at the same level within the radius distance (distance 1 = 3 tiles, distance 2 = 9 tiles, distance 3 = 25 tiles).
+
+```
+ITTC_SERVER = {
+  'name': 'NextView Imagery Services',
+  'cache': {
+    'memory': {
+      'enabled': True,
+      'size': 1000,
+      'minZoom': 0,
+      'maxZoom': 14
+    }
+  },
+  'heuristic': {
+    'up': {
+      'enabled': True
+    }
+    'nearby': {
+      'enabled': True
+      'radius': 3
+    }
+  }
+}
+
+```
+
 ## Contributing
 
 HIU is currently accepting pull requests for this repository. Please provide a human-readable description of the changes in the pull request. Additionally, update the README.md file as needed.
