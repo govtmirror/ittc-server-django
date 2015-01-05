@@ -3,7 +3,7 @@ ittc-server-django
 
 ## Description
 
-This repository contains a Django server for running ITTC applications.
+This repository contains a Django server for running ITTC applications.  This application provides a Django interface for managing an in-memory tile cache and translator.  The application acts like a proxy and translates between tile schemas if possible.  For example, you can service tiles in TMS, TMS-Flipped, and Bing formats while only saving tiles on disk in one format when using `ittc-server-django` as a proxy/cache.
 
 ### CyberGIS
 The Humanitarian Information Unit has been developing a sophisticated geographic computing infrastructure referred to as the CyberGIS. The CyberGIS provides highly available, scalable, reliable, and timely geospatial services capable of supporting multiple concurrent projects.  The CyberGIS relies on primarily open source projects, such as PostGIS, GeoServer, GDAL, OGR, and OpenLayers.  The name CyberGIS is dervied from the term geospatial cyberinfrastructure.
@@ -14,13 +14,16 @@ As root (`sudo su -`), execute the following commands:
 
 ```
 apt-get update
-apt-get install -y curl vim git apache2
+apt-get install -y curl vim git nginx
 apt-get install -y memcached zlib1g-dev libjpeg-dev 
 apt-get install -y libapache2-mod-python python-dev python-pip
 pip install django
 pip install django-cors-headers
 pip install Pillow
 pip install python-memcached
+pip install gunicorn
+pip install greenlet
+pip install gevent
 ```
 
 Then, as ubuntu, execute the following commands:
@@ -38,17 +41,40 @@ vim ittc-server-django.git/ittc/ittc/settings.py
 
 ## Usage
 
-To run the server in development mode, execute the following:
+The application can be run through the Django built-in development server or Gnuicron ([http://gunicorn.org/](http://gunicorn.org/)).
+
+You first need to start memcached with the following command.  The settings.py assumes the cache for the tiles is running on port 11212, instead of the default of 11211.
+
+```
+memcached -vv -m 1024 -p 11212
+```
+
+Then, prepare the server.
 
 ```
 cd ittc-server-django.git/ittc
 python manage.py syncdb
+```
+
+To run the application using the Django built-in development server, execute the following:
+
+```
 python manage.py runserver [::]:8000
 ```
 
+To run the application using Gnuicorn, execute the following:
+
+```
+gunicorn --workers=4 --worker-class gevent -b 0.0.0.0:8000 ittc.wsgi
+or
+gunicorn --workers=4 --worker-class gevent -b unix:///tmp/gunicorn.sock --error-logfile error.log ittc.wsgi
+```
+
+You can learn more about gunicron configuration at [http://docs.gunicorn.org/en/develop/configure.html](http://docs.gunicorn.org/en/develop/configure.html).
+
 ## Contributing
 
-HIU is currently not accepting pull requests for this repository.
+HIU is currently accepting pull requests for this repository. Please provide a human-readable description of the changes in the pull request. Additionally, update the README.md file as needed.
 
 ## License
 This project constitutes a work of the United States Government and is not subject to domestic copyright protection under 17 USC § 105.
