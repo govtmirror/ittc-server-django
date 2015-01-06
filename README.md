@@ -53,10 +53,12 @@ vim ittc-server-django.git/ittc/ittc/settings.py
 
 The application can be run through the Django built-in development server or Gnuicron ([http://gunicorn.org/](http://gunicorn.org/)).
 
-You first need to start memcached with the following command.  The settings.py assumes the cache for the tiles is running on port 11212, instead of the default of 11211.
+You first need to start 3 memcached instances with the following commands  The settings.py assumes the default cache is running on port 11211, the cache for the tiles is running on port 11212, and the cache for Celery results is running on port 11213.
 
 ```
+memcached -vv -m 128 -p 11211 -d
 memcached -vv -m 1024 -p 11212 -d
+memcached -vv -m 128 -p 11213 -d
 ```
 
 Then, prepare the server.
@@ -66,9 +68,12 @@ cd ittc-server-django.git/ittc
 python manage.py syncdb
 ```
 
+If `syncdb` asks if you would like to create an admin user, do it. 
+
 Then start a Celery worker with:
 
 ```
+cd ittc-server-django.git/ittc
 celery -A ittc worker --loglevel=error
 ```
 
@@ -90,30 +95,35 @@ You can learn more about gunicron configuration at [http://docs.gunicorn.org/en/
 
 ### Heuristics
 
-You can enable a variety of heuristics / branch prediction via the settings.py file.  The up heuristic caches all tiles parent to a requested tile.  The `nearby` heuristic caches all tiles at the same level within the radius distance (distance 1 --> 3*3 tiles, distance 2 = 25 tiles, distance 3 = 25 tiles).
+You can enable a variety of heuristics / branch prediction via the settings.py file.  The `nearby` heuristic caches all tiles at the same level within the radius distance (distance 1 --> 3*3 tiles, distance 2 = 25 tiles, distance 3 = 25 tiles).  The `up` heuristic caches all tiles parent to a requested tile.  The `down` heuristic caches tiles that are `children` to the requested tile within the depth and minZoom/maxZoom range.  For instance, if you request a tile at 14 and have a depth of 2, all the children tiles from 14 to 16 will be requested.
 
 ```
 ITTC_SERVER = {
-  'name': 'NextView Imagery Services',
-  'cache': {
-    'memory': {
-      'enabled': True,
-      'size': 1000,
-      'minZoom': 0,
-      'maxZoom': 14
+    'name': 'HIU Imagery Services',
+    'cache': {
+        'memory': {
+            'enabled': True,
+            'size': 1000,
+            'minZoom': 0,
+            'maxZoom': 14
+        }
+    },
+    'heuristic': {
+        'down': {
+            'enabled': True,
+            'depth': 1,
+            'minZoom': 0,
+            'maxZoom': 18
+        },
+        'up': {
+            'enabled': True
+        },
+        'nearby': {
+            'enabled': True,
+            'radius': 2
+        }
     }
-  },
-  'heuristic': {
-    'up': {
-      'enabled': True
-    }
-    'nearby': {
-      'enabled': True
-      'radius': 2
-    }
-  }
 }
-
 ```
 
 ## Contributing
