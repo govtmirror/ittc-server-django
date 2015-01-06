@@ -3,7 +3,7 @@ ittc-server-django
 
 ## Description
 
-This repository contains a Django server for running ITTC applications.  This application provides a Django interface for managing an in-memory tile cache and translator.  The application acts like a proxy and translates between tile schemas if possible.  For example, you can service tiles in TMS, TMS-Flipped, and Bing formats while only saving tiles on disk in one format when using `ittc-server-django` as a proxy/cache.
+This repository contains a Django server for running ITTC applications.  This application provides a Django interface for managing an in-memory tile cache and translator.  The application acts like a proxy and translates between tile schemas if possible.  For example, you can service tiles in TMS, TMS-Flipped, and Bing formats while only saving tiles on disk in one format when using `ittc-server-django` as a proxy/cache.  The goal is to create a server that uses heuristics and branch prediction to provide extremely responsive caches.
 
 ### CyberGIS
 The Humanitarian Information Unit has been developing a sophisticated geographic computing infrastructure referred to as the CyberGIS. The CyberGIS provides highly available, scalable, reliable, and timely geospatial services capable of supporting multiple concurrent projects.  The CyberGIS relies on primarily open source projects, such as PostGIS, GeoServer, GDAL, OGR, and OpenLayers.  The name CyberGIS is dervied from the term geospatial cyberinfrastructure.
