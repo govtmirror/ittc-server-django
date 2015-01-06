@@ -10,10 +10,11 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
-from django.core.cache import caches, get_cache
+from django.core.cache import cache, caches, get_cache
 
 import StringIO
 from PIL import Image, ImageEnhance
+import umemcache
 
 from ittc.capabilities.models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS
@@ -44,6 +45,17 @@ def capabilities_service(request, template='capabilities/capabilities_service_1_
     print settings.SITEURL
     ctx = {'tileservice': TileService.objects.get(slug=slug), 'SITEURL': settings.SITEURL, }
     return render(request,template,ctx,'text/xml')
+
+def flush(request):
+   
+    tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
+    tilecache.connect()
+    tilecache.flush_all()
+
+    return HttpResponse("Tile cache flushed.",
+                        status=400,
+                        content_type="text/plain"
+                        )
 
 
 def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):

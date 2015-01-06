@@ -6,6 +6,7 @@ js_info_dict = {
 }
 
 urlpatterns = patterns('ittc.cache.views',
+    url(r'^flush$', 'flush', name='flush'),
     url(r'^tms/$', 'capabilities_all_xml', name='capabilities_all_xml'),
     url(r'^tms/(?P<slug>[^/]+)/$', 'capabilities_service', name='capabilities_service'),
     url(r'^tms/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\.(?P<ext>(png|gif|jpg|jpeg))$', 'tile_tms', name='tile_tms'),
