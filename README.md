@@ -15,7 +15,7 @@ As root (`sudo su -`), execute the following commands:
 ```
 apt-get update
 apt-get install -y curl vim git nginx
-apt-get install -y memcached zlib1g-dev libjpeg-dev 
+apt-get install -y memcached zlib1g-dev libjpeg-dev rabbitmq-server
 apt-get install -y libapache2-mod-python python-dev python-pip
 pip install django
 pip install django-cors-headers
@@ -25,6 +25,15 @@ pip install django-memcached-pool
 pip install gunicorn
 pip install greenlet
 pip install gevent
+#pip install celery
+#Need to use fork of celery that support ultramemcached ("umemcache")
+#Workaround <--
+#pip install git+git://github.com/celery/py-amqp.git
+#pip install git+git://github.com/celery/billiard.git
+#pip install git+git://github.com/celery/kombu.git
+#pip install --upgrade kombu
+pip install git+git://github.com/state-hiu/celery.git@umemcache
+#-->
 ```
 
 Then, as ubuntu, execute the following commands:
@@ -47,7 +56,7 @@ The application can be run through the Django built-in development server or Gnu
 You first need to start memcached with the following command.  The settings.py assumes the cache for the tiles is running on port 11212, instead of the default of 11211.
 
 ```
-memcached -vv -m 1024 -p 11212
+memcached -vv -m 1024 -p 11212 -d
 ```
 
 Then, prepare the server.
@@ -55,6 +64,12 @@ Then, prepare the server.
 ```
 cd ittc-server-django.git/ittc
 python manage.py syncdb
+```
+
+Then start a Celery worker with:
+
+```
+celery -A ittc worker --loglevel=error
 ```
 
 To run the application using the Django built-in development server, execute the following:
@@ -75,7 +90,7 @@ You can learn more about gunicron configuration at [http://docs.gunicorn.org/en/
 
 ### Heuristics
 
-You can enable a variety of heuristics / branch prediction via the settings.py file.  The up heuristic caches all tiles parent to a requested tile.  The `nearby` heuristic caches all tiles at the same level within the radius distance (distance 1 = 3 tiles, distance 2 = 9 tiles, distance 3 = 25 tiles).
+You can enable a variety of heuristics / branch prediction via the settings.py file.  The up heuristic caches all tiles parent to a requested tile.  The `nearby` heuristic caches all tiles at the same level within the radius distance (distance 1 --> 3*3 tiles, distance 2 = 25 tiles, distance 3 = 25 tiles).
 
 ```
 ITTC_SERVER = {
@@ -94,7 +109,7 @@ ITTC_SERVER = {
     }
     'nearby': {
       'enabled': True
-      'radius': 3
+      'radius': 2
     }
   }
 }

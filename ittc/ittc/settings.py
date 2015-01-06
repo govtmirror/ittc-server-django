@@ -104,23 +104,35 @@ CACHES = {
         'BACKEND': 'memcachepool.cache.UMemcacheCache',
         'LOCATION': '127.0.0.1:11211',
         'OPTIONS': {
-            'MAX_POOL_SIZE': 100,
+            'MAX_POOL_SIZE': 40,
             'BLACKLIST_TIME': 60,
             'SOCKET_TIMEOUT': 5,
-            'MAX_ITEM_SIZE': 10*1000*1000
+            'MAX_ITEM_SIZE': 1000*1000*1000
         }
     },
     'tiles': {
         'BACKEND': 'memcachepool.cache.UMemcacheCache',
         'LOCATION': '127.0.0.1:11212',
         'OPTIONS': {
-            'MAX_POOL_SIZE': 100,
+            'MAX_POOL_SIZE': 40,
             'BLACKLIST_TIME': 60,
             'SOCKET_TIMEOUT': 5,
-            'MAX_ITEM_SIZE': 10*1000*1000
+            'MAX_ITEM_SIZE': 1000*1000*1000
+        }
+    },
+    'celery_results': {
+        'BACKEND': 'memcachepool.cache.UMemcacheCache',
+        'LOCATION': '127.0.0.1:11213',
+        'OPTIONS': {
+            'MAX_POOL_SIZE': 40,
+            'BLACKLIST_TIME': 60,
+            'SOCKET_TIMEOUT': 5,
+            'MAX_ITEM_SIZE': 1000*1000*1000
         }
     }
 }
+
+CELERY_CACHE_BACKEND = 'default'
 
 ###Settings ITTC Capabilities
 ITTC_SERVER = {
@@ -139,7 +151,7 @@ ITTC_SERVER = {
         },
         'nearby': {
             'enabled': True,
-            'radius': 1
+            'radius': 2
         }
     }
 }
@@ -152,3 +164,5 @@ PROXY_ALLOWED_HOSTS = ( 'tile.openstreetmap.org', 'tile.openstreetmap.fr', 'tile
 
 PROXY_URL = '/proxy/?url='
 
+CELERY_RESULT_BACKEND = 'cache+memcached://127.0.0.1:11213/'
+BROKER_URL = 'amqp://guest:guest@localhost:5672//'

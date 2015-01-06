@@ -1,6 +1,6 @@
 import json, os, datetime
 
-from django.shortcuts import render_to_response, get_object_or_404,render
+from django.shortcuts import render_to_response, get_object_or_404, render
 from django.template.loader import render_to_string
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext, loader
@@ -17,8 +17,9 @@ from PIL import Image, ImageEnhance
 import umemcache
 
 from ittc.capabilities.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles
 from ittc.source.models import TileSource
+from ittc.cache.tasks import taskRequestTile
 #from ittc.cache.models import Tile
 
 def render(request, template='capabilities/services.html', ctx=None, contentType=None):
@@ -77,9 +78,10 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
     iy = None
     iyf = None
     iz = None
+    nearbyTiles = None
 
-    if verbose:
-        print request.path
+    #if verbose:
+    #    print request.path
 
     if u:
         iz, ix, iy = bing_to_tms(u)
@@ -92,6 +94,18 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
     iy, iyf = getYValues(tileservice,tilesource,ix,iy,iz)
 
     tile_bbox = tms_to_bbox(ix,iy,iz)
+
+    if settings.ITTC_SERVER['heuristic']['nearby']['enabled']:
+        ir = settings.ITTC_SERVER['heuristic']['nearby']['enabled']
+        nearbyTiles = getNearbyTiles(ix, iy, iz, ir)
+        print nearbyTiles
+
+    if nearbyTiles:
+        for t in nearbyTiles:
+            tx, ty, tz = t
+            taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
+            #taskRequestTile.delay(ts=tilesource.id, iz=tz, ix=tx, iy=ty, ext=ext)
+
     tilecache = caches['tiles']
 
     #Check if requested tile is within source's extents
@@ -156,7 +170,7 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
         elif tilesource.type == TYPE_TMS_FLIPPED:
             tile = tilesource.requestTile(ix,iyf,iz,ext,True)
 
-    print "yo"
+    #print "yo"
     image = Image.open(StringIO.StringIO(tile))
     #Is Tile blank.  then band.getextrema should return 0,0 for band 4
     #Tile Cache watermarking is messing up bands

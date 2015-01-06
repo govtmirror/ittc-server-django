@@ -106,6 +106,24 @@ def bbox_intersects_source(tilesource,ix,iyf,iz):
 
     return intersects
 
+def getMaxX(res, size, bbox):
+    maxX = int(
+        round(
+            (bbox[2] - bbox[0]) /
+            (res * size)
+        )
+    ) - 1
+    return maxX
+
+def getMaxY(res, size, bbox):
+    maxY = int(
+        round(
+            (bbox[3] - bbox[1]) /
+            (res * size)
+        )
+    ) - 1
+    return maxY
+
 # Flipping in both directions is the same equation
 def flip_y(x,y,z,size=256,bbox=[-20037508.34,-20037508.34,20037508.34,20037508.34]):
     res = resolutions[int(z)]
@@ -194,3 +212,20 @@ def getRegexValue(match,name):
     except:
         value = None
     return value
+
+def getNearbyTiles(ix0, iy0, iz0, ir, size=256, bbox=[-20037508.34,-20037508.34,20037508.34,20037508.34]):
+    nearbyTiles = []
+
+    res = resolutions[int(iz0)]
+    maxX = getMaxX(res, size, bbox)
+    maxY = getMaxY(res, size, bbox)
+
+    for iy1 in range(iy0-ir,iy0+ir+1):
+        for ix1 in range(ix0-ir,ix0+ir+1):
+            if iy1 != iy0 or ix1 != ix0:
+                iy1 = iy1 % maxY
+                ix1 = ix1 % maxX
+                t = (ix1, iy1, iz0)
+                nearbyTiles.append(t)
+
+    return nearbyTiles

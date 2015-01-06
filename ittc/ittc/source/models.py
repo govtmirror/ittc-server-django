@@ -141,21 +141,17 @@ class TileSource(models.Model):
         verbose_name_plural = _("Tile Sources")
 
     def match(self, url):
-        print "matching pattern: "+str(self.pattern)
-        print "matching url: "+str(url)
         match = None
         if self.pattern:
             match = re.match(self.pattern, url, re.M|re.I)
         return match
 
     def requestTile(self,x,y,z,ext,verbose):
-        print "requesting tile"
-        print "url base: "+self.url
         url = self.url.format(x=x,y=y,z=z,ext=ext)
         contentType = "image/png"
         
         if verbose:
-            print "URL: "+url
+            print "Requesting tile from "+url
 
         request = make_request(url=url, params=None, auth=None, data=None, contentType=contentType)
         
