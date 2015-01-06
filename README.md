@@ -20,7 +20,8 @@ apt-get install -y libapache2-mod-python python-dev python-pip
 pip install django
 pip install django-cors-headers
 pip install Pillow
-pip install python-memcached
+pip install umemcache
+pip install django-memcached-pool 
 pip install gunicorn
 pip install greenlet
 pip install gevent

@@ -101,26 +101,47 @@ STATIC_URL = '/static/'
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'BACKEND': 'memcachepool.cache.UMemcacheCache',
         'LOCATION': '127.0.0.1:11211',
+        'OPTIONS': {
+            'MAX_POOL_SIZE': 100,
+            'BLACKLIST_TIME': 60,
+            'SOCKET_TIMEOUT': 5,
+            'MAX_ITEM_SIZE': 10*1000*1000
+        }
     },
     'tiles': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'BACKEND': 'memcachepool.cache.UMemcacheCache',
         'LOCATION': '127.0.0.1:11212',
+        'OPTIONS': {
+            'MAX_POOL_SIZE': 100,
+            'BLACKLIST_TIME': 60,
+            'SOCKET_TIMEOUT': 5,
+            'MAX_ITEM_SIZE': 10*1000*1000
+        }
     }
 }
 
 ###Settings ITTC Capabilities
 ITTC_SERVER = {
-  'name': 'NextView Imagery Services',
-  'cache': {
-    'memory': {
-      'enabled': True,
-      'size': 1000,
-      'minZoom': 0,
-      'maxZoom': 14
+    'name': 'NextView Imagery Services',
+    'cache': {
+        'memory': {
+            'enabled': True,
+            'size': 1000,
+            'minZoom': 0,
+            'maxZoom': 14
+        }
+    },
+    'heuristic': {
+        'up': {
+            'enabled': True
+        },
+        'nearby': {
+            'enabled': True,
+            'radius': 1
+        }
     }
-  }
 }
 
 SITEURL = "http://localhost:8000/"
