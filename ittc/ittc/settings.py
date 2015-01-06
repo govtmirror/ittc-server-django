@@ -136,7 +136,7 @@ CELERY_CACHE_BACKEND = 'default'
 
 ###Settings ITTC Capabilities
 ITTC_SERVER = {
-    'name': 'NextView Imagery Services',
+    'name': 'HIU Imagery Services',
     'cache': {
         'memory': {
             'enabled': True,
@@ -146,6 +146,12 @@ ITTC_SERVER = {
         }
     },
     'heuristic': {
+        'down': {
+            'enabled': True,
+            'depth': 1,
+            'minZoom': 0,
+            'maxZoom': 18
+        },
         'up': {
             'enabled': True
         },
