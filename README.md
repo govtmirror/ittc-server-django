@@ -77,7 +77,7 @@ Then start a Celery worker with:
 
 ```
 cd ittc-server-django.git/ittc
-celery -A ittc worker --loglevel=error
+celery -A ittc worker -P gevent --loglevel=error --concurrency=40 -n worker1.%h
 ```
 
 To run the application using the Django built-in development server, execute the following:
