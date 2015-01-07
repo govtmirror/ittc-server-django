@@ -142,7 +142,7 @@ ITTC_SERVER = {
             'enabled': True,
             'size': 1000,
             'minZoom': 0,
-            'maxZoom': 14
+            'maxZoom': 16
         }
     },
     'heuristic': {

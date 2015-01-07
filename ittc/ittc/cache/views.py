@@ -17,7 +17,7 @@ from PIL import Image, ImageEnhance
 import umemcache
 
 from ittc.capabilities.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles
 from ittc.source.models import TileSource
 from ittc.cache.tasks import taskRequestTile
 #from ittc.cache.models import Tile
@@ -79,6 +79,8 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
     iyf = None
     iz = None
     nearbyTiles = None
+    parentTiles = None
+    childrenTiles = None
 
     #if verbose:
     #    print request.path
@@ -98,13 +100,37 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
     if settings.ITTC_SERVER['heuristic']['nearby']['enabled']:
         ir = settings.ITTC_SERVER['heuristic']['nearby']['enabled']
         nearbyTiles = getNearbyTiles(ix, iy, iz, ir)
+        print "Nearby Tiles"
         print nearbyTiles
+
+    if settings.ITTC_SERVER['heuristic']['up']['enabled']:
+        parentTiles = getParentTiles(ix, iy, iz)
+        print "Parent Tiles"
+        print parentTiles
+
+    if settings.ITTC_SERVER['heuristic']['down']['enabled']:
+        depth = settings.ITTC_SERVER['heuristic']['down']['depth']
+        minZoom = settings.ITTC_SERVER['heuristic']['down']['minZoom']
+        maxZoom = settings.ITTC_SERVER['heuristic']['down']['maxZoom']
+        childrenTiles = getChildrenTiles(ix, iy, iz, depth, minZoom, maxZoom)
+        print "Children Tiles: "+str(len(childrenTiles))
+        print childrenTiles
 
     if nearbyTiles:
         for t in nearbyTiles:
             tx, ty, tz = t
             taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
             #taskRequestTile.delay(ts=tilesource.id, iz=tz, ix=tx, iy=ty, ext=ext)
+
+    if parentTiles:
+        for t in parentTiles:
+            tx, ty, tz = t
+            taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
+
+    if childrenTiles:
+        for t in childrenTiles:
+            tx, ty, tz = t
+            taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
 
     tilecache = caches['tiles']
 
