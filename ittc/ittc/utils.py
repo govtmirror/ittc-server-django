@@ -3,13 +3,16 @@ import base64
 import math
 import copy
 import string
+import datetime
+
+import email.utils as eut
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
-from django.core.cache import cache
+from django.core.cache import cache, caches, get_cache
 from django.http import Http404
 
 http_client = httplib2.Http()
@@ -273,3 +276,57 @@ def nav_down(tiles, t, d, max):
         tiles = nav_down(tiles, t10, d-1, max)
         tiles = nav_down(tiles, t11, d-1, max)
         return tiles
+
+def getHeader(headers, name):
+    value = None
+    try:
+        value = headers[name]
+    except KeyError:
+        value = None
+    return value
+
+def check_cache_availability(cache):
+    available = False
+    tilecache = caches[cache]
+    try:
+        tilecache.get('')
+        available = True
+    except:
+        available = False
+    return available
+
+#How to parse HTTP Expires header
+#http://stackoverflow.com/questions/1471987/how-do-i-parse-an-http-date-string-in-python
+def check_tile_expired(tile):
+    expired = False
+    now = datetime.datetime.now()
+    print "Now"
+    print now
+    headers = tile['headers']
+    if getHeader(headers,'Expires'):
+        #time_expires = datetime.datetime.strptime(getHeader(headers,'Expires'), "%a, %d-%b-%Y %H:%M:%S GMT")
+        time_expires = datetime.datetime(*eut.parsedate(getHeader(headers,'Expires'))[:6])
+        print "Time Expires"
+        print time_expires
+        if now >= time_expires:
+            expired = True
+
+    return expired
+
+def getTileFromCache(cache, key, check):
+    if cache:
+        if check:
+            tile = cache.get(key)
+            if tile is None:
+                return None
+            else:
+                if check_tile_expired(tile):
+                    print "Tile is expired.  Evicting and returning None"
+                    cache.delete(tile)
+                    return None
+                else:
+                    return tile
+        else:
+            return cache.get(key)
+    else:
+        return None

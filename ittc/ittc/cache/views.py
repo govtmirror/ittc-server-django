@@ -17,7 +17,7 @@ from PIL import Image, ImageEnhance
 import umemcache
 
 from ittc.capabilities.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache
 from ittc.source.models import TileSource
 from ittc.cache.tasks import taskRequestTile
 #from ittc.cache.models import Tile
@@ -132,8 +132,6 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
             tx, ty, tz = t
             taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
 
-    tilecache = caches['tiles']
-
     #Check if requested tile is within source's extents
     returnBlankTile = False
     returnErrorTile = False
@@ -169,10 +167,17 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
         image.save(response, "PNG")
         return response
 
+    cache_available = check_cache_availability('tiles')
+    tilecache = caches['tiles']
+
+    if not cache_available:
+        print "Cache not available"
+
     tile = None
-    if iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
+    if cache_available and iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
-        tile = tilecache.get(key)
+        #tile = tilecache.get(key)
+        tile = getTileFromCache(tilecache, key, True)
         if tile:
             if verbose:
                 print "cache hit for "+key
@@ -196,8 +201,9 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
         elif tilesource.type == TYPE_TMS_FLIPPED:
             tile = tilesource.requestTile(ix,iyf,iz,ext,True)
 
-    #print "yo"
-    image = Image.open(StringIO.StringIO(tile))
+    print "Headers:"
+    print tile['headers']
+    image = Image.open(StringIO.StringIO(tile['data']))
     #Is Tile blank.  then band.getextrema should return 0,0 for band 4
     #Tile Cache watermarking is messing up bands
     #bands = image.split()

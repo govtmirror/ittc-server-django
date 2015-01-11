@@ -161,5 +161,11 @@ class TileSource(models.Model):
         #image = binascii.hexlify(request.read())
         #image = io.BytesIO(request.read()))
         image = request.read()
-        return image
+        headers = request.info()
+
+        tile = {
+            'headers': headers,
+            'data': image
+        }
+        return tile
 
