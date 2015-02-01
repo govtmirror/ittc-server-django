@@ -17,10 +17,12 @@ from PIL import Image, ImageEnhance
 import umemcache
 
 from ittc.capabilities.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, logTileRequest, getIPAddress, stats_tilerequest, tms_to_geojson
 from ittc.source.models import TileSource
 from ittc.cache.tasks import taskRequestTile
 #from ittc.cache.models import Tile
+
+from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
 def render(request, template='capabilities/services.html', ctx=None, contentType=None):
     if not (contentType is None):
@@ -59,6 +61,90 @@ def flush(request):
                         )
 
 
+def stats_json(request):
+
+    stats = stats_tilerequest()
+    return HttpResponse(str(stats),
+                        status=400,
+                        content_type="text/plain"
+                        )
+
+def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=None):
+
+    #==#
+    verbose = True
+    ix = None
+    iy = None
+    iyf = None
+    iz = None
+
+
+    if u:
+        iz, ix, iy = bing_to_tms(u)
+
+    elif x and y and z:
+        ix = int(x)
+        iy = int(y)
+        iz = int(z)
+
+    if t == "regular":
+        ify = flip_y(ix,iy,iz,256,webmercator_bbox)
+    else:
+        ify = iy
+        iy = flip_y(ix,ify,iz,256,webmercator_bbox)
+
+
+    stats = stats_tilerequest()
+
+    key = z+"/"+x+"/"+y
+
+    if not stat:
+        return None
+
+    image = None
+    if key in stats['global'][stat]:
+        blue =  (256.0 * stats['global'][stat][key]) / stats['tile']['max']
+        image = Image.new("RGBA", (256, 256), (0, 0, int(blue), 128) )
+    else:
+        image = Image.new("RGBA", (256, 256), (0, 0, 0, 0) )
+
+    if image:
+        response = HttpResponse(content_type="image/png")
+        image.save(response, "PNG")
+        return response
+    else:
+        return None
+
+def stats_geojson(request, stat=None, z=None):
+
+    iz = int(z)
+    features = []
+
+    if not stat:
+        return None
+
+    stats = stats_tilerequest()
+
+    i = 0
+    for key in stats['global'][stat]:
+        i = i + 1
+        t = key.split("/")
+        tz = int(t[0])
+        tx = int(t[1])
+        ty = int(t[2])
+        if iz == tz:
+            count = stats['global'][stat][key]
+            geom = tms_to_geojson(tx,ty,tz)
+            props = {"x":tx,"y":ty,"z":tz,"count": count}
+            features.append( Feature(geometry=GeometryCollection(geom), id=i, properties=props) )
+
+    geojson = FeatureCollection( features )
+
+    return HttpResponse(str(geojson),
+                        status=400,
+                        content_type="application/json"
+                        )
+
 def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
     tileservice = get_object_or_404(TileService, slug=slug)
 
@@ -73,6 +159,9 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
 
 def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=None, u=None, ext=None):
 
+    now = datetime.datetime.now()
+    ip = getIPAddress(request)
+    #==#
     verbose = True
     ix = None
     iy = None
@@ -181,9 +270,11 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
         if tile:
             if verbose:
                 print "cache hit for "+key
+                logTileRequest(tilesource, x, y, z, 'hit', now, ip)
         else:
             if verbose:
                 print "cache miss for "+key
+                logTileRequest(tilesource, x, y, z, 'miss', now, ip)
 
             if tilesource.type == TYPE_TMS:
                 tile = tilesource.requestTile(ix,iy,iz,ext,True)
@@ -195,6 +286,7 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
     else:
         if verbose:
             print "cache bypass for "+tilesource.name+"/"+str(iz)+"/"+str(ix)+"/"+str(iy)
+        logTileRequest(tilesource, x, y, z, 'bypass', now, ip)
 
         if tilesource.type == TYPE_TMS:
             tile = tilesource.requestTile(ix,iy,iz,ext,True)

@@ -1,3 +1,5 @@
+import os
+import sys
 import httplib2
 import base64
 import math
@@ -14,6 +16,10 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.core.cache import cache, caches, get_cache
 from django.http import Http404
+
+from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
+
+#from ittc.source.models import TileSource
 
 http_client = httplib2.Http()
 
@@ -145,8 +151,19 @@ def tms_to_bbox(x,y,z):
     n = tile_to_lat(y,z)
     return [w, s, e, n]
 
+def tms_to_geojson(x,y,z):
+    bbox = tms_to_bbox(x,y,z)
+    minx = bbox[0]
+    miny = bbox[1]
+    maxx = bbox[2]
+    maxy = bbox[3]
+    geom = Polygon([[(minx,miny),(maxx,miny),(maxx,maxy),(minx,maxy),(minx,miny)]])
+    return geom
+
+
 def tile_to_lon(x, z):
     return (x/math.pow(2,z)*360-180);
+
 
 def tile_to_lat(y, z):
     n = math.pi - 2 * math.pi * y / math.pow(2,z);
@@ -330,3 +347,84 @@ def getTileFromCache(cache, key, check):
             return cache.get(key)
     else:
         return None
+
+def getIPAddress(request):
+    ip = None
+    print request.META['HTTP_X_FORWARDED_FOR']
+    try:
+        ip = request.META['HTTP_X_FORWARDED_FOR']
+    except:
+        ip = None
+    return ip
+
+def logTileRequest(tilesource, x, y, z, status, datetime, ip):
+    if settings.LOG_ROOT:
+        if not os.path.exists(settings.LOG_ROOT):
+            os.mkdir(settings.LOG_ROOT)
+        with open(settings.LOG_ROOT+"/"+"tile_requests.tsv",'a') as f:
+            line = settings.LOG_FORMAT['tile_request'].format(status=status,tilesource=tilesource.name,z=z,x=x,y=y,ip=ip,datetime=datetime.isoformat())
+            f.write(line+"\n")
+
+
+def stats_tilerequest():
+    stats = {
+        'total': {
+            'count': 0
+        },
+        'tile': {
+            'max': 0
+        },
+        'global':{
+            'strict': {},
+            'parents': {}
+        },
+        'tilesource':{}
+    }
+    if settings.LOG_ROOT:
+        if os.path.exists(settings.LOG_ROOT+"/"+"tile_requests.tsv"):
+            with open(settings.LOG_ROOT+"/"+"tile_requests.tsv",'r') as f:
+                lines =  f.readlines()
+                for line in lines:
+                    values = line.split("\t")
+                    status = values[0]
+                    tilesource = values[1]
+                    z = values[2]
+                    x = values[3]
+                    y = values[4]
+                    key = z+"/"+x+"/"+y
+                    total_count = stats['total']['count']
+                    global_count = 0
+                    source_count = 0
+                    if key in stats['global']['strict']:
+                        global_count = stats['global']['strict'][key]
+                    if tilesource in stats['tilesource']:
+                        if key in stats['tilesource'][tilesource]:
+                            source_count = stats['tilesource'][tilesource][key]
+                    else:
+                        stats['tilesource'][tilesource] = {}
+                    #==#
+                    total_count += 1
+                    global_count += 1
+                    source_count += 1
+                    stats['global']['strict'][key] = global_count
+                    stats['tilesource'][tilesource][key] = source_count
+                    stats['total']['count'] = total_count
+
+                    #==#
+                    #Parent Tiles
+                    parentTiles = getParentTiles(int(x), int(y), int(z))
+                    for pt in parentTiles:
+                        px, py, pz = pt
+                        key = str(pz)+"/"+str(px)+"/"+str(py)
+                        if key in stats['global']['parents']:
+                            stats['global']['parents'][key] = stats['global']['parents'][key] + 1
+                        else:
+                            stats['global']['parents'][key] = 1
+
+    global_max = 0
+    for key in stats['global']['strict']:
+        if stats['global']['strict'][key] > global_max:
+            global_max = stats['global']['strict'][key]
+    stats['tile']['max'] = global_max
+
+    return stats

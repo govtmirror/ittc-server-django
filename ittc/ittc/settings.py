@@ -173,3 +173,9 @@ PROXY_URL = '/proxy/?url='
 
 CELERY_RESULT_BACKEND = 'cache+memcached://127.0.0.1:11213/'
 BROKER_URL = 'amqp://guest:guest@localhost:5672//'
+
+LOG_ROOT = BASE_DIR+'/logs'
+
+LOG_FORMAT = {
+    'tile_request': '{status}	{tilesource}	{z}	{x}	{y}	{ip}	{datetime}'
+}
