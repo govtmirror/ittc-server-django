@@ -20,25 +20,31 @@ apt-get update
 apt-get install -y curl vim git nginx
 apt-get install -y memcached zlib1g-dev libjpeg-dev rabbitmq-server
 apt-get install -y libapache2-mod-python python-dev python-pip
-pip install django
-pip install django-cors-headers
-pip install Pillow
-pip install umemcache
-pip install django-memcached-pool 
-pip install gunicorn
-pip install greenlet
-pip install gevent
-#pip install celery
-#Need to use fork of celery that support ultramemcached ("umemcache")
-#Workaround <--
-#pip install git+git://github.com/celery/py-amqp.git
-#pip install git+git://github.com/celery/billiard.git
-#pip install git+git://github.com/celery/kombu.git
-#pip install --upgrade kombu
-pip install git+git://github.com/state-hiu/celery.git@umemcache
 #-->
 ```
 
+Then, as root, then install python packages with:
+```
+pip install -r requirements.txt
+```
+
+The requirements.txt file will install a fork of celery that works with unmemcache.
+
+Then, as root, install MongoDB with the following based on http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+
+```
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
+echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | tee /etc/apt/sources.list.d/mongodb.list
+apt-get update
+apt-get install -y mongodb-org
+
+#Pin Current Version of MongoDB
+echo "mongodb-org hold" | sudo dpkg --set-selections
+echo "mongodb-org-server hold" | sudo dpkg --set-selections
+echo "mongodb-org-shell hold" | sudo dpkg --set-selections
+echo "mongodb-org-mongos hold" | sudo dpkg --set-selections
+echo "mongodb-org-tools hold" | sudo dpkg --set-selections`
+```
 Then, as ubuntu, execute the following commands:
 
 ```
@@ -56,12 +62,27 @@ vim ittc-server-django.git/ittc/ittc/settings.py
 
 The application can be run through the Django built-in development server or Gnuicron ([http://gunicorn.org/](http://gunicorn.org/)).
 
+First, clear the RabbitMQ cache of messages with:
+
+```
+rabbitmqctl stop_app
+rabbitmqctl reset
+rabbitmqctl start_app
+```
+
+
 You first need to start 3 memcached instances with the following commands  The settings.py assumes the default cache is running on port 11211, the cache for the tiles is running on port 11212, and the cache for Celery results is running on port 11213.
 
 ```
 memcached -vv -m 128 -p 11211 -d
 memcached -vv -m 1024 -p 11212 -d
 memcached -vv -m 128 -p 11213 -d
+```
+
+Start MongoDB if it does not start automatically with:
+
+```
+sudo service mongod start
 ```
 
 Then, prepare the server.

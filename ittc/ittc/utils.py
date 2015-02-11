@@ -19,6 +19,8 @@ from django.http import Http404
 
 from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
+from pymongo import MongoClient
+
 #from ittc.source.models import TileSource
 
 http_client = httplib2.Http()
@@ -364,9 +366,51 @@ def logTileRequest(tilesource, x, y, z, status, datetime, ip):
         with open(settings.LOG_ROOT+"/"+"tile_requests.tsv",'a') as f:
             line = settings.LOG_FORMAT['tile_request'].format(status=status,tilesource=tilesource.name,z=z,x=x,y=y,ip=ip,datetime=datetime.isoformat())
             f.write(line+"\n")
+            #Update Mongo Aggregate Stats
+            client = MongoClient('localhost', 27017)
+            db = client.ittc
+            stats_total = db.stats_total
+            stats_by_ip = db.stats_by_ip
+            stats_by_source = db.stats_by_source
+            stats_by_location = db.stats_by_location
+            stats_by_zoom = db.stats_by_zoom
+            stats_by_status = db.stats_by_status
+            incStat(stats_total, 'total.count')
+            incStat(stats_by_ip, ip)
+            incStat(stats_by_source, tilesource.name)
+            incStat(stats_by_location, z+'/'+x+'/'+y)
+            incStat(stats_by_zoom, z)
+            incStat(stats_by_status, status)
+            #incState(collection, 'by_location.strict.'+z+'/'+x+'/'+y)
+            #incState(collection, 'by_source.'+str(tilesource.name)+'.'+z+'/'+x+'/'+y+'/')
 
+def incStat(collection, name):
+    #stat = collection.find_one({'stat': name})
+    collection.update({'stat': name}, {'$set': {'stat': name}, '$inc': {'value': 1}}, upsert=True)
 
-def stats_tilerequest():
+def getStat(collection, name, fallback):
+    if not collection:
+        return fallback
+    
+    doc = collection.find_one({'stat': name})
+
+    if doc:
+        return doc['value']
+    else:
+        return fallback
+
+def getStats(collection, fallback):
+    if not collection:
+        return fallback
+
+    docs = collection.find()
+
+    if docs:
+        return docs
+    else:
+        return fallback
+
+def stats_tilerequest(mongo=True):
     stats = {
         'total': {
             'count': 0
@@ -380,6 +424,39 @@ def stats_tilerequest():
         },
         'tilesource':{}
     }
+
+    if mongo:
+        client = MongoClient('localhost', 27017)
+        db = client.ittc
+        stats_total = db.stats_total
+        stats_by_ip = db.stats_by_ip
+        stats_by_source = db.stats_by_source
+        stats_by_location = db.stats_by_location
+        stats_by_zoom = db.stats_by_zoom
+        stats_by_status = db.stats_by_status
+        stats = {
+            'total': {
+                'count': getStat(stats_total, 'total.count', 0)
+            },
+            'by_ip': {},
+            'by_source': {},
+            'by_location': {},
+            'by_zoom':{},
+            'by_status': {}
+        }
+        for doc in getStats(stats_by_ip,[]):
+            stats['by_ip'][doc['stat']] = doc['value']
+        for doc in getStats(stats_by_source,[]):
+            stats['by_source'][doc['stat']] = doc['value']
+        for doc in getStats(stats_by_location,[]):
+            stats['by_location'][doc['stat']] = doc['value']
+        for doc in getStats(stats_by_zoom,[]):
+            stats['by_zoom'][doc['stat']] = doc['value']
+        for doc in getStats(stats_by_status,[]):
+            stats['by_status'][doc['stat']] = doc['value']
+ 
+        return stats
+
     if settings.LOG_ROOT:
         if os.path.exists(settings.LOG_ROOT+"/"+"tile_requests.tsv"):
             with open(settings.LOG_ROOT+"/"+"tile_requests.tsv",'r') as f:

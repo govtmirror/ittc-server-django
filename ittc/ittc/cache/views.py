@@ -20,6 +20,7 @@ from ittc.capabilities.models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, logTileRequest, getIPAddress, stats_tilerequest, tms_to_geojson
 from ittc.source.models import TileSource
 from ittc.cache.tasks import taskRequestTile
+import json
 #from ittc.cache.models import Tile
 
 from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
@@ -64,7 +65,7 @@ def flush(request):
 def stats_json(request):
 
     stats = stats_tilerequest()
-    return HttpResponse(str(stats),
+    return HttpResponse(json.dumps(stats),
                         status=400,
                         content_type="text/plain"
                         )
