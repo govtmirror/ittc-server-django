@@ -154,6 +154,12 @@ def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=No
     else:
         return None
 
+def stats_map(request):
+    context_dict = {}
+    return render_to_response(
+        "cache/stats_map.html",
+        RequestContext(request, context_dict))
+
 def stats_geojson(request, stat=None, z=None):
 
     iz = int(z)
@@ -175,7 +181,7 @@ def stats_geojson(request, stat=None, z=None):
             #count = stats['global'][stat][key]
             count = stats['by_location'][key]
             geom = tms_to_geojson(tx,ty,tz)
-            props = {"x":tx, "y":ty, "z":tz, "count": count}
+            props = {"x":tx, "y":ty, "z":tz, "location": key, "count": count}
             features.append( Feature(geometry=geom, id=i, properties=props) )
 
     geojson = FeatureCollection( features )

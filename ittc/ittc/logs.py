@@ -21,6 +21,8 @@ from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
 from pymongo import MongoClient
 
+from .stats import buildStats, incStats
+
 import iso8601
 
 #from ittc.source.models import TileSource

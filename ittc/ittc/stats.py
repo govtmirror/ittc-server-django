@@ -113,7 +113,6 @@ def stats_tilerequest(mongo=True):
                     stats[name] = doc['value']
 
             elif len(attrs) > 0:
-                print "Stat: "+name
                 stats[name] = {}
                 docs = getStats(db[desc['collection']],[])
                 for doc in docs:
@@ -121,11 +120,9 @@ def stats_tilerequest(mongo=True):
                     obj = stats[name]
                     for i in range(len(attrs)-1):
                         a = attrs[i]
-                        print "Attribute: "+a
                         try:
                             obj = obj[doc[a]]
                         except KeyError, e:
-                            print e
                             obj[doc[a]] = {}
                             obj = obj[doc[a]]
 

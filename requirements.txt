@@ -10,3 +10,5 @@ git+git://github.com/state-hiu/celery.git@umemcache
 geojson
 pymongo
 iso8601
+django-leaflet
+django-jquery

@@ -45,6 +45,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 
     'corsheaders',
+    'leaflet',
+    'jquery',
+
 ) + ITTC_APPS
 
 MIDDLEWARE_CLASSES = (
@@ -98,6 +101,17 @@ STATIC_URL = '/static/'
 #    'django.contrib.staticfiles.finders.FileSystemFinder',
 #    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #)
+
+LEAFLET_CONFIG = {
+    'TILES': [
+        # Find tiles at:
+        # http://leaflet-extras.github.io/leaflet-providers/preview/
+
+        ('OpenStreetMap',
+         'http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+         '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, Tiles courtesy of <a href="http://hot.openstreetmap.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'),
+    ]
+}
 
 CACHES = {
     'default': {
@@ -198,4 +212,5 @@ CUSTOM_STATS = [
     {'name': 'by_source_status', 'collection': 'stats_by_source_status', 'attributes': ['source', 'status']},
     {'name': 'by_month_source', 'collection': 'stats_by_month_source', 'attributes': ['month', 'source']},
     {'name': 'by_zoom_status', 'collection': 'stats_by_zoom_status', 'attributes': ['z', 'status']},
+    {'name': 'by_date_location', 'collection': 'stats_by_date_location', 'attributes': ['date', 'location']}
 ]

@@ -17,6 +17,8 @@ urlpatterns = patterns('ittc.cache.views',
     url(r'^stats/export/json$', 'stats_json', name='stats_json'),
     url(r'^stats/export/tms/(?P<t>[^/]+)/(?P<stat>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\.(?P<ext>(png|gif|jpg|jpeg))$', 'stats_tms', name='stats_tms'),
     url(r'^stats/export/geojson/(?P<z>[^/]+)/(?P<stat>[^/]+)\.geojson$', 'stats_geojson', name='stats_geojson'),
+
+    url(r'^stats/map$', 'stats_map', name='stats_map'),
     
     url(r'^tms/$', 'capabilities_all_xml', name='capabilities_all_xml'),
     url(r'^tms/(?P<slug>[^/]+)/$', 'capabilities_service', name='capabilities_service'),
