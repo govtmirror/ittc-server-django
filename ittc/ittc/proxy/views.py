@@ -79,7 +79,7 @@ def proxy(request):
     if match_tilesource and match_regex:
         return proxy_tilesource(request, match_tilesource, match_regex)
     else:
-        return None
+        return HttpResponse('No matching tilesource found.',RequestContext(request, {}), status=404)
 
     #origins = Origin.objects.all()
     #for origin in origins:

@@ -20,7 +20,6 @@ apt-get update
 apt-get install -y curl vim git nginx
 apt-get install -y memcached zlib1g-dev libjpeg-dev rabbitmq-server
 apt-get install -y libapache2-mod-python python-dev python-pip
-#-->
 ```
 
 Then, as root, then install python packages with:
@@ -28,9 +27,7 @@ Then, as root, then install python packages with:
 pip install -r requirements.txt
 ```
 
-The requirements.txt file will install a fork of celery that works with unmemcache.
-
-Then, as root, install MongoDB with the following based on http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+The requirements.txt file will install a fork of celery that works with unmemcache.  Then, as root, install MongoDB with the following based on http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 
 ```
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
@@ -62,7 +59,7 @@ vim ittc-server-django.git/ittc/ittc/settings.py
 
 The application can be run through the Django built-in development server or Gnuicron ([http://gunicorn.org/](http://gunicorn.org/)).
 
-First, clear the RabbitMQ cache of messages with:
+First, as root, clear the RabbitMQ cache of messages with:
 
 ```
 rabbitmqctl stop_app

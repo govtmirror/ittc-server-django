@@ -17,11 +17,16 @@ from PIL import Image, ImageEnhance
 import umemcache
 
 from ittc.capabilities.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, logTileRequest, getIPAddress, stats_tilerequest, tms_to_geojson
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson
+from ittc.utils import logs_tilerequest
+from ittc.stats import stats_tilerequest, clearStats, reloadStats
+from ittc.logs import clearLogs, reloadLogs, logTileRequest
+
 from ittc.source.models import TileSource
 from ittc.cache.tasks import taskRequestTile
 import json
 #from ittc.cache.models import Tile
+from bson.json_util import dumps
 
 from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
@@ -57,17 +62,50 @@ def flush(request):
     tilecache.flush_all()
 
     return HttpResponse("Tile cache flushed.",
-                        status=400,
                         content_type="text/plain"
                         )
 
+def logs_json(request):
+
+    logs = logs_tilerequest()
+    return HttpResponse(dumps(logs),
+                        content_type="application/json"
+                        )
+
+
+def logs_clear(request):
+    clearLogs()
+
+    return HttpResponse("Logs cleared.",
+                        content_type="text/plain"
+                        )
+
+def logs_reload(request):
+    reloadLogs()
+
+    return HttpResponse("Logs reloaded from disk.",
+                        content_type="text/plain"
+                        )
+
+def stats_clear(request):
+    clearStats()
+
+    return HttpResponse("Tile stats cleared.",
+                        content_type="text/plain"
+                        )
+
+def stats_reload(request):
+    reloadStats()
+
+    return HttpResponse("Stats reloaded from MongoDB Logs.",
+                        content_type="text/plain"
+                        )
 
 def stats_json(request):
 
     stats = stats_tilerequest()
     return HttpResponse(json.dumps(stats),
-                        status=400,
-                        content_type="text/plain"
+                        content_type="application/json"
                         )
 
 def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=None):
@@ -127,22 +165,22 @@ def stats_geojson(request, stat=None, z=None):
     stats = stats_tilerequest()
 
     i = 0
-    for key in stats['global'][stat]:
+    for key in stats['by_location']:
         i = i + 1
         t = key.split("/")
         tz = int(t[0])
         tx = int(t[1])
         ty = int(t[2])
         if iz == tz:
-            count = stats['global'][stat][key]
+            #count = stats['global'][stat][key]
+            count = stats['by_location'][key]
             geom = tms_to_geojson(tx,ty,tz)
-            props = {"x":tx,"y":ty,"z":tz,"count": count}
-            features.append( Feature(geometry=GeometryCollection(geom), id=i, properties=props) )
+            props = {"x":tx, "y":ty, "z":tz, "count": count}
+            features.append( Feature(geometry=geom, id=i, properties=props) )
 
     geojson = FeatureCollection( features )
 
-    return HttpResponse(str(geojson),
-                        status=400,
+    return HttpResponse(json.dumps(geojson),
                         content_type="application/json"
                         )
 
@@ -160,6 +198,7 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
 
 def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=None, u=None, ext=None):
 
+    print "requestTile"
     now = datetime.datetime.now()
     ip = getIPAddress(request)
     #==#

@@ -9,3 +9,4 @@ gevent
 git+git://github.com/state-hiu/celery.git@umemcache
 geojson
 pymongo
+iso8601
