@@ -44,6 +44,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Theme
+    #"pinax_theme_bootstrap_account",
+    "pinax_theme_bootstrap",
+    #'django_forms_bootstrap',
+
     'corsheaders',
     'leaflet',
     'jquery',
@@ -212,5 +217,6 @@ CUSTOM_STATS = [
     {'name': 'by_source_status', 'collection': 'stats_by_source_status', 'attributes': ['source', 'status']},
     {'name': 'by_month_source', 'collection': 'stats_by_month_source', 'attributes': ['month', 'source']},
     {'name': 'by_zoom_status', 'collection': 'stats_by_zoom_status', 'attributes': ['z', 'status']},
-    {'name': 'by_date_location', 'collection': 'stats_by_date_location', 'attributes': ['date', 'location']}
+    {'name': 'by_date_location', 'collection': 'stats_by_date_location', 'attributes': ['date', 'location']},
+    {'name': 'by_source_location', 'collection': 'stats_by_source_location', 'attributes': ['source', 'location']}
 ]

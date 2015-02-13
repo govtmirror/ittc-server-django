@@ -17,46 +17,85 @@
     <!--[if lt IE 8]><script src="{% static "leaflet/eventlister.ie6-7.js" %}"></script><!--<![endif]-->
 </head>
 <body>
-    {% leaflet_map "map" callback="window.map_init_basic" %}
+    {% leaflet_map "map" %}
     <script>
-        function map_init_basic (map, options)
+        _onEachFeature = function(feature, layer)
         {
-            //var map = L.map('map')
-            var layer_stats = new L.geoJson();
-            layer_stats.addTo(map);
+            var popupOptions = {maxWidth: 400};
+            //layer.setIcon(mapgiveIcon);
+            var properties = feature.properties
+            var popupContent = "<h4>Location: " + properties.location + "<br>Count: " + properties.count + "</h4>";
+            layer.bindPopup(popupContent,popupOptions);
+        };
+        _style = function(feature)
+        {
+            var count = feature.properties.count
+            var blue = 0.1;
+            if(count > 10)
+                blue = 1.0;
+            else if(count > 5)
+                blue = 0.5;
+            else if(count > 2)
+                blue = 0.25
+
+            return {'opacity': 0.0,'fillOpacity': 0.6,'fillColor': 'rgb(0,0,'+(128*blue)+')'}
+        };
+        buildURL = function(z, source, date)
+        {
+            if (source!=undefined && date!=undefined)
+                return '/cache/stats/export/geojson/'+z+'/source/'+source+'/date/'+date+'.geojson'
+            else if(source!=undefined && date==undefined)
+                return '/cache/stats/export/geojson/'+z+'/source/'+source+'.geojson'
+            else if(source==undefined && date!=undefined)
+                return '/cache/stats/export/geojson/'+z+'/date/'+date+'.geojson'
+            else
+                return '/cache/stats/export/geojson/'+z+'.geojson'
+        };
+        buildLayer = function()
+       {
+            return L.geoJson({"type":"FeatureCollection","features":[]},
+            {
+                onEachFeature: function (feature, layer){_onEachFeature(feature, layer)},
+                style: function(feature){ _style(feature);}
+            });
+        };
+        requestLayer = function(layer, map)
+        {
             $.ajax(
             {
                 dataType: "json",
-                url: "{% url 'stats_geojson' 15 'count' %}",
+                url: buildURL(layer.z, layer.source, layer.date),
                 success : function (response)
                 {
-                    layer_stats = L.geoJson(response,
-                    {
-                        onEachFeature: function (feature, layer)
-                        {
-                            var popupOptions = {maxWidth: 400};
-                            //layer.setIcon(mapgiveIcon);
-                            var properties = feature.properties
-                            var popupContent = "<h4>Location: " + properties.location + "<br>Count: " + properties.count + "</h4>";
-                            layer.bindPopup(popupContent,popupOptions);
-                        },
-                        style: function(feature)
-                        {
-                            var count = feature.properties.count
-                            var blue = 0.1;
-                            if(count > 10)
-                                blue = 1.0;
-                            else if(count > 5)
-                                blue = 0.5;
-                            else if(count > 2)
-                                blue = 0.25
-
-                            return {'opacity':0.0,'fillOpacity': 0.6,'fillColor':'rgb(0,0,'+(128*blue)+')'}
-		        }
-                    }).addTo(map);
-                    map.fitBounds(layer_stats.getBounds());
+                    layer.layer.addData(response);
+                    map.fitBounds(layer.layer.getBounds());
                 }
             }).error(function() {});
+        };
+        initMap = function(e)
+        {
+            var detail = e.detail;
+            var map = detail.map;
+            //var map = L.map('map')
+            var source = {% if source %}"{{ source }}"{% else %}undefined{% endif %};
+            var date = {% if date %}"{{ date }}"{% else %}undefined{% endif %};
+            //////////////////
+            var baseLayers = [];
+            var featureLayers = [];
+            featureLayers.push({"layer":buildLayer(),"date":date,"source":source,"z":14});
+            featureLayers.push({"layer":buildLayer(),"date":date,"source":source,"z":15});
+            for(var i = 0; i < featureLayers.length; i++)
+            {
+                console.log(featureLayers[i]);
+                var layer = featureLayers[i].layer;
+                //layer.addToMap(map);
+            }
+            L.control.layers(baseLayers, featureLayers).addTo(map);
+            for(var i = 0; i < featureLayers.length; i++)
+            {
+                requestLayer(featureLayers[i],map);
+            }
         }
+        window.addEventListener("map:init", initMap);
     </script>
 </body>

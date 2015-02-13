@@ -154,24 +154,44 @@ def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=No
     else:
         return None
 
-def stats_map(request):
-    context_dict = {}
+def stats_map(request, source=None, date=None):
+    stats = stats_tilerequest()
+    dates = stats['by_date_location'].keys()
+    #print stats['by_date_location'].keys()
+    context_dict = {
+        'date': date,
+        'sources': TileSource.objects.all().order_by('name'),
+        'dates': dates
+    }
+    try:
+        context_dict['source'] = TileSource.objects.get(name=source)
+    except:
+        context_dict['source'] = None
     return render_to_response(
-        "cache/stats_map.html",
+        "cache/stats_map_2.html",
         RequestContext(request, context_dict))
 
-def stats_geojson(request, stat=None, z=None):
+
+def stats_geojson_source(request, z=None, source=None):
+    return stats_geojson(request, z=z, source=source)
+
+def stats_geojson(request, z=None, source=None, date=None):
 
     iz = int(z)
     features = []
 
-    if not stat:
-        return None
-
     stats = stats_tilerequest()
 
+    root = None
+    if source:
+        root = stats['by_source_location'][source]
+    elif date:
+        root = stats['by_date_location'][date]
+    else:
+        root = stats['by_location']
+
     i = 0
-    for key in stats['by_location']:
+    for key in root:
         i = i + 1
         t = key.split("/")
         tz = int(t[0])
@@ -179,7 +199,7 @@ def stats_geojson(request, stat=None, z=None):
         ty = int(t[2])
         if iz == tz:
             #count = stats['global'][stat][key]
-            count = stats['by_location'][key]
+            count = root[key]
             geom = tms_to_geojson(tx,ty,tz)
             props = {"x":tx, "y":ty, "z":tz, "location": key, "count": count}
             features.append( Feature(geometry=geom, id=i, properties=props) )
