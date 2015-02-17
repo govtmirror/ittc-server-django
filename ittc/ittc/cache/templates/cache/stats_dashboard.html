@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+#chart_zoom g.stack._0  > rect.bar {
+    stroke: none;
+    fill: blue;
+}
+#chart_zoom g.stack._1 > rect.bar {
+    stroke: none;
+    fill: red;
+}
+#chart_zoom g.stack._2 > rect.bar {
+    stroke: none;
+    fill: green;
+}
+#chart_zoom g.dc-legend-item:nth-child(1) > rect:nth-child(1) {
+    stroke: none;
+    fill: blue;
+}
+#chart_zoom g.dc-legend-item:nth-child(2) > rect:nth-child(1) {
+    stroke: none;
+    fill: red;
+}
+#chart_zoom g.dc-legend-item:nth-child(3) > rect:nth-child(1) {
+    stroke: none;
+    fill: green;
+}
+</style>
+{% endblock %}
+{% block navbar_right %}
+  <li><a href="{% url 'stats_map' %}">All</a></li>
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">By Source <span class="caret"></span></a>
+    <ul class="dropdown-menu" role="menu">
+    {% for source in sources %}
+      <li><a href="{% url 'stats_dashboard_source' source.name %}">{{ source.name }}</a></li>
+    {% endfor %}
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">By Date <span class="caret"></span></a>
+    <ul class="dropdown-menu" role="menu">
+    {% for date in dates %}
+      <li><a href="{% url 'stats_dashboard_date' date %}">{{ date }}</a></li>
+    {% endfor %}
+    </ul>
+  </li>
+{% endblock %}
+{% block content %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="page-header" style="padding-left:10px;"><h3>Dashboard
+      {% if source %}: {{ source.name }}{% endif %}
+      {% if date %}: {{ date }}{% endif %}
+      </h3></div>
+   </div>
+  </div>
+  <div class="row">
+    <div class="col-md-4">
+      <div id="chart_status"></div>
+    </div>
+    <div class="col-md-8">
+      <div id="chart_dates"></div>
+    </div>
+  </div>
+    <div class="row">
+    <div class="col-md-4">
+    </div>
+    <div class="col-md-8">
+      <div id="chart_zoom"></div>
+    </div>
+  </div>
+<script>
+  var source = {% if source %}"{{ source }}"{% else %}undefined{% endif %};
+  var date = {% if date %}"{{ date }}"{% else %}undefined{% endif %};
+  //////////////////////////////////
+  var initPieChart = function(pieChart, stats)
+  {
+    var data_by_status = []
+    if(source!=undefined)
+    {
+      for (var k in stats.by_source_status[source])
+      {
+        data_by_status.push({'status':k,'count':stats.by_source_status[source][k]})
+      }
+    }
+    else
+    {
+      for (var k in stats.by_status)
+      {
+        data_by_status.push({'status':k,'count':stats.by_status[k]})
+      }
+    }
+
+    var ndx = crossfilter(data_by_status);
+    var dim  = ndx.dimension(function(d) {return d.status;});
+    var group = dim.group().reduceSum(function(d) {return d.count;});
+
+    var colors = ["red","green","blue","gray"];
+
+    pieChart
+      .width(240)
+      .height(240)
+      .slicesCap(4)
+      .innerRadius(40)
+      .dimension(dim)
+      .group(group)
+      .legend(dc.legend())
+      .colors(colors)
+      .colorAccessor(function(d, i)
+      {
+        if(d.data.key=="miss")
+            return 0;
+        else if(d.data.key=="hit")
+            return 1
+        else if(d.data.key=="bypass")
+            return 2;
+        else
+            return 3;
+      });
+  }
+  var initLineChart = function(lineChart, stats)
+  {
+    var parseDate = d3.time.format("%Y-%m-%d").parse;
+    var data_by_date = []
+    if(source!=undefined)
+    {
+      for (var k in stats.by_date_source)
+      {
+        if(source in stats.by_date_source[k])
+        {
+          data_by_date.push({'date':parseDate(k), 'count':stats.by_date_source[k][source]*1.0});
+        }
+        else
+        {
+          data_by_date.push({'date':parseDate(k), 'count':0.0});
+        }
+      }
+    }
+    else
+    {
+      for (var k in stats.by_date)
+      {
+        data_by_date.push({'date':parseDate(k), 'count':stats.by_date[k]*1.0})
+      }
+    }
+
+    var ndx = crossfilter(data_by_date);
+    var dim  = ndx.dimension(function(d) {return d.date;});
+    var group = dim.group().reduceSum(function(d) {return d.count;});
+
+    //var colors = ["red","green","blue","gray"];
+
+    var width = 660;
+    var height = 240;
+    var x = d3.time.scale().range([0, width]);
+    var y = d3.scale.linear().range([height, 0]);
+
+    x.domain(d3.extent(data_by_date, function(d) { return d.date; }));
+    y.domain(d3.extent(data_by_date, function(d) { return d.count; }));
+
+    lineChart
+      .width(width)
+      .height(height)
+      .renderArea(true)
+      //.chart(function(c) { return dc.lineChart(c).interpolate('basis');})
+      .interpolate('basis')
+      .x(x)
+      .y(y)
+      //.brushOn(false)
+      .yAxisLabel("Tile Requests")
+      .xAxisLabel("Date")
+      //.clipPadding(10)
+      //.elasticY(true)
+      .dimension(dim)
+      .group(group)
+      .legend(dc.legend());
+  };
+
+  var initColumnChart = function(columnChart, stats)
+  {
+    var data_by_zoom = []
+    for (var z in stats.by_zoom_status)
+    {
+      var obj = stats.by_zoom_status[z];
+      var out = {'zoom': parseInt(z,10)};
+      var statuses = ["miss","hit","bypass"];
+      for(var i = 0; i < statuses.length; i++)
+      {
+          var status = statuses[i];
+          if(status in obj)
+          {
+            out[status] = obj[status];
+          }
+          else
+          {
+            out[status] = 0;
+          }
+      }
+      data_by_zoom.push(out);
+    }
+
+    var ndx = crossfilter(data_by_zoom);
+    var dim  = ndx.dimension(function(d) {return d.zoom;});
+    //var group = dim.group().reduceSum(function(d) {return d});
+    var group = dim.group().reduce(
+            function (p, v) {
+                p.miss += v.miss;
+                p.hit += v.hit;
+                p.bypass += v.bypass;
+                return p;
+            },
+            function (p, v) {
+                p.miss -= v.miss;
+                p.hit -= v.hit;
+                p.bypass -= v.bypass;
+                return p;
+            },
+            function () {
+                return {
+                    miss: 0,
+                    hit: 0,
+                    bypass: 0
+                };
+            }
+    );
+
+
+    //var colors = ["red","green","blue","gray"];
+
+    var width = 660;
+    var height = 240;
+    var x = d3.scale.linear().range([0, width]);
+    x.domain([0,20]);
+
+    //var y = d3.scale.linear().range([height, 0]);
+
+    //x.domain(d3.extent(data_by_date, function(d) { return d.date; }));
+    //y.domain(d3.extent(data_by_date, function(d) { return d.count; }));
+
+    var colorRenderlet = function (_chart) {
+        _chart.selectAll("rect.bar")
+                .on("click", function (d) {
+                    function setAttr(selection, keyName) {
+                        selection.style("fill", function (d) {
+                            if (d[keyName] == "miss") return "red";
+                            else if (d[keyName] == "bypass") return "blue";
+                            else if (d[keyName] == "hit") return "green";
+                        });
+                    };
+                    setAttr(_chart.selectAll("g.stack").selectAll("rect.bar"), "layer")
+                    setAttr(_chart.selectAll("g.dc-legend-item").selectAll("rect"), "name")
+                });
+    };
+
+    columnChart
+      .width(width)
+      .height(height)
+      .gap(4)
+      .x(x)
+      .elasticY(true)
+      .dimension(dim)
+      .group(group, "bypass")
+      .valueAccessor(function(d){
+        return d.value.bypass;
+      })
+      .stack(group, "miss", function(d){
+        return d.value.miss;
+      })
+      .stack(group, "hit", function(d){
+        return d.value.hit;
+      })
+      .renderlet(colorRenderlet)
+      .legend(dc.legend());
+  }
+
+  var pieChart = dc.pieChart("#chart_status");
+  var lineChart = dc.lineChart("#chart_dates");
+  var columnChart = dc.barChart("#chart_zoom");
+  d3.json("{% url 'stats_json' %}", function(error, stats)
+  {
+    initPieChart(pieChart, stats)
+    initLineChart(lineChart, stats)
+    initColumnChart(columnChart, stats)
+    pieChart.render();
+    lineChart.render();
+    columnChart.render();
+  });
+</script>
+{% endblock %}
+{% block footer %}
+{% endblock %}

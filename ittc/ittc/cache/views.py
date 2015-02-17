@@ -154,6 +154,22 @@ def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=No
     else:
         return None
 
+def stats_dashboard(request, source=None, date=None):
+    stats = stats_tilerequest()
+    dates = stats['by_date_location'].keys()
+    context_dict = {
+        'date': date,
+        'sources': TileSource.objects.all().order_by('name'),
+        'dates': dates
+    }
+    try:
+        context_dict['source'] = TileSource.objects.get(name=source)
+    except:
+        context_dict['source'] = None
+    return render_to_response(
+        "cache/stats_dashboard.html",
+        RequestContext(request, context_dict))
+
 def stats_map(request, source=None, date=None):
     stats = stats_tilerequest()
     dates = stats['by_date_location'].keys()
@@ -168,7 +184,7 @@ def stats_map(request, source=None, date=None):
     except:
         context_dict['source'] = None
     return render_to_response(
-        "cache/stats_map_2.html",
+        "cache/stats_map_3.html",
         RequestContext(request, context_dict))
 
 

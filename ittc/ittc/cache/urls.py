@@ -26,7 +26,10 @@ urlpatterns = patterns('ittc.cache.views',
     url(r'^stats/map$', 'stats_map', name='stats_map'),
     url(r'^stats/map/source/(?P<source>[^/]+)$', 'stats_map', name='stats_map_source'),
     url(r'^stats/map/date/(?P<date>[^/]+)$', 'stats_map', name='stats_map_date'),
-    
+
+    url(r'^stats/dashboard$', 'stats_dashboard', name='stats_dashboard'),
+    url(r'^stats/dashboard/source/(?P<source>[^/]+)$', 'stats_dashboard', name='stats_dashboard_source'),
+    url(r'^stats/dashboard/date/(?P<date>[^/]+)$', 'stats_dashboard', name='stats_dashboard_date'),
     
     url(r'^tms/$', 'capabilities_all_xml', name='capabilities_all_xml'),
     url(r'^tms/(?P<slug>[^/]+)/$', 'capabilities_service', name='capabilities_service'),
