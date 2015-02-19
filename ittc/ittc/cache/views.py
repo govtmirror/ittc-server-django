@@ -17,7 +17,7 @@ from PIL import Image, ImageEnhance
 import umemcache
 
 from ittc.capabilities.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue
 from ittc.utils import logs_tilerequest
 from ittc.stats import stats_tilerequest, clearStats, reloadStats
 from ittc.logs import clearLogs, reloadLogs, logTileRequest
@@ -81,6 +81,7 @@ def logs_clear(request):
                         )
 
 def logs_reload(request):
+    clearLogs()
     reloadLogs()
 
     return HttpResponse("Logs reloaded from disk.",
@@ -199,7 +200,9 @@ def stats_geojson(request, z=None, source=None, date=None):
     stats = stats_tilerequest()
 
     root = None
-    if source:
+    if source and date:
+        root = getValue(getValue(stats['by_source_date_location'],source),date)
+    elif source:
         root = stats['by_source_location'][source]
     elif date:
         root = stats['by_date_location'][date]
@@ -225,6 +228,42 @@ def stats_geojson(request, z=None, source=None, date=None):
     return HttpResponse(json.dumps(geojson),
                         content_type="application/json"
                         )
+
+def sources_list(request):
+    stats = stats_tilerequest()
+    context_dict = {
+        'sources': TileSource.objects.all().order_by('name'),
+    }
+    return render_to_response(
+        "cache/sources_list.html",
+        RequestContext(request, context_dict))
+
+def sources_json(request):
+    now = datetime.datetime.now()
+    dt = now
+    #######
+    stats = stats_tilerequest()
+    sources = []
+    for source in TileSource.objects.all().order_by('name'):
+        link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source.name+'.geojson'
+        link_proxy = settings.SITEURL+'proxy/?url='+(source.url).replace("{ext}","png")
+        sources.append({
+            'name': source.name,
+            'type': source.type_title(),
+            'url': source.url,
+            'requests_all': getValue(stats['by_source'], source.name,0),
+            'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
+            'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source.name, 0),
+            'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source.name, 0),\
+            'link_proxy': link_proxy,
+            'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy,
+            'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
+        })
+
+    return HttpResponse(json.dumps(sources),
+                        content_type="application/json"
+                        )
+
 
 def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
     tileservice = get_object_or_404(TileService, slug=slug)

@@ -25,7 +25,15 @@ from pymongo import MongoClient
 
 http_client = httplib2.Http()
 
+def clearStats():
+    client = MongoClient('localhost', 27017)
+    db = client.ittc
+    for stat in settings.CUSTOM_STATS:
+        db.drop_collection(stat['collection'])
+
+
 def reloadStats():
+    clearStats()
     client = MongoClient('localhost', 27017)
     db = client.ittc
     for doc in db[settings.LOG_COLLECTION].find():
@@ -42,11 +50,6 @@ def buildStats(r):
         stats.append(stat)
     return stats
 
-def clearStats():
-    client = MongoClient('localhost', 27017)
-    db = client.ittc
-    for stat in settings.CUSTOM_STATS:
-        db.drop_collection(stat['collection'])
 
 def incStats(db, stats):
     for stat in stats:

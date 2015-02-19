@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, TYPE_CHOICES
 
 def make_request(url, params, auth=None, data=None, contentType=None):
     """
@@ -116,12 +116,12 @@ class OriginPattern(models.Model):
 
 class TileSource(models.Model):
 
-    TYPE_CHOICES = [
-        (TYPE_TMS, _("TMS")),
-        (TYPE_TMS_FLIPPED, _("TMS - Flipped")),
-        (TYPE_BING, _("Bing")),
-        (TYPE_WMS, _("WMS"))
-    ]
+    #TYPE_CHOICES = [
+    #    (TYPE_TMS, _("TMS")),
+    #    (TYPE_TMS_FLIPPED, _("TMS - Flipped")),
+    #    (TYPE_BING, _("Bing")),
+    #    (TYPE_WMS, _("WMS"))
+    #]
 
     name = models.CharField(max_length=100)
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
@@ -139,6 +139,11 @@ class TileSource(models.Model):
     class Meta:
         ordering = ("name",)
         verbose_name_plural = _("Tile Sources")
+
+
+    def type_title(self):
+        return unicode([v for i, v in enumerate(TYPE_CHOICES) if v[0] == self.type][0][1]);
+
 
     def match(self, url):
         match = None

@@ -62,6 +62,14 @@ TYPE_TMS_FLIPPED = 2
 TYPE_BING = 3
 TYPE_WMS = 4
 
+TYPE_CHOICES = [
+  (TYPE_TMS, _("TMS")),
+  (TYPE_TMS_FLIPPED, _("TMS - Flipped")),
+  (TYPE_BING, _("Bing")),
+  (TYPE_WMS, _("WMS"))
+]
+
+
 #===================================#
 
 def bbox_to_wkt(x0, x1, y0, y1, srid="4326"):
@@ -298,12 +306,15 @@ def nav_down(tiles, t, d, max):
         tiles = nav_down(tiles, t11, d-1, max)
         return tiles
 
-def getHeader(headers, name):
+def getValue(d, name, fallback=None):
     value = None
-    try:
-        value = headers[name]
-    except KeyError:
-        value = None
+    if d:
+        try:
+            value = d[name]
+        except KeyError:
+            value = fallback
+    else:
+        value = fallback
     return value
 
 def check_cache_availability(cache):
@@ -324,9 +335,9 @@ def check_tile_expired(tile):
     print "Now"
     print now
     headers = tile['headers']
-    if getHeader(headers,'Expires'):
+    if getValue(headers,'Expires'):
         #time_expires = datetime.datetime.strptime(getHeader(headers,'Expires'), "%a, %d-%b-%Y %H:%M:%S GMT")
-        time_expires = datetime.datetime(*eut.parsedate(getHeader(headers,'Expires'))[:6])
+        time_expires = datetime.datetime(*eut.parsedate(getValue(headers,'Expires'))[:6])
         print "Time Expires"
         print time_expires
         if now >= time_expires:
