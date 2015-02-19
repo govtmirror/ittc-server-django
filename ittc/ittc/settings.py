@@ -56,7 +56,7 @@ INSTALLED_APPS = (
     #'django_forms_bootstrap',
 
     'corsheaders',
-    'leaflet',
+    #'leaflet',
     'jquery',
 
 ) + ITTC_APPS
@@ -113,16 +113,16 @@ STATIC_URL = '/static/'
 #    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #)
 
-LEAFLET_CONFIG = {
-    'TILES': [
-        # Find tiles at:
-        # http://leaflet-extras.github.io/leaflet-providers/preview/
-
-        ('OpenStreetMap',
-         'http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-         '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, Tiles courtesy of <a href="http://hot.openstreetmap.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'),
-    ]
-}
+#LEAFLET_CONFIG = {
+#    'TILES': [
+#        # Find tiles at:
+#        # http://leaflet-extras.github.io/leaflet-providers/preview/
+#
+#        ('OpenStreetMap',
+#         'http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+#         '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, Tiles courtesy of <a href="http://hot.openstreetmap.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'),
+#    ]
+#}
 
 CACHES = {
     'default': {
