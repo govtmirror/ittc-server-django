@@ -64,6 +64,13 @@ Then, update SITEURL (e.g., http://hiu-maps.net/) in settings.py:
 vim ittc-server-django.git/ittc/ittc/settings.py
 ```
 
+Create directory for static files for NGINX and copy over static files.
+
+```
+sudo mkdir -p /var/www/ittc/static
+sudo python manage.py collectstatic
+```
+
 ## Usage
 
 The application can be run through the Django built-in development server or Gnuicron ([http://gunicorn.org/](http://gunicorn.org/)).
