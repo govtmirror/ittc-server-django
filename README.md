@@ -22,6 +22,13 @@ apt-get install -y memcached zlib1g-dev libjpeg-dev rabbitmq-server
 apt-get install -y libapache2-mod-python python-dev python-pip
 ```
 
+Then, as ubuntu, clone this repo with commands like the following.
+
+```
+cd ~
+git clone https://github.com/state-hiu/ittc-server-django.git ittc-server-django.git
+```
+
 Then, as root, then install python packages with:
 ```
 pip install -r requirements.txt
@@ -42,13 +49,7 @@ echo "mongodb-org-shell hold" | sudo dpkg --set-selections
 echo "mongodb-org-mongos hold" | sudo dpkg --set-selections
 echo "mongodb-org-tools hold" | sudo dpkg --set-selections`
 ```
-Then, as ubuntu, execute the following commands:
 
-```
-cd ~
-git clone https://github.com/state-hiu/ittc-server-django.git ittc-server-django.git
-
-```
 Then, update SITEURL (e.g., http://hiu-maps.net/) in settings.py:
 
 ```
