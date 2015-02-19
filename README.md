@@ -34,6 +34,14 @@ Then, as root, then install python packages with:
 pip install -r requirements.txt
 ```
 
+If there are any issues with celery be correctly configured, run pip install for the following packages from https://github.com/state-hiu/celery/blob/umemcache/requirements/dev.txt manually.
+
+```
+sudo pip install https://github.com/celery/py-amqp/zipball/master
+sudo pip install https://github.com/celery/billiard/zipball/master
+sudo pip install https://github.com/celery/kombu/zipball/master
+```
+
 The requirements.txt file will install a fork of celery that works with unmemcache.  Then, as root, install MongoDB with the following based on http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 
 ```
