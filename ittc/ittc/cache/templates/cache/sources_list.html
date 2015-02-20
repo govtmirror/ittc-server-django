@@ -103,7 +103,7 @@ var formatDate = function(d)
                     <td>{{ source.type }}</td>
                     <td style="text-align:center;">{{ source.requests_today }} <a ng-if="source.requests_today &gt; 0" class="btn btn-primary btn-xs" href="/cache/stats/map/source/{{ source.name }}/date/{{ sDate }}">map</a></td>
                     <td>{{ source.url }}</td>
-                    <th><a href="{{ source.link_id }}">iD</a>, <a href="{{ source.link_geojsonio }}">geojson.io</a></th>
+                    <th><a href="{{ source.link_proxy }}">proxy</a>, <a href="{{ source.link_id }}">iD</a>, <a href="{{ source.link_geojsonio }}">geojson.io</a></th>
                   </tr>
                 </tbody>
               </table>
