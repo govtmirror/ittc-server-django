@@ -32,6 +32,14 @@
 {% block navbar_right %}
   <li><a href="{% url 'stats_dashboard' %}">All</a></li>
   <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">By Origin <span class="caret"></span></a>
+    <ul class="dropdown-menu" role="menu">
+    {% for origin in origins %}
+      <li><a href="{% url 'stats_dashboard_origin' origin.name %}">{{ origin.name }}</a></li>
+    {% endfor %}
+    </ul>
+  </li>
+  <li class="dropdown">
     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">By Source <span class="caret"></span></a>
     <ul class="dropdown-menu" role="menu">
     {% for source in sources %}
@@ -52,6 +60,7 @@
   <div class="row">
     <div class="col-md-12">
       <div class="page-header" style="padding-left:10px;"><h3>Dashboard
+      {% if origin %}: {{ origin.name }}{% endif %}
       {% if source %}: {{ source.name }}{% endif %}
       {% if date %}: {{ date }}{% endif %}
       </h3></div>
@@ -71,6 +80,9 @@
         </div>
         <div class="col-md-4">
           <div style="margin-bottom:8px;"><a class="btn btn-primary" href="{% url 'stats_map' %}">Map: All</a></div>
+          {% if origin %}
+          <div style="margin-bottom:8px;"><a class="btn btn-primary" href="{% url 'stats_map_origin' origin.name %}">Map: {{ origin.name }}</a></div>
+          {% endif %}
           {% if source %}
           <div style="margin-bottom:8px;"><a class="btn btn-primary" href="{% url 'stats_map_source' source.name %}">Map: {{ source.name }}</a></div>
           {% endif %}
@@ -91,13 +103,21 @@
       </div>
   </div>
 <script>
+  var origin = {% if origin %}"{{ origin }}"{% else %}undefined{% endif %};
   var source = {% if source %}"{{ source }}"{% else %}undefined{% endif %};
   var date = {% if date %}"{{ date }}"{% else %}undefined{% endif %};
   //////////////////////////////////
   var initPieChart = function(pieChart, stats)
   {
     var data_by_status = []
-    if(source!=undefined)
+    if(origin!=undefined)
+    {
+      for (var k in stats.by_origin_status[origin])
+      {
+        data_by_status.push({'status':k,'count':stats.by_origin_status[origin][k]})
+      }
+    }
+    else if(source!=undefined)
     {
       for (var k in stats.by_source_status[source])
       {
@@ -144,8 +164,22 @@
   var initLineChart = function(lineChart, stats)
   {
     var parseDate = d3.time.format("%Y-%m-%d").parse;
-    var data_by_date = []
-    if(source!=undefined)
+    var data_by_date = [];
+    if(origin!=undefined)
+    {
+      for (var k in stats.by_date_origin)
+      {
+        if(origin in stats.by_date_origin[k])
+        {
+          data_by_date.push({'date':parseDate(k), 'count':stats.by_date_origin[k][origin]*1.0});
+        }
+        else
+        {
+          data_by_date.push({'date':parseDate(k), 'count':0.0});
+        }
+      }
+    }
+    else if(source!=undefined)
     {
       for (var k in stats.by_date_source)
       {
@@ -203,13 +237,15 @@
   var initColumnChart = function(columnChart, stats)
   {
     var data_by_zoom = []
-    for (var z in stats.by_zoom_status)
+    if(origin!=undefined)
     {
-      var obj = stats.by_zoom_status[z];
-      var out = {'zoom': parseInt(z,10)};
-      var statuses = ["miss","hit","bypass"];
-      for(var i = 0; i < statuses.length; i++)
+      for (var z in stats.by_origin_zoom_status[origin])
       {
+        var obj = stats.by_origin_zoom_status[origin][z];
+        var out = {'zoom': parseInt(z,10)};
+        var statuses = ["miss","hit","bypass"];
+        for(var i = 0; i < statuses.length; i++)
+        {
           var status = statuses[i];
           if(status in obj)
           {
@@ -219,9 +255,55 @@
           {
             out[status] = 0;
           }
+        }
+        data_by_zoom.push(out);
       }
-      data_by_zoom.push(out);
     }
+    else if(source!=undefined)
+    {
+      for (var z in stats.by_source_zoom_status[source])
+      {
+        var obj = stats.by_source_zoom_status[source][z];
+        var out = {'zoom': parseInt(z,10)};
+        var statuses = ["miss","hit","bypass"];
+        for(var i = 0; i < statuses.length; i++)
+        {
+          var status = statuses[i];
+          if(status in obj)
+          {
+            out[status] = obj[status];
+          }
+          else
+          {
+            out[status] = 0;
+          }
+        }
+        data_by_zoom.push(out);
+      }
+    }
+    else
+    {
+      for (var z in stats.by_zoom_status)
+      {
+        var obj = stats.by_zoom_status[z];
+        var out = {'zoom': parseInt(z,10)};
+        var statuses = ["miss","hit","bypass"];
+        for(var i = 0; i < statuses.length; i++)
+        {
+          var status = statuses[i];
+          if(status in obj)
+          {
+            out[status] = obj[status];
+          }
+          else
+          {
+            out[status] = 0;
+          }
+        }
+        data_by_zoom.push(out);
+      }
+    }
+
 
     var ndx = crossfilter(data_by_zoom);
     var dim  = ndx.dimension(function(d) {return d.zoom;});
@@ -254,7 +336,7 @@
     var width = 660;
     var height = 240;
     var x = d3.scale.linear().range([0, width]);
-    x.domain([0,20.5]);
+    x.domain([0,22.5]);
 
     //var y = d3.scale.linear().range([height, 0]);
 

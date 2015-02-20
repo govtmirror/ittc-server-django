@@ -3,7 +3,8 @@
         "pk": 1,
         "model": "source.origin",
         "fields": {
-            "name":"OSM - Main",
+            "name":"osm_main",
+            "description":"Main OpenStreetMap Server",
             "type": 2,
             "url": "http://c.tile.openstreetmap.org/{z}/{x}/{y}.{ext}"
         }
@@ -21,7 +22,8 @@
         "pk": 2,
         "model": "source.origin",
         "fields": {
-            "name":"OSM - France",
+            "name":"osm_france",
+            "description":"OSM France Server.  This server primarily serves out the humanitarian style OSM tiles.",
             "type": 2,
             "url": "http://b.tile.openstreetmap.fr/{slug}/{z}/{x}/{y}.{ext}"
         }
@@ -39,7 +41,8 @@
         "pk": 3,
         "model": "source.origin",
         "fields": {
-            "name":"Bing Aerial",
+            "name":"bing_aerial",
+            "description":"Bing Aerial.  Satellite Imagery.  Allowed to trace for OSM vectors.",
             "type": 3,
             "url": "http://ecn.t0.tiles.virtualearth.net/tiles/{slug}{u}.jpeg?g=3291&mkt=en-us"
         }
@@ -57,7 +60,8 @@
         "pk": 4,
         "model": "source.origin",
         "fields": {
-            "name":"MapBox",
+            "name":"mapbox",
+            "description":"MapBox.",
             "type": 2,
             "url": "http://c.tiles.mapbox.com/v4/{slug}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw"
         }

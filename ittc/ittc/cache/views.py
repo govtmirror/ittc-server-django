@@ -22,7 +22,7 @@ from ittc.utils import logs_tilerequest
 from ittc.stats import stats_tilerequest, clearStats, reloadStats
 from ittc.logs import clearLogs, reloadLogs, logTileRequest
 
-from ittc.source.models import TileSource
+from ittc.source.models import Origin,TileSource
 from ittc.cache.tasks import taskRequestTile
 import json
 #from ittc.cache.models import Tile
@@ -164,37 +164,55 @@ def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=No
     else:
         return None
 
-def stats_dashboard(request, source=None, date=None):
+def stats_dashboard(request, origin=None, source=None, date=None):
     stats = stats_tilerequest()
     dates = stats['by_date_location'].keys()
     context_dict = {
         'date': date,
-        'sources': TileSource.objects.all().order_by('name'),
+        'origins': Origin.objects.all().order_by('name','type'),
+        'sources': TileSource.objects.all().order_by('name','type'),
         'dates': dates
     }
+
+    try:
+        context_dict['origin'] = Origin.objects.get(name=origin)
+    except:
+        context_dict['origin'] = None
+
     try:
         context_dict['source'] = TileSource.objects.get(name=source)
     except:
         context_dict['source'] = None
+
     return render_to_response(
         "cache/stats_dashboard.html",
         RequestContext(request, context_dict))
 
 
 @login_required
-def stats_map(request, source=None, date=None):
+def stats_map(request, origin=None, source=None, date=None):
     stats = stats_tilerequest()
     dates = stats['by_date_location'].keys()
     #print stats['by_date_location'].keys()
     context_dict = {
         'date': date,
-        'sources': TileSource.objects.all().order_by('name'),
+        'origins': Origin.objects.all().order_by('name','type'),
+        'sources': TileSource.objects.all().order_by('name','type'),
         'dates': dates
     }
+
+    try:
+        context_dict['origin'] = Origin.objects.get(name=origin)
+    except:
+        context_dict['origin'] = None
+
+
     try:
         context_dict['source'] = TileSource.objects.get(name=source)
     except:
         context_dict['source'] = None
+
+
     return render_to_response(
         "cache/stats_map_3.html",
         RequestContext(request, context_dict))
@@ -206,7 +224,7 @@ def stats_geojson_source(request, z=None, source=None):
 
 
 @login_required
-def stats_geojson(request, z=None, source=None, date=None):
+def stats_geojson(request, z=None, origin=None, source=None, date=None):
 
     iz = int(z)
     features = []
@@ -214,8 +232,12 @@ def stats_geojson(request, z=None, source=None, date=None):
     stats = stats_tilerequest()
 
     root = None
-    if source and date:
+    if origin and date:
+        root = getValue(getValue(stats['by_origin_date_location'],origin),date)
+    elif source and date:
         root = getValue(getValue(stats['by_source_date_location'],source),date)
+    elif origin:
+        root = stats['by_origin_location'][origin]
     elif source:
         root = stats['by_source_location'][source]
     elif date:
@@ -245,6 +267,17 @@ def stats_geojson(request, z=None, source=None, date=None):
 
 
 @login_required
+def origins_list(request):
+    stats = stats_tilerequest()
+    context_dict = {
+        'origins': Origin.objects.all().order_by('name','type'),
+    }
+    return render_to_response(
+        "cache/origins_list.html",
+        RequestContext(request, context_dict))
+
+
+@login_required
 def sources_list(request):
     stats = stats_tilerequest()
     context_dict = {
@@ -253,6 +286,34 @@ def sources_list(request):
     return render_to_response(
         "cache/sources_list.html",
         RequestContext(request, context_dict))
+
+
+@login_required
+def origins_json(request):
+    now = datetime.datetime.now()
+    dt = now
+    #######
+    stats = stats_tilerequest()
+    origins = []
+    for origin in Origin.objects.all().order_by('name','type'):
+        link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/origin/'+origin.name+'.geojson'
+        origins.append({
+            'name': origin.name,
+            'description': origin.description,
+            'type': origin.type_title(),
+            'url': origin.url,
+            'requests_all': getValue(stats['by_origin'], origin.name,0),
+            'requests_year': getValue(getValue(stats['by_year_origin'],dt.strftime('%Y')),origin.name, 0),
+            'requests_month': getValue(getValue(stats['by_month_origin'],dt.strftime('%Y-%m')),origin.name, 0),
+            'requests_today': getValue(getValue(stats['by_date_origin'],dt.strftime('%Y-%m-%d')),origin.name, 0),
+            'link_geojson': link_geojson,
+            'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
+        })
+
+    return HttpResponse(json.dumps(origins),
+                        content_type="application/json"
+                        )
+
 
 
 @login_required
@@ -268,6 +329,7 @@ def sources_json(request):
         sources.append({
             'name': source.name,
             'type': source.type_title(),
+            'origin': source.origin.name,
             'url': source.url,
             'requests_all': getValue(stats['by_source'], source.name,0),
             'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
@@ -275,6 +337,7 @@ def sources_json(request):
             'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source.name, 0),\
             'link_proxy': link_proxy,
             'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy,
+            'link_geojson': link_geojson,
             'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
         })
 
@@ -298,11 +361,14 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
 
 
 @login_required
-def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=None, u=None, ext=None):
+def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=None, x=None, y=None, u=None, ext=None):
 
     print "requestTile"
     now = datetime.datetime.now()
     ip = getIPAddress(request)
+    #==#
+    if not tileorigin:
+        tileorigin = tilesource.origin
     #==#
     verbose = True
     ix = None
@@ -412,11 +478,11 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
         if tile:
             if verbose:
                 print "cache hit for "+key
-                logTileRequest(tilesource, x, y, z, 'hit', now, ip)
+                logTileRequest(tileorigin, tilesource, x, y, z, 'hit', now, ip)
         else:
             if verbose:
                 print "cache miss for "+key
-                logTileRequest(tilesource, x, y, z, 'miss', now, ip)
+                logTileRequest(tileorigin, tilesource, x, y, z, 'miss', now, ip)
 
             if tilesource.type == TYPE_TMS:
                 tile = tilesource.requestTile(ix,iy,iz,ext,True)
@@ -428,7 +494,7 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
     else:
         if verbose:
             print "cache bypass for "+tilesource.name+"/"+str(iz)+"/"+str(ix)+"/"+str(iy)
-        logTileRequest(tilesource, x, y, z, 'bypass', now, ip)
+        logTileRequest(tileorigin, tilesource, x, y, z, 'bypass', now, ip)
 
         if tilesource.type == TYPE_TMS:
             tile = tilesource.requestTile(ix,iy,iz,ext,True)

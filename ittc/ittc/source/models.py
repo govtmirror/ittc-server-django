@@ -68,6 +68,7 @@ class Origin(models.Model):
     ]
 
     name = models.CharField(max_length=100)
+    description = models.CharField(max_length=400, help_text=_('Human-readable description of the services provided by this tile origin.'))
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
     url = models.CharField(max_length=400, help_text=_('Used to generate url for new tilesource.'))
 
@@ -75,8 +76,13 @@ class Origin(models.Model):
         return self.name
 
     class Meta:
-        ordering = ("name",)
+        ordering = ("name","type")
         verbose_name_plural = _("Origins")
+
+
+    def type_title(self):
+        return unicode([v for i, v in enumerate(TYPE_CHOICES) if v[0] == self.type][0][1]);
+
 
     def match(self, url):
         match = None

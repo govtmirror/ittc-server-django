@@ -72,12 +72,15 @@
             <li id="nav_sources">
               <a href="{% url "sources_list" %}">Sources</a>
             </li>
+            <li id="nav_origins">
+              <a href="{% url "origins_list" %}">Origins</a>
+            </li>
             <li id="nav_admin">
               <a href="/admin">Admin</a>
             </li>
             {% endblock %}
           </ul>
-          <ul class="nav navbar-nav navbar-right">
+          <ul class="nav navbar-nav navbar-right" style="min-width:380px">
               {% block navbar_right %}
               {% endblock %}
           </ul>

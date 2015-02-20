@@ -44,22 +44,24 @@ def reloadLogs():
                 for line in lines:
                     values = line.rstrip('\n').split("\t")
                     status = values[0]
-                    tilesource = values[1]
-                    z = values[2]
-                    x = values[3]
-                    y = values[4]
-                    ip = values[5]
+                    tileorigin = values[1]
+                    tilesource = values[2]
+                    z = values[3]
+                    x = values[4]
+                    y = values[5]
+                    ip = values[6]
                     #dt = datetime.datetime.strptime(values[6],'YYYY-MM-DDTHH:MM:SS.mmmmmm')
-                    dt = iso8601.parse_date(values[6])
+                    dt = iso8601.parse_date(values[7])
                     location = z+"/"+x+"/"+y
                     client = MongoClient('localhost', 27017)
                     db = client.ittc
-                    r = buildTileRequestDocument(tilesource, x, y, z, status, dt, ip)
+                    r = buildTileRequestDocument(tileorigin, tilesource, x, y, z, status, dt, ip)
                     db[settings.LOG_COLLECTION].insert(r)
 
-def buildTileRequestDocument(tilesource, x, y, z, status, datetime, ip):
+def buildTileRequestDocument(tileorigin, tilesource, x, y, z, status, datetime, ip):
     r = {
         'ip': ip,
+        'origin': tileorigin if tileorigin else "",
         'source': tilesource,
         'location': z+'/'+x+'/'+y,
         'z': z,
@@ -71,17 +73,17 @@ def buildTileRequestDocument(tilesource, x, y, z, status, datetime, ip):
     }
     return r
 
-def logTileRequest(tilesource, x, y, z, status, datetime, ip):
+def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
     if settings.LOG_ROOT:
         if not os.path.exists(settings.LOG_ROOT):
             os.mkdir(settings.LOG_ROOT)
         with open(settings.LOG_ROOT+"/"+"tile_requests.tsv",'a') as f:
-            line = settings.LOG_FORMAT['tile_request'].format(status=status,tilesource=tilesource.name,z=z,x=x,y=y,ip=ip,datetime=datetime.isoformat())
+            line = settings.LOG_FORMAT['tile_request'].format(status=status,tileorigin=tileorigin.name,tilesource=tilesource.name,z=z,x=x,y=y,ip=ip,datetime=datetime.isoformat())
             f.write(line+"\n")
             # Update MongoDB
             client = MongoClient('localhost', 27017)
             db = client.ittc
-            r = buildTileRequestDocument(tilesource.name, x, y, z, status, datetime, ip)
+            r = buildTileRequestDocument(tileorigin.name,tilesource.name, x, y, z, status, datetime, ip)
             # Update Mongo Logs
             db[settings.LOG_COLLECTION].insert(r)
             # Update Mongo Aggregate Stats

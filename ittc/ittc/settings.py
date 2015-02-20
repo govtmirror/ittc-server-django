@@ -173,13 +173,13 @@ ITTC_SERVER = {
     },
     'heuristic': {
         'down': {
-            'enabled': True,
+            'enabled': False,
             'depth': 1,
             'minZoom': 0,
             'maxZoom': 18
         },
         'up': {
-            'enabled': True
+            'enabled': False
         },
         'nearby': {
             'enabled': True,
@@ -202,7 +202,7 @@ BROKER_URL = 'amqp://guest:guest@localhost:5672//'
 LOG_ROOT = BASE_DIR+'/logs'
 
 LOG_FORMAT = {
-    'tile_request': '{status}	{tilesource}	{z}	{x}	{y}	{ip}	{datetime}'
+    'tile_request': '{status}	{tileorigin}	{tilesource}	{z}	{x}	{y}	{ip}	{datetime}'
 }
 
 LOG_COLLECTION = 'logs'
@@ -210,6 +210,7 @@ LOG_COLLECTION = 'logs'
 CUSTOM_STATS = [
     {'name': 'total', 'collection': 'stats_total', 'attributes': []},
     #{'name': 'by_ip', 'collection': 'stats_by_ip', 'attributes': ['ip']},
+    {'name': 'by_origin', 'collection': 'stats_by_origin', 'attributes': ['origin']},
     {'name': 'by_source', 'collection': 'stats_by_source', 'attributes': ['source']},
     {'name': 'by_location', 'collection': 'stats_by_location', 'attributes': ['location']},
     {'name': 'by_zoom', 'collection': 'stats_by_zoom', 'attributes': ['z']},
@@ -218,13 +219,22 @@ CUSTOM_STATS = [
     {'name': 'by_month', 'collection': 'stats_by_month', 'attributes': ['month']},
     {'name': 'by_date', 'collection': 'stats_by_date', 'attributes': ['date']},
 
+
+    {'name': 'by_year_origin', 'collection': 'stats_by_year_origin', 'attributes': ['year', 'origin']},
     {'name': 'by_year_source', 'collection': 'stats_by_year_source', 'attributes': ['year', 'source']},
+    {'name': 'by_date_origin', 'collection': 'stats_by_date_origin', 'attributes': ['date', 'origin']},
     {'name': 'by_date_source', 'collection': 'stats_by_date_source', 'attributes': ['date', 'source']},
     #{'name': 'by_ip_source', 'collection': 'stats_by_ip_source', 'attributes': ['ip', 'source']},
+    {'name': 'by_origin_status', 'collection': 'stats_by_origin_status', 'attributes': ['origin', 'status']},
     {'name': 'by_source_status', 'collection': 'stats_by_source_status', 'attributes': ['source', 'status']},
+    {'name': 'by_month_origin', 'collection': 'stats_by_month_origin', 'attributes': ['month', 'origin']},
     {'name': 'by_month_source', 'collection': 'stats_by_month_source', 'attributes': ['month', 'source']},
     {'name': 'by_zoom_status', 'collection': 'stats_by_zoom_status', 'attributes': ['z', 'status']},
+    {'name': 'by_origin_zoom_status', 'collection': 'stats_by_origin_zoom_status', 'attributes': ['origin', 'z', 'status']},
+    {'name': 'by_source_zoom_status', 'collection': 'stats_by_source_zoom_status', 'attributes': ['source', 'z', 'status']},
     {'name': 'by_date_location', 'collection': 'stats_by_date_location', 'attributes': ['date', 'location']},
+    {'name': 'by_origin_location', 'collection': 'stats_by_origin_location', 'attributes': ['origin', 'location']},
     {'name': 'by_source_location', 'collection': 'stats_by_source_location', 'attributes': ['source', 'location']},
+    {'name': 'by_origin_date_location', 'collection': 'stats_by_origin_date_location', 'attributes': ['origin', 'date', 'location']},
     {'name': 'by_source_date_location', 'collection': 'stats_by_source_date_location', 'attributes': ['source', 'date', 'location']},
 ]
