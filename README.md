@@ -22,9 +22,24 @@ apt-get install -y memcached zlib1g-dev libjpeg-dev rabbitmq-server
 apt-get install -y libapache2-mod-python python-dev python-pip
 ```
 
+Then, as ubuntu, clone this repo with commands like the following.
+
+```
+cd ~
+git clone https://github.com/state-hiu/ittc-server-django.git ittc-server-django.git
+```
+
 Then, as root, then install python packages with:
 ```
 pip install -r requirements.txt
+```
+
+If there are any issues with celery be correctly configured, run pip install for the following packages from https://github.com/state-hiu/celery/blob/umemcache/requirements/dev.txt manually.
+
+```
+sudo pip install https://github.com/celery/py-amqp/zipball/master
+sudo pip install https://github.com/celery/billiard/zipball/master
+sudo pip install https://github.com/celery/kombu/zipball/master
 ```
 
 The requirements.txt file will install a fork of celery that works with unmemcache.  Then, as root, install MongoDB with the following based on http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
@@ -42,17 +57,18 @@ echo "mongodb-org-shell hold" | sudo dpkg --set-selections
 echo "mongodb-org-mongos hold" | sudo dpkg --set-selections
 echo "mongodb-org-tools hold" | sudo dpkg --set-selections`
 ```
-Then, as ubuntu, execute the following commands:
 
-```
-cd ~
-git clone https://github.com/state-hiu/ittc-server-django.git ittc-server-django.git
-
-```
 Then, update SITEURL (e.g., http://hiu-maps.net/) in settings.py:
 
 ```
 vim ittc-server-django.git/ittc/ittc/settings.py
+```
+
+Create directory for static files for NGINX and copy over static files.
+
+```
+sudo mkdir -p /var/www/ittc/static
+sudo python manage.py collectstatic
 ```
 
 ## Usage
