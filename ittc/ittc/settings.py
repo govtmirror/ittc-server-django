@@ -209,7 +209,7 @@ LOG_COLLECTION = 'logs'
 
 CUSTOM_STATS = [
     {'name': 'total', 'collection': 'stats_total', 'attributes': []},
-    {'name': 'by_ip', 'collection': 'stats_by_ip', 'attributes': ['ip']},
+    #{'name': 'by_ip', 'collection': 'stats_by_ip', 'attributes': ['ip']},
     {'name': 'by_source', 'collection': 'stats_by_source', 'attributes': ['source']},
     {'name': 'by_location', 'collection': 'stats_by_location', 'attributes': ['location']},
     {'name': 'by_zoom', 'collection': 'stats_by_zoom', 'attributes': ['z']},
@@ -220,7 +220,7 @@ CUSTOM_STATS = [
 
     {'name': 'by_year_source', 'collection': 'stats_by_year_source', 'attributes': ['year', 'source']},
     {'name': 'by_date_source', 'collection': 'stats_by_date_source', 'attributes': ['date', 'source']},
-    {'name': 'by_ip_source', 'collection': 'stats_by_ip_source', 'attributes': ['ip', 'source']},
+    #{'name': 'by_ip_source', 'collection': 'stats_by_ip_source', 'attributes': ['ip', 'source']},
     {'name': 'by_source_status', 'collection': 'stats_by_source_status', 'attributes': ['source', 'status']},
     {'name': 'by_month_source', 'collection': 'stats_by_month_source', 'attributes': ['month', 'source']},
     {'name': 'by_zoom_status', 'collection': 'stats_by_zoom_status', 'attributes': ['z', 'status']},

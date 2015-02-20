@@ -55,6 +55,8 @@ def capabilities_service(request, template='capabilities/capabilities_service_1_
     ctx = {'tileservice': TileService.objects.get(slug=slug), 'SITEURL': settings.SITEURL, }
     return render(request,template,ctx,'text/xml')
 
+
+@login_required
 def flush(request):
    
     tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
@@ -65,6 +67,7 @@ def flush(request):
                         content_type="text/plain"
                         )
 
+@login_required
 def logs_json(request):
 
     logs = logs_tilerequest()
@@ -73,6 +76,7 @@ def logs_json(request):
                         )
 
 
+@login_required
 def logs_clear(request):
     clearLogs()
 
@@ -80,6 +84,7 @@ def logs_clear(request):
                         content_type="text/plain"
                         )
 
+@login_required
 def logs_reload(request):
     clearLogs()
     reloadLogs()
@@ -102,6 +107,8 @@ def stats_reload(request):
                         content_type="text/plain"
                         )
 
+
+@login_required
 def stats_json(request):
 
     stats = stats_tilerequest()
@@ -109,6 +116,8 @@ def stats_json(request):
                         content_type="application/json"
                         )
 
+
+@login_required
 def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=None):
 
     #==#
@@ -171,6 +180,8 @@ def stats_dashboard(request, source=None, date=None):
         "cache/stats_dashboard.html",
         RequestContext(request, context_dict))
 
+
+@login_required
 def stats_map(request, source=None, date=None):
     stats = stats_tilerequest()
     dates = stats['by_date_location'].keys()
@@ -189,9 +200,12 @@ def stats_map(request, source=None, date=None):
         RequestContext(request, context_dict))
 
 
+@login_required
 def stats_geojson_source(request, z=None, source=None):
     return stats_geojson(request, z=z, source=source)
 
+
+@login_required
 def stats_geojson(request, z=None, source=None, date=None):
 
     iz = int(z)
@@ -229,6 +243,8 @@ def stats_geojson(request, z=None, source=None, date=None):
                         content_type="application/json"
                         )
 
+
+@login_required
 def sources_list(request):
     stats = stats_tilerequest()
     context_dict = {
@@ -238,6 +254,8 @@ def sources_list(request):
         "cache/sources_list.html",
         RequestContext(request, context_dict))
 
+
+@login_required
 def sources_json(request):
     now = datetime.datetime.now()
     dt = now
@@ -265,6 +283,7 @@ def sources_json(request):
                         )
 
 
+@login_required
 def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
     tileservice = get_object_or_404(TileService, slug=slug)
 
@@ -277,6 +296,8 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
     else:
         return HttpResponse(RequestContext(request, {}), status=404)
 
+
+@login_required
 def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=None, u=None, ext=None):
 
     print "requestTile"

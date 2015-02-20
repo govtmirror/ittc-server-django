@@ -381,6 +381,17 @@ def logs_tilerequest(mongo=True):
         db = client.ittc
         collection = db[settings.LOG_COLLECTION]
         for doc in collection.find():
-            logs['logs'].append(doc)
+            #Filter out IP Addresses and other info
+            out = {
+              'source': doc.source,
+              'location': doc.location,
+              'z': doc.z,
+              'status': doc.status,
+              'year': doc.year,
+              'month': doc.month,
+              'date': doc.date,
+              'date_iso': doc.date_iso
+            }
+            logs['logs'].append(out)
 
     return logs
