@@ -331,21 +331,21 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
     if settings.ITTC_SERVER['heuristic']['nearby']['enabled']:
         ir = settings.ITTC_SERVER['heuristic']['nearby']['enabled']
         nearbyTiles = getNearbyTiles(ix, iy, iz, ir)
-        print "Nearby Tiles"
-        print nearbyTiles
+        #print "Nearby Tiles"
+        #print nearbyTiles
 
     if settings.ITTC_SERVER['heuristic']['up']['enabled']:
         parentTiles = getParentTiles(ix, iy, iz)
-        print "Parent Tiles"
-        print parentTiles
+        #print "Parent Tiles"
+        #print parentTiles
 
     if settings.ITTC_SERVER['heuristic']['down']['enabled']:
         depth = settings.ITTC_SERVER['heuristic']['down']['depth']
         minZoom = settings.ITTC_SERVER['heuristic']['down']['minZoom']
         maxZoom = settings.ITTC_SERVER['heuristic']['down']['maxZoom']
         childrenTiles = getChildrenTiles(ix, iy, iz, depth, minZoom, maxZoom)
-        print "Children Tiles: "+str(len(childrenTiles))
-        print childrenTiles
+        #print "Children Tiles: "+str(len(childrenTiles))
+        #print childrenTiles
 
     if nearbyTiles:
         for t in nearbyTiles:
@@ -435,8 +435,8 @@ def requestTile(request, tileservice=None, tilesource=None, z=None, x=None, y=No
         elif tilesource.type == TYPE_TMS_FLIPPED:
             tile = tilesource.requestTile(ix,iyf,iz,ext,True)
 
-    print "Headers:"
-    print tile['headers']
+    #print "Headers:"
+    #print tile['headers']
     image = Image.open(StringIO.StringIO(tile['data']))
     #Is Tile blank.  then band.getextrema should return 0,0 for band 4
     #Tile Cache watermarking is messing up bands

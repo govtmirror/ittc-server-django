@@ -332,14 +332,14 @@ def check_cache_availability(cache):
 def check_tile_expired(tile):
     expired = False
     now = datetime.datetime.now()
-    print "Now"
-    print now
+    #print "Now"
+    #print now
     headers = tile['headers']
     if getValue(headers,'Expires'):
         #time_expires = datetime.datetime.strptime(getHeader(headers,'Expires'), "%a, %d-%b-%Y %H:%M:%S GMT")
         time_expires = datetime.datetime(*eut.parsedate(getValue(headers,'Expires'))[:6])
-        print "Time Expires"
-        print time_expires
+        #print "Time Expires"
+        #print time_expires
         if now >= time_expires:
             expired = True
 
@@ -365,7 +365,7 @@ def getTileFromCache(cache, key, check):
 
 def getIPAddress(request):
     ip = None
-    print request.META['HTTP_X_FORWARDED_FOR']
+    #print request.META['HTTP_X_FORWARDED_FOR']
     try:
         ip = request.META['HTTP_X_FORWARDED_FOR']
     except:
