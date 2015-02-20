@@ -30,7 +30,7 @@
         "pk": 2,
         "model": "source.originpattern",
         "fields": {
-            "origin": 1,
+            "origin": 2,
             "includes": "^http://c.tile.openstreetmap.fr/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
             "excludes": ""
         }
@@ -48,7 +48,7 @@
         "pk": 3,
         "model": "source.originpattern",
         "fields": {
-            "origin": 1,
+            "origin": 3,
             "includes": "^http://ecn.t0.tiles.virtualearth.net/tiles/(?P<slug>[^/]+)(?P<z>\\d+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]g=3291&mkt=en-us$",
             "excludes": ""
         }
@@ -66,7 +66,7 @@
         "pk": 4,
         "model": "source.originpattern",
         "fields": {
-            "origin": 1,
+            "origin": 4,
             "includes": "^http://c.tiles.mapbox.com/v4/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw$",
             "excludes": ""
         }
