@@ -18,12 +18,13 @@ import umemcache
 
 from ittc.capabilities.models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue
-from ittc.utils import logs_tilerequest
+from ittc.utils import logs_tilerequest, formatMemorySize
 from ittc.stats import stats_tilerequest, clearStats, reloadStats
 from ittc.logs import clearLogs, reloadLogs, logTileRequest
 
 from ittc.source.models import Origin,TileSource
 from ittc.cache.tasks import taskRequestTile
+from ittc.cache.forms import TileOriginForm, TileSourceForm
 import json
 #from ittc.cache.models import Tile
 from bson.json_util import dumps
@@ -267,6 +268,53 @@ def stats_geojson(request, z=None, origin=None, source=None, date=None):
 
 
 @login_required
+def info(request):
+    stats = stats_tilerequest()
+    caches = []
+    c = settings.ITTC_SERVER['cache']['memory']
+    caches.append({
+        'name': 'memory',
+        'enabled': c['enabled'],
+        'description': c['description'],
+        'type': c['type'],
+        'size': formatMemorySize(c['size'],original='M'),
+        'minzoom': c['minZoom'],
+        'maxzoom': c['maxZoom'],
+        'expiration': c['expiration']
+    })
+    heuristics = []
+    h = settings.ITTC_SERVER['heuristic']['down']
+    heuristics.append({
+        'name': 'down',
+        'enabled': h['enabled'],
+        'description': h['description']
+    })
+    h = settings.ITTC_SERVER['heuristic']['up']
+    heuristics.append({
+        'name': 'up',
+        'enabled': h['enabled'],
+        'description': h['description']
+    })
+    h = settings.ITTC_SERVER['heuristic']['nearby']
+    heuristics.append({
+        'name': 'nearby',
+        'enabled': h['enabled'],
+        'description': h['description']
+    })
+
+    context_dict = {
+        'origins': Origin.objects.all().order_by('name','type'),
+        'sources': TileSource.objects.all().order_by('name','type'),
+        'caches': caches,
+        'heuristics': heuristics,
+        'hosts': settings.PROXY_ALLOWED_HOSTS
+    }
+    return render_to_response(
+        "cache/info.html",
+        RequestContext(request, context_dict))
+
+
+@login_required
 def origins_list(request):
     stats = stats_tilerequest()
     context_dict = {
@@ -286,6 +334,123 @@ def sources_list(request):
     return render_to_response(
         "cache/sources_list.html",
         RequestContext(request, context_dict))
+
+@login_required
+def services_list(request):
+    stats = stats_tilerequest()
+    context_dict = {
+        'services': TileService.objects.all().order_by('name','type'),
+    }
+    return render_to_response(
+        "cache/services_list.html",
+        RequestContext(request, context_dict))
+
+@login_required
+def origins_new(request, template="cache/origins_edit.html"):
+
+    if request.method == "POST":
+        origin_form = TileOriginForm(request.POST)
+        origin_form.save()
+        ###
+        stats = stats_tilerequest()
+        context_dict = {
+            'origin_form': TileOriginForm()
+        }
+
+        return HttpResponseRedirect(reverse('origins_list',args=()))
+    else:
+        stats = stats_tilerequest()
+        context_dict = {
+            'origin_form': TileOriginForm()
+        }
+        return render_to_response(
+            template,
+            RequestContext(request, context_dict))
+
+
+@login_required
+def origins_edit(request, origin=None, template="cache/origins_edit.html"):
+
+    if request.method == "POST":
+        instance = Origin.objects.get(name=origin)
+        origin_form = TileOriginForm(request.POST,instance=instance)
+        origin_form.save()
+        ###
+        stats = stats_tilerequest()
+        context_dict = {
+            'origin': instance,
+            'origin_form': TileOriginForm(instance=instance)
+        }
+
+        return HttpResponseRedirect(reverse('origins_list',args=()))
+
+    else:
+        stats = stats_tilerequest()
+        instance = Origin.objects.get(name=origin)
+        context_dict = {
+            'origin': instance,
+            'origin_form': TileOriginForm(instance=instance)
+        }
+        return render_to_response(
+            template,
+            RequestContext(request, context_dict))
+
+
+@login_required
+def sources_new(request, template="cache/sources_edit.html"):
+
+    if request.method == "POST":
+        source_form = TileSourceForm(request.POST)
+        if source_form.is_valid():
+            source_form.save()
+            ###
+            stats = stats_tilerequest()
+            context_dict = {
+                'source_form': TileSourceForm()
+            }
+            return HttpResponseRedirect(reverse('sources_list',args=()))
+
+    else:
+        stats = stats_tilerequest()
+        context_dict = {
+            'source_form': TileSourceForm()
+        }
+        return render_to_response(
+            template,
+            RequestContext(request, context_dict))
+
+@login_required
+def sources_edit(request, source=None, template="cache/sources_edit.html"):
+
+    if request.method == "POST":
+        instance = TileSource.objects.get(name=source)
+        source_form = TileSourceForm(request.POST,instance=instance)
+        if source_form.is_valid():
+            source_form.save()
+            ###
+            stats = stats_tilerequest()
+            context_dict = {
+                'source': instance,
+                'source_form': TileSourceForm(instance=instance)
+            }
+            return HttpResponseRedirect(reverse('sources_list',args=()))
+        else:
+            return HttpResponse(
+                'An unknown error has occured.',
+                mimetype="text/plain",
+                status=401
+            )
+    else:
+        stats = stats_tilerequest()
+        instance = TileSource.objects.get(name=source)
+        context_dict = {
+            'source': instance,
+            'source_form': TileSourceForm(instance=instance)
+        }
+        return render_to_response(
+            template,
+            RequestContext(request, context_dict))
+
 
 
 @login_required
@@ -344,6 +509,36 @@ def sources_json(request):
     return HttpResponse(json.dumps(sources),
                         content_type="application/json"
                         )
+
+@login_required
+def services_json(request):
+    now = datetime.datetime.now()
+    dt = now
+    #######
+    stats = stats_tilerequest()
+    services = []
+    #for source in TileSource.objects.all().order_by('name'):
+    #    link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source.name+'.geojson'
+    #    link_proxy = settings.SITEURL+'proxy/?url='+(source.url).replace("{ext}","png")
+    #    sources.append({
+    #        'name': source.name,
+    #        'type': source.type_title(),
+    #        'origin': source.origin.name,
+    #        'url': source.url,
+    #        'requests_all': getValue(stats['by_source'], source.name,0),
+    #        'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
+    #        'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source.name, 0),
+    #        'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source.name, 0),\
+    #        'link_proxy': link_proxy,
+    #        'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy,
+    #        'link_geojson': link_geojson,
+    #        'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
+    #    })
+
+    return HttpResponse(json.dumps(services),
+                        content_type="application/json"
+                        )
+
 
 
 @login_required

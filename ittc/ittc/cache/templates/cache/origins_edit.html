@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+{% load bootstrap_tags %}
+
+{% block extra_head %}
+<style>
+</style>
+<script>
+var now = new Date();
+var today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+var formatDate = function(d)
+{
+  if(d!=undefined)
+  {
+    return d.getFullYear()+"-"+((d.getMonth()<9)?("0"+(d.getMonth()+1)):(d.getMonth()+1))+"-"+((d.getDate()<10)?("0"+d.getDate()):d.getDate());
+  }
+  else
+  {
+    return "";
+  }
+};
+</script>
+<script>
+</script>
+{% endblock %}
+{% block navbar_right %}
+{% endblock %}
+{% block content %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="page-header" style="padding-left:10px;"><h3>{% if origin %}Edit Origin: {{ origin.name }}{% else %}Create New Tile Origin{% endif %}</h3></div>
+   </div>
+  </div>
+  <div class="row">
+    <div id="services" class="col-md-8">
+      <form class="form-horizontal" action="{% if origin %}{% url "origins_edit" origin.name %}{% else %}{% url "origins_new"%}{% endif %}" method="POST" style="padding:40px;">
+        {% csrf_token %}
+        <div class="form-controls">
+          {{ origin_form|as_bootstrap }}
+        </div>
+        <div class="form-actions">
+          {% if origin %}
+            <input type="submit" class="btn btn-primary" value="Save"/>
+          {% else %}
+            <input type="submit" class="btn btn-primary" value="Create"/>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+    <div class="col-md-4">{% include "commands.html" %}</div>
+  </div>
+<script>
+  //////////////////////////////////
+</script>
+{% endblock %}
+{% block footer %}
+{% endblock %}

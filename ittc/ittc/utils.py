@@ -69,6 +69,13 @@ TYPE_CHOICES = [
   (TYPE_WMS, _("WMS"))
 ]
 
+IMAGE_EXTENSION_CHOICES = [
+  ('png', _("png")),
+  ('gif', _("gif")),
+  ('jpg', _("jpg")),
+  ('jpeg', _("jpeg"))
+]
+
 
 #===================================#
 
@@ -395,3 +402,22 @@ def logs_tilerequest(mongo=True):
             logs['logs'].append(out)
 
     return logs
+
+def formatMemorySize(num, original='B', suffix='B'):
+    units = ['','K','M','G','T','P','E','Z']
+    if original!='B':
+        units = units[units.index(original.upper()):]
+    for unit in units:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'YB', suffix)
+
+
+def url_to_pattern(url, extensions=['png','gif','jpg','jpeg']):
+    pattern = url
+    a = ['x','y','z']
+    for i in range(len(a)):
+      pattern = pattern.replace('{'+a[i]+'}','(?P<'+a[i]+'>[^/]+)')
+    pattern = pattern.replace('{ext}','(?P<ext>('+("|".join(extensions))+'))')
+    return pattern

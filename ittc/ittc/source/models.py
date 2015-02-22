@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, TYPE_CHOICES
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, TYPE_CHOICES, IMAGE_EXTENSION_CHOICES
 
 def make_request(url, params, auth=None, data=None, contentType=None):
     """
@@ -70,7 +70,7 @@ class Origin(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=400, help_text=_('Human-readable description of the services provided by this tile origin.'))
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
-    url = models.CharField(max_length=400, help_text=_('Used to generate url for new tilesource.'))
+    url = models.CharField(max_length=400, help_text=_('Used to generate url for new tilesource.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.png.'))
 
     def __unicode__(self):
         return self.name
@@ -122,19 +122,13 @@ class OriginPattern(models.Model):
 
 class TileSource(models.Model):
 
-    #TYPE_CHOICES = [
-    #    (TYPE_TMS, _("TMS")),
-    #    (TYPE_TMS_FLIPPED, _("TMS - Flipped")),
-    #    (TYPE_BING, _("Bing")),
-    #    (TYPE_WMS, _("WMS"))
-    #]
-
     name = models.CharField(max_length=100)
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
-    auto = models.CharField(max_length=5, default="true")
-    origin = models.ForeignKey(Origin,null=True,blank=True,help_text=_('The origin, if there is one.'))
+    auto = models.CharField(max_length=5, default="true", help_text=_('Was the tile source created automatically by the proxy or manually by a user?'))
+    origin = models.ForeignKey(Origin,null=True,blank=True,help_text=_('The Tile Origin, if there is one.'))
+    url = models.CharField(max_length=400)
+    extensions = models.CharField(max_length=400,null=True,blank=True)
     pattern = models.CharField(max_length=400,null=True,blank=True)
-    url = models.CharField(max_length=100)
     extents = models.CharField(max_length=100,blank=True,null=True)
     minZoom = models.IntegerField(default=0,null=True,blank=True)
     maxZoom = models.IntegerField(default=None,null=True,blank=True)

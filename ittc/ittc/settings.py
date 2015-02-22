@@ -53,7 +53,7 @@ INSTALLED_APPS = (
     # Theme
     #"pinax_theme_bootstrap_account",
     "pinax_theme_bootstrap",
-    #'django_forms_bootstrap',
+    'django_forms_bootstrap',
 
     'corsheaders',
     #'leaflet',
@@ -165,7 +165,9 @@ ITTC_SERVER = {
     'cache': {
         'memory': {
             'enabled': True,
-            'size': 1000,
+            'type':'memory',
+            'description': 'Main in-memory cache for tiles.',
+            'size': 1024,
             'minZoom': 0,
             'maxZoom': 16,
             'expiration': 'origin'
@@ -174,15 +176,18 @@ ITTC_SERVER = {
     'heuristic': {
         'down': {
             'enabled': False,
+            'description':'Indirectly requests the 4 tiles beneath the requested tile.',
             'depth': 1,
             'minZoom': 0,
             'maxZoom': 18
         },
         'up': {
-            'enabled': False
+            'enabled': False,
+            'description': 'Indirectly requests all tiles above the requested tile.'
         },
         'nearby': {
             'enabled': True,
+            'description': 'Indirectly requests all neighboring tiles within a given radius.',
             'radius': 2
         }
     }

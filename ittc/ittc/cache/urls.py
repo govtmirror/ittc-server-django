@@ -6,12 +6,21 @@ js_info_dict = {
 }
 
 urlpatterns = patterns('ittc.cache.views',
+    url(r'^info$', 'info', name='info'), 
+
     url(r'^flush$', 'flush', name='flush'),
 
+    url(r'^services$', 'services_list', name='services_list'),
+    url(r'^services/export/services.json$', 'services_json', name='services_json'),
+
     url(r'^sources$', 'sources_list', name='sources_list'),
+    url(r'^sources/new$', 'sources_new', name='sources_new'),
+    url(r'^sources/edit/(?P<source>[^/]+)$', 'sources_edit', name='sources_edit'),
     url(r'^sources/export/sources.json$', 'sources_json', name='sources_json'),
 
     url(r'^origins$', 'origins_list', name='origins_list'),
+    url(r'^origins/new$', 'origins_new', name='origins_new'),
+    url(r'^origins/edit/(?P<origin>[^/]+)$', 'origins_edit', name='origins_edit'),
     url(r'^origins/export/origins.json$', 'origins_json', name='origins_json'),
 
     url(r'^logs/reload$', 'logs_reload', name='logs_reload'),

@@ -28,32 +28,52 @@ var formatDate = function(d)
     
     //$(function(){
     tileApp.controller('SourcesControllerAll', function($scope, $http) {
+      var requests_var = $('#all').data('requests-var');
       $http.get(url_sources)
         .success(function(response)
         {
           $scope.sources = response;
+          for(var i = 0; i < $scope.sources.length; i++)
+          {
+              $scope.sources[i]['requests'] = $scope.sources[i][requests_var];
+          }
         });
     });
     tileApp.controller('SourcesControllerYear', function($scope, $http) {
+      var requests_var = $('#year').data('requests-var');
       $http.get(url_sources)
         .success(function(response)
         {
           $scope.sources = response;
+          for(var i = 0; i < $scope.sources.length; i++)
+          {
+              $scope.sources[i]['requests'] = $scope.sources[i][requests_var];
+          }
         });
     });
     tileApp.controller('SourcesControllerMonth', function($scope, $http) {
+      var requests_var = $('#month').data('requests-var');
       $http.get(url_sources)
         .success(function(response)
         {
           $scope.sources = response;
+          for(var i = 0; i < $scope.sources.length; i++)
+          {
+              $scope.sources[i]['requests'] = $scope.sources[i][requests_var];
+          }
         });
     });
     tileApp.controller('SourcesControllerToday', function($scope, $http) {
+      var requests_var = $('#today').data('requests-var');
       $scope.sDate = formatDate(today);
       $http.get(url_sources)
         .success(function(response)
         {
           $scope.sources = response;
+          for(var i = 0; i < $scope.sources.length; i++)
+          {
+              $scope.sources[i]['requests'] = $scope.sources[i][requests_var];
+          }
         });
     });
     //});
@@ -85,128 +105,37 @@ var formatDate = function(d)
         <li class=""><a href="#month" aria-controls="month" data-toggle="tab"><i class=""></i>Month</a></li>
       </ul>
       <div class="tab-content">
-        <div id="today" class="tab-pane active">
+        <div id="today" class="tab-pane active" data-requests-var="requests_today">
           <div>
-            {% verbatim %}
             <div ng-controller="SourcesControllerToday">
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Origin</th>
-                  <th>Requests</th>
-                  <th>URL</th>
-                  <th>Links</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="source in sources">
-                    <td>{{ source.name }}</td>
-                    <td>{{ source.type }}</td>
-                    <td>{{ source.origin }}</td>
-                    <td style="text-align:center;">{{ source.requests_today }} <a ng-if="source.requests_today &gt; 0" class="btn btn-primary btn-xs" href="/cache/stats/map/source/{{ source.name }}/date/{{ sDate }}">map</a></td>
-                    <td>{{ source.url }}</td>
-                    <th><a href="{{ source.link_proxy }}">proxy</a>, <a href="{{ source.link_id }}">iD</a>, <a href="{{ source.link_geojsonio }}">geojson.io</a></th>
-                  </tr>
-                </tbody>
-              </table>
+              {% include "cache/_sources_table.html" %}
             </div>
-            {% endverbatim %}
           </div>
         </div>
-        <div id="all" class="tab-pane">
+        <div id="all" class="tab-pane" data-requests-var="requests_all">
           <div>
-            {% verbatim %}
-            <div ng-controller="SourcesControllerAll"> 
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Origin</th>
-                  <th>Requests</th>
-                  <th>URL</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="source in sources">
-                    <td>{{ source.name }}</td>
-                    <td>{{ source.type }}</td>
-                    <td>{{ source.origin }}</td>
-                    <td style="text-align:center;">{{ source.requests_all }} <a ng-if="source.requests_all &gt; 0" class="btn btn-primary btn-xs" href="/cache/stats/map/source/{{ source.name }}">map</a></td>
-                    <td>{{ source.url }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div ng-controller="SourcesControllerAll">
+              {% include "cache/_sources_table.html" %}
             </div>
-            {% endverbatim %}
           </div>
         </div>
-        <div id="year" class="tab-pane">
+        <div id="year" class="tab-pane" data-requests-var="requests_year">
           <div>
-            {% verbatim %}
             <div ng-controller="SourcesControllerYear">
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Origin</th>
-                  <th>Requests</th>
-                  <th>URL</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="source in sources">
-                    <td>{{ source.name }}</td>
-                    <td>{{ source.type }}</td>
-                    <td>{{ source.origin }}</td>
-                    <td>{{ source.requests_year }}</td>
-                    <td>{{ source.url }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              {% include "cache/_sources_table.html" %}
             </div>
-            {% endverbatim %}
           </div>
         </div>
-        <div id="month" class="tab-pane">
+        <div id="month" class="tab-pane" data-requests-var="requests_month">
           <div>
-            {% verbatim %}
             <div ng-controller="SourcesControllerMonth">
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Origin</th>
-                  <th>Requests</th>
-                  <th>URL</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="source in sources">
-                    <td>{{ source.name }}</td>
-                    <td>{{ source.type }}</td>
-                    <td>{{ source.origin }}</td>
-                    <td>{{ source.requests_month }}</td>
-                    <td>{{ source.url }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              {% include "cache/_sources_table.html" %}
             </div>
-            {% endverbatim %}
           </div>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <h4>Commands</h4>
-      <div style="margin-bottom:8px;">
-        <a class="btn btn-primary" href="{% url 'sources_list' %}">New Source</a>
-        <a class="btn btn-primary" href="{% url 'origins_list' %}">New Origin</a>
-      </div>
-      <hr>
-      <div style="margin-bottom:8px;"><a class="btn btn-danger" href="{% url 'flush' %}">Flush Cache</a></div>
-      <hr>
-      <div style="margin-bottom:8px;"><a class="btn btn-danger" href="{% url 'stats_reload' %}">Reload Stats</a>
-      <a class="btn btn-danger" href="{% url 'stats_clear' %}">Clear Stats</a></div>
-      <hr>
-      <div style="margin-bottom:8px;"><a class="btn btn-danger" href="{% url 'logs_reload' %}">Reload Logs</a>
-      <a class="btn btn-danger" href="{% url 'logs_clear' %}">Clear Logs</a></div>
+    <div class="col-md-4">{% include "commands.html" %}</div>
   </div>
 <script>
   var source = {% if source %}"{{ source }}"{% else %}undefined{% endif %};
