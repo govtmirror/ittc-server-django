@@ -269,14 +269,16 @@ def getNearbyTiles(ix0, iy0, iz0, ir, size=256, bbox=[-20037508.34,-20037508.34,
 
     return nearbyTiles
 
-def getParentTiles(ix0, iy0, iz0, size=256, bbox=[-20037508.34,-20037508.34,20037508.34,20037508.34]):
+def getParentTiles(ix0, iy0, iz0, depth=-1, size=256, bbox=[-20037508.34,-20037508.34,20037508.34,20037508.34]):
     parentTiles = []
 
     res = resolutions[int(iz0)]
     maxX = getMaxX(res, size, bbox)
     maxY = getMaxY(res, size, bbox)
 
-    for iz1 in range(0, iz0):
+    levels = range(iz0-depth, iz0) if depth != -1 else range(0, iz0)
+    #print levels
+    for iz1 in levels:
         ix1 = int(ix0 / math.pow(2, iz0-iz1))
         iy1 = int(iy0 / math.pow(2, iz0-iz1))
         t = (ix1, iy1, iz1)

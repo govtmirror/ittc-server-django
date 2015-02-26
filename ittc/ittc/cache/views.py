@@ -596,7 +596,11 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
         #print nearbyTiles
 
     if settings.ITTC_SERVER['heuristic']['up']['enabled']:
-        parentTiles = getParentTiles(ix, iy, iz)
+        iDepth = getValue(settings.ITTC_SERVER['heuristic']['up'],'depth')
+        if iDepth:
+            parentTiles = getParentTiles(ix, iy, iz, depth=iDepth)
+        else:
+            parentTiles = getParentTiles(ix, iy, iz)
         #print "Parent Tiles"
         #print parentTiles
 

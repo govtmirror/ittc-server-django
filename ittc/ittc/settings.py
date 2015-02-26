@@ -182,11 +182,12 @@ ITTC_SERVER = {
             'maxZoom': 18
         },
         'up': {
-            'enabled': False,
-            'description': 'Indirectly requests all tiles above the requested tile.'
+            'enabled': True,
+            'description': 'Indirectly requests all tiles above the requested tile.  All tiles within a zoom level of "depth" are indirectly requested.',
+            'depth': 2
         },
         'nearby': {
-            'enabled': True,
+            'enabled': False,
             'description': 'Indirectly requests all neighboring tiles within a given radius.',
             'radius': 2
         }
