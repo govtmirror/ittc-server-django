@@ -58,7 +58,7 @@ def parse_url(url):
 
     return url
 
-class Origin(models.Model):
+class TileOrigin(models.Model):
 
     TYPE_CHOICES = [
         (TYPE_TMS, _("TMS")),
@@ -70,6 +70,7 @@ class Origin(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=400, help_text=_('Human-readable description of the services provided by this tile origin.'))
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
+    multiple = models.BooleanField(default=True, help_text=_('If true, make sure to include {slug} in the url to be replaced by each source.'))
     url = models.CharField(max_length=400, help_text=_('Used to generate url for new tilesource.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.png.'))
 
     def __unicode__(self):
@@ -77,7 +78,7 @@ class Origin(models.Model):
 
     class Meta:
         ordering = ("name","type")
-        verbose_name_plural = _("Origins")
+        verbose_name_plural = _("Tile Origins")
 
 
     def type_title(self):
@@ -86,16 +87,16 @@ class Origin(models.Model):
 
     def match(self, url):
         match = None
-        patterns = OriginPattern.objects.filter(origin__pk=self.pk)
+        patterns = TileOriginPattern.objects.filter(origin__pk=self.pk)
         for pattern in patterns:
             match = pattern.match(url)
             if match:
                 break
         return match
 
-class OriginPattern(models.Model):
+class TileOriginPattern(models.Model):
 
-    origin = models.ForeignKey(Origin,null=True,blank=True,help_text=_('The origin.'))
+    origin = models.ForeignKey(TileOrigin,null=True,blank=True,help_text=_('The origin.'))
     includes = models.CharField(max_length=400,null=True,blank=True)
     excludes = models.CharField(max_length=400,null=True,blank=True)
 
@@ -104,7 +105,7 @@ class OriginPattern(models.Model):
 
     class Meta:
         ordering = ("origin", "includes", "excludes")
-        verbose_name_plural = _("Origin Patterns")
+        verbose_name_plural = _("Tile Origin Patterns")
 
     def match(self,url):
         print "matching includes: "+str(self.includes)
@@ -124,9 +125,9 @@ class TileSource(models.Model):
 
     name = models.CharField(max_length=100)
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
-    auto = models.CharField(max_length=5, default="true", help_text=_('Was the tile source created automatically by the proxy or manually by a user?'))
-    origin = models.ForeignKey(Origin,null=True,blank=True,help_text=_('The Tile Origin, if there is one.'))
-    url = models.CharField(max_length=400)
+    auto = models.BooleanField(default=True, help_text=_('Was the tile source created automatically by the proxy or manually by a user?'))
+    origin = models.ForeignKey(TileOrigin,null=True,blank=True,help_text=_('The Tile Origin, if there is one.'))
+    url = models.CharField(max_length=400, help_text=_('Standard Tile URL.  If applicable, replace {slug} from origin.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.png.'))
     extensions = models.CharField(max_length=400,null=True,blank=True)
     pattern = models.CharField(max_length=400,null=True,blank=True)
     extents = models.CharField(max_length=100,blank=True,null=True)

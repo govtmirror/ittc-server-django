@@ -22,7 +22,7 @@ from ittc.utils import logs_tilerequest, formatMemorySize
 from ittc.stats import stats_tilerequest, clearStats, reloadStats
 from ittc.logs import clearLogs, reloadLogs, logTileRequest
 
-from ittc.source.models import Origin,TileSource
+from ittc.source.models import TileOrigin,TileSource
 from ittc.cache.tasks import taskRequestTile
 from ittc.cache.forms import TileOriginForm, TileSourceForm
 import json
@@ -170,13 +170,13 @@ def stats_dashboard(request, origin=None, source=None, date=None):
     dates = stats['by_date_location'].keys()
     context_dict = {
         'date': date,
-        'origins': Origin.objects.all().order_by('name','type'),
+        'origins': TileOrigin.objects.all().order_by('name','type'),
         'sources': TileSource.objects.all().order_by('name','type'),
         'dates': dates
     }
 
     try:
-        context_dict['origin'] = Origin.objects.get(name=origin)
+        context_dict['origin'] = TileOrigin.objects.get(name=origin)
     except:
         context_dict['origin'] = None
 
@@ -197,13 +197,13 @@ def stats_map(request, origin=None, source=None, date=None):
     #print stats['by_date_location'].keys()
     context_dict = {
         'date': date,
-        'origins': Origin.objects.all().order_by('name','type'),
+        'origins': TileOrigin.objects.all().order_by('name','type'),
         'sources': TileSource.objects.all().order_by('name','type'),
         'dates': dates
     }
 
     try:
-        context_dict['origin'] = Origin.objects.get(name=origin)
+        context_dict['origin'] = TileOrigin.objects.get(name=origin)
     except:
         context_dict['origin'] = None
 
@@ -303,7 +303,7 @@ def info(request):
     })
 
     context_dict = {
-        'origins': Origin.objects.all().order_by('name','type'),
+        'origins': TileOrigin.objects.all().order_by('name','type'),
         'sources': TileSource.objects.all().order_by('name','type'),
         'caches': caches,
         'heuristics': heuristics,
@@ -318,7 +318,7 @@ def info(request):
 def origins_list(request):
     stats = stats_tilerequest()
     context_dict = {
-        'origins': Origin.objects.all().order_by('name','type'),
+        'origins': TileOrigin.objects.all().order_by('name','type'),
     }
     return render_to_response(
         "cache/origins_list.html",
@@ -372,7 +372,7 @@ def origins_new(request, template="cache/origins_edit.html"):
 def origins_edit(request, origin=None, template="cache/origins_edit.html"):
 
     if request.method == "POST":
-        instance = Origin.objects.get(name=origin)
+        instance = TileOrigin.objects.get(name=origin)
         origin_form = TileOriginForm(request.POST,instance=instance)
         origin_form.save()
         ###
@@ -386,7 +386,7 @@ def origins_edit(request, origin=None, template="cache/origins_edit.html"):
 
     else:
         stats = stats_tilerequest()
-        instance = Origin.objects.get(name=origin)
+        instance = TileOrigin.objects.get(name=origin)
         context_dict = {
             'origin': instance,
             'origin_form': TileOriginForm(instance=instance)
@@ -397,7 +397,7 @@ def origins_edit(request, origin=None, template="cache/origins_edit.html"):
 
 
 @login_required
-def sources_new(request, template="cache/sources_edit.html"):
+def sources_new(request, origin=None, template="cache/sources_edit.html"):
 
     if request.method == "POST":
         source_form = TileSourceForm(request.POST)
@@ -412,8 +412,17 @@ def sources_new(request, template="cache/sources_edit.html"):
 
     else:
         stats = stats_tilerequest()
+        source_form = None
+        if origin:
+            origin_object = TileOrigin.objects.get(name=origin)
+            if origin_object.multiple:
+                source_form = TileSourceForm(initial={'origin': origin_object, 'auto': False, 'type': origin_object.type, 'url': origin_object.url, 'extensions': [u'png']})
+            else:
+                source_form = TileSourceForm(initial={'origin': origin_object, 'auto': False, 'type': origin_object.type, 'url': origin_object.url, 'extensions': [u'png']})
+        else:
+            source_form = TileSourceForm()
         context_dict = {
-            'source_form': TileSourceForm()
+            'source_form': source_form
         }
         return render_to_response(
             template,
@@ -460,12 +469,13 @@ def origins_json(request):
     #######
     stats = stats_tilerequest()
     origins = []
-    for origin in Origin.objects.all().order_by('name','type'):
+    for origin in TileOrigin.objects.all().order_by('name','type'):
         link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/origin/'+origin.name+'.geojson'
         origins.append({
             'name': origin.name,
             'description': origin.description,
             'type': origin.type_title(),
+            'multiple': origin.multiple,
             'url': origin.url,
             'requests_all': getValue(stats['by_origin'], origin.name,0),
             'requests_year': getValue(getValue(stats['by_year_origin'],dt.strftime('%Y')),origin.name, 0),

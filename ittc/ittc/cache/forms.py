@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 #from modeltranslation.forms import TranslationModelForm
 
-from ittc.source.models import Origin, TileSource
+from ittc.source.models import TileOrigin, TileSource
 
 from ittc.utils import url_to_pattern, IMAGE_EXTENSION_CHOICES
 
@@ -21,7 +21,7 @@ class TileOriginForm(forms.ModelForm):
         return super(TileOriginForm, self).save(*args, **kwargs)
 
     class Meta():
-        model = Origin
+        model = TileOrigin
         #exclude = ResourceBaseForm.Meta.exclude + (
         #    'content_type',
         #    'object_id',

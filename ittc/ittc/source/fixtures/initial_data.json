@@ -1,17 +1,18 @@
 [
     {
         "pk": 1,
-        "model": "source.origin",
+        "model": "source.tileorigin",
         "fields": {
             "name":"osm_main",
             "description":"Main OpenStreetMap Server",
             "type": 2,
+            "multiple": false,
             "url": "http://c.tile.openstreetmap.org/{z}/{x}/{y}.{ext}"
         }
     },
     {
         "pk": 1,
-        "model": "source.originpattern",
+        "model": "source.tileoriginpattern",
         "fields": {
             "origin": 1,
             "includes": "^http://c.tile.openstreetmap.org/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
@@ -20,7 +21,7 @@
     },
     {
         "pk": 2,
-        "model": "source.origin",
+        "model": "source.tileorigin",
         "fields": {
             "name":"osm_france",
             "description":"OSM France Server.  This server primarily serves out the humanitarian style OSM tiles.",
@@ -30,7 +31,7 @@
     },
     {
         "pk": 2,
-        "model": "source.originpattern",
+        "model": "source.tileoriginpattern",
         "fields": {
             "origin": 2,
             "includes": "^http://c.tile.openstreetmap.fr/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
@@ -39,7 +40,7 @@
     },
     {
         "pk": 3,
-        "model": "source.origin",
+        "model": "source.tileorigin",
         "fields": {
             "name":"bing_aerial",
             "description":"Bing Aerial.  Satellite Imagery.  Allowed to trace for OSM vectors.",
@@ -49,7 +50,7 @@
     },
     {
         "pk": 3,
-        "model": "source.originpattern",
+        "model": "source.tileoriginpattern",
         "fields": {
             "origin": 3,
             "includes": "^http://ecn.t0.tiles.virtualearth.net/tiles/(?P<slug>[^/]+)(?P<z>\\d+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]g=3291&mkt=en-us$",
@@ -58,7 +59,7 @@
     },
     {
         "pk": 4,
-        "model": "source.origin",
+        "model": "source.tileorigin",
         "fields": {
             "name":"mapbox",
             "description":"MapBox.",
@@ -68,7 +69,7 @@
     },
     {
         "pk": 4,
-        "model": "source.originpattern",
+        "model": "source.tileoriginpattern",
         "fields": {
             "origin": 4,
             "includes": "^http://c.tiles.mapbox.com/v4/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw$",
@@ -81,7 +82,7 @@
         "fields": {
             "name": "osm",
             "type": 2,
-            "auto": "false",
+            "auto": false,
             "origin": 1,
             "pattern": "^http://b.tile.openstreetmap.org/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
             "url": "http://b.tile.openstreetmap.org/{z}/{x}/{y}.{ext}"
@@ -93,7 +94,7 @@
         "fields": {
             "name": "osm-humanitarian",
             "type": 2,
-            "auto": "false",
+            "auto": false,
             "origin": 2,
             "pattern": "^http://b.tile.openstreetmap.fr/hot/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
             "url": "http://b.tile.openstreetmap.fr/hot/{z}/{x}/{y}.{ext}"
@@ -105,7 +106,7 @@
         "fields": {
             "name": "Bing Aerial",
             "type": 3,
-            "auto": "false",
+            "auto": false,
             "origin": 3,
             "pattern": "^http://ecn.t0.tiles.virtualearth.net/tiles/a(?P<u>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]g=3291&mkt=en-us$",
             "url": "http://ecn.t0.tiles.virtualearth.net/tiles/a{u}.jpeg?g=3291&mkt=en-us"
@@ -117,7 +118,7 @@
         "fields": {
             "name": "Bing Aerial with Labels",
             "type": 3,
-            "auto": "false",
+            "auto": false,
             "origin": 3,
             "pattern": "^http://ecn.t0.tiles.virtualearth.net/tiles/h(?P<u>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]g=3291&mkt=en-us$",
             "url": "http://ecn.t0.tiles.virtualearth.net/tiles/h{u}.jpeg?g=3291&mkt=en-us"
@@ -129,7 +130,7 @@
         "fields": {
             "name": "LSIB Dark",
             "type": 2,
-            "auto": "false",
+            "auto": false,
             "origin": 4,
             "pattern": "^http://c.tiles.mapbox.com/v4/hiu.lsib-dark/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw$",
             "url": "http://c.tiles.mapbox.com/v4/hiu.lsib-dark/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw"
@@ -141,7 +142,7 @@
         "fields": {
             "name": "LSIB Dark Labelled",
             "type": 2,
-            "auto": "false",
+            "auto": false,
             "origin": 4,
             "pattern": "^http://c.tiles.mapbox.com/v4/hiu.lsib-dark-labelled/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw$",
             "url": "http://c.tiles.mapbox.com/v4/hiu.lsib-dark-labelled/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw"

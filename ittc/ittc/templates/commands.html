@@ -1,4 +1,11 @@
-<h4>Commands</h4>
+{% if origin %}
+<h4>Origin Commands</h4>
+<div style="margin-bottom:8px;">
+  <a class="btn btn-primary" href="{% url 'sources_new_origin' origin %}">New Source From Origin</a>
+</div>
+<hr>
+{% endif %}
+<h4>General Commands</h4>
 <div style="margin-bottom:8px;">
   <a class="btn btn-primary" href="{% url 'services_list' %}">New Service</a>
   <a class="btn btn-primary" href="{% url 'sources_new' %}">New Source</a>

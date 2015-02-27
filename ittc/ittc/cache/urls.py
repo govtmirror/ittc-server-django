@@ -15,6 +15,7 @@ urlpatterns = patterns('ittc.cache.views',
 
     url(r'^sources$', 'sources_list', name='sources_list'),
     url(r'^sources/new$', 'sources_new', name='sources_new'),
+    url(r'^sources/new/origin/(?P<origin>[^/]+)$', 'sources_new', name='sources_new_origin'),
     url(r'^sources/edit/(?P<source>[^/]+)$', 'sources_edit', name='sources_edit'),
     url(r'^sources/export/sources.json$', 'sources_json', name='sources_json'),
 
