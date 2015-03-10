@@ -1,3 +1,10 @@
+{% if source %}
+<h4>Source Commands</h4>
+<div style="margin-bottom:8px;">
+  <a class="btn btn-primary" href="{% url 'services_new_source' origin %}">New Service From Source</a>
+</div>
+<hr>
+{% endif %}
 {% if origin %}
 <h4>Origin Commands</h4>
 <div style="margin-bottom:8px;">
@@ -7,7 +14,7 @@
 {% endif %}
 <h4>General Commands</h4>
 <div style="margin-bottom:8px;">
-  <a class="btn btn-primary" href="{% url 'services_list' %}">New Service</a>
+  <a class="btn btn-primary" href="{% url 'services_new' %}">New Service</a>
   <a class="btn btn-primary" href="{% url 'sources_new' %}">New Source</a>
   <a class="btn btn-primary" href="{% url 'origins_new' %}">New Origin</a>
 </div>

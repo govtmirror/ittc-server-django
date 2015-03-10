@@ -30,8 +30,15 @@ def make_request(url, params, auth=None, data=None, contentType=None):
     """
     Prepares a request from a url, params, and optionally authentication.
     """
+    #print 'make_request'
+    
     if params:
-        url = url + urllib.urlencode(params)
+        url = url + '?' + urllib.urlencode(params)
+
+    #print url
+    #print data
+    #print auth
+    #print contentType
 
     req = urllib2.Request(url, data=data)
 
@@ -43,6 +50,7 @@ def make_request(url, params, auth=None, data=None, contentType=None):
     else:
         if data:
             req.add_header('Content-type', 'text/xml')
+
 
     return urllib2.urlopen(req)
 
@@ -72,6 +80,7 @@ class TileOrigin(models.Model):
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
     multiple = models.BooleanField(default=True, help_text=_('If true, make sure to include {slug} in the url to be replaced by each source.'))
     url = models.CharField(max_length=400, help_text=_('Used to generate url for new tilesource.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.png.'))
+    auth= models.CharField(max_length=400, help_text=_('Authentication or access token.  Dynamically replaced in downstream sources by replacing {auth}.'))
 
     def __unicode__(self):
         return self.name
@@ -108,16 +117,16 @@ class TileOriginPattern(models.Model):
         verbose_name_plural = _("Tile Origin Patterns")
 
     def match(self,url):
-        print "matching includes: "+str(self.includes)
-        print "matching excludes: "+str(self.excludes)
-        print "matching url: "+str(url)
+        #print "matching includes: "+str(self.includes)
+        #print "matching excludes: "+str(self.excludes)
+        #print "matching url: "+str(url)
         match = None
         if self.includes:
             match = re.match(self.includes, url, re.M|re.I)
         if self.excludes:
             if re.match(self.excludes, url, re.M|re.I):
                 match = None
-        print "match: "+str(match)
+        #print "match: "+str(match)
         return match
 
 
@@ -127,7 +136,7 @@ class TileSource(models.Model):
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
     auto = models.BooleanField(default=True, help_text=_('Was the tile source created automatically by the proxy or manually by a user?'))
     origin = models.ForeignKey(TileOrigin,null=True,blank=True,help_text=_('The Tile Origin, if there is one.'))
-    url = models.CharField(max_length=400, help_text=_('Standard Tile URL.  If applicable, replace {slug} from origin.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.png.'))
+    url = models.CharField(max_length=400, help_text=_('Standard Tile URL.  If applicable, replace {slug} from origin.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.png.  If url includes {auth}, it is dynamically replaced with the relevant auth token stored with origin.'))
     extensions = models.CharField(max_length=400,null=True,blank=True)
     pattern = models.CharField(max_length=400,null=True,blank=True)
     extents = models.CharField(max_length=100,blank=True,null=True)
@@ -153,13 +162,22 @@ class TileSource(models.Model):
         return match
 
     def requestTile(self,x,y,z,ext,verbose):
-        url = self.url.format(x=x,y=y,z=z,ext=ext)
+        if self.origin.auth:
+            url = self.url.format(x=x,y=y,z=z,ext=ext,auth=self.origin.auth)
+        else:
+            url = self.url.format(x=x,y=y,z=z,ext=ext)
         contentType = "image/png"
+        #contentType = "text/html"
         
         if verbose:
             print "Requesting tile from "+url
 
-        request = make_request(url=url, params=None, auth=None, data=None, contentType=contentType)
+        #print "URL2: "+url
+
+        params = None
+        #params = {'access_token': 'pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw'}
+
+        request = make_request(url=url, params=params, auth=None, data=None, contentType=contentType)
         
         if request.getcode() != 200:
             raise Exception("Could not fetch tile from source with url {url}: Status Code {status}".format(url=url,status=request.getcode()))

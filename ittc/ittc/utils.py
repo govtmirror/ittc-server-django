@@ -19,6 +19,8 @@ from django.http import Http404
 
 from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
+from urlparse import urlparse
+
 from pymongo import MongoClient
 
 from .stats import buildStats, incStats
@@ -230,10 +232,10 @@ def getYCoordFromQuadKey(u):
 def getYValues(tileservice, tilesource, ix, iy, iz):
 
     if tileservice:
-        if tileservice.serviceType == TYPE_TMS_FLIPPED or tileservice.serviceType == TYPE_BING:
+        if tileservice.type == TYPE_TMS_FLIPPED or tileservice.type == TYPE_BING:
             iyf = iy
             iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
-        elif tileservice.serviceType == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
+        elif tileservice.type == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
             ify = flip_y(ix,iy,iz,256,webmercator_bbox)
     else:
         if tilesource.type == TYPE_TMS_FLIPPED:
@@ -417,9 +419,16 @@ def formatMemorySize(num, original='B', suffix='B'):
 
 
 def url_to_pattern(url, extensions=['png','gif','jpg','jpeg']):
-    pattern = url
+    o = urlparse(url)
+    pattern = o.scheme + "://" + o.netloc + o.path
+    # Pattern = url without querystring
     a = ['x','y','z']
     for i in range(len(a)):
       pattern = pattern.replace('{'+a[i]+'}','(?P<'+a[i]+'>[^/]+)')
     pattern = pattern.replace('{ext}','(?P<ext>('+("|".join(extensions))+'))')
     return pattern
+
+
+def service_to_url(base, name, extensions=['png','gif','jpg','jpeg']):
+    url = base + 'cache/tms/'+name+'/{z}/{x}/{y}.png'
+    return url

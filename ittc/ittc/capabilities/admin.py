@@ -1,5 +1,6 @@
 from django.contrib import admin
-from ittc.capabilities.models import Server, Extent, Layer, Collection, CollectionMember, TileService, TileServiceType, ImageType
+#from ittc.capabilities.models import Server, Extent, Layer, Collection, CollectionMember, TileService, TileServiceType, ImageType
+from ittc.capabilities.models import Server, Extent, Layer, Collection, CollectionMember, TileServiceType, ImageType
 
 class ExtentAdmin(admin.ModelAdmin):
     model = Layer
@@ -26,10 +27,10 @@ class CollectionMemberAdmin(admin.ModelAdmin):
 #    list_display_links = ('id','name',)
 #    list_display = ('id','name','serviceType','imageType')
 
-class TileServiceAdmin(admin.ModelAdmin):
-    model = Layer
-    list_display_links = ('id','name',)
-    list_display = ('id','name','slug','serviceType','srs')
+#class TileServiceAdmin(admin.ModelAdmin):
+#    model = Layer
+#    list_display_links = ('id','name',)
+#    list_display = ('id','name','slug','serviceType','srs')
 
 
 class TileServiceTypeAdmin(admin.ModelAdmin):
@@ -50,7 +51,7 @@ class ServerAdmin(admin.ModelAdmin):
 admin.site.register(Layer, LayerAdmin)
 admin.site.register(Collection,CollectionAdmin)
 admin.site.register(CollectionMember,CollectionMemberAdmin)
-admin.site.register(TileService, TileServiceAdmin)
+#admin.site.register(TileService, TileServiceAdmin)
 admin.site.register(TileServiceType, TileServiceTypeAdmin)
 admin.site.register(ImageType, ImageTypeAdmin)
 admin.site.register(Server, ServerAdmin)

@@ -20,7 +20,7 @@ from django.core.cache import caches, get_cache
 import StringIO
 from PIL import Image, ImageEnhance
 
-from ittc.capabilities.models import TileService
+from ittc.cache.models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue
 from ittc.source.models import TileOrigin, TileOriginPattern, TileSource
 from ittc.cache.views import requestTile

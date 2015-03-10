@@ -64,7 +64,8 @@
             "name":"mapbox",
             "description":"MapBox.",
             "type": 2,
-            "url": "http://c.tiles.mapbox.com/v4/{slug}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw"
+            "url": "http://c.tiles.mapbox.com/v4/{slug}/{z}/{x}/{y}.png?access_token={auth}",
+            "auth": "pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw"
         }
     },
     {
@@ -72,7 +73,7 @@
         "model": "source.tileoriginpattern",
         "fields": {
             "origin": 4,
-            "includes": "^http://c.tiles.mapbox.com/v4/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw$",
+            "includes": "^http://c.tiles.mapbox.com/v4/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
             "excludes": ""
         }
     },
@@ -132,8 +133,8 @@
             "type": 2,
             "auto": false,
             "origin": 4,
-            "pattern": "^http://c.tiles.mapbox.com/v4/hiu.lsib-dark/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw$",
-            "url": "http://c.tiles.mapbox.com/v4/hiu.lsib-dark/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw"
+            "pattern": "^http://c.tiles.mapbox.com/v4/hiu.lsib-dark/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
+            "url": "http://c.tiles.mapbox.com/v4/hiu.lsib-dark/{z}/{x}/{y}.png"
         }
     },
     {
@@ -144,8 +145,8 @@
             "type": 2,
             "auto": false,
             "origin": 4,
-            "pattern": "^http://c.tiles.mapbox.com/v4/hiu.lsib-dark-labelled/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw$",
-            "url": "http://c.tiles.mapbox.com/v4/hiu.lsib-dark-labelled/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw"
+            "pattern": "^http://c.tiles.mapbox.com/v4/hiu.lsib-dark-labelled/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
+            "url": "http://c.tiles.mapbox.com/v4/hiu.lsib-dark-labelled/{z}/{x}/{y}.png"
         }
     }
 ]

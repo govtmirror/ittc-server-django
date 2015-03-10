@@ -22,11 +22,7 @@ var formatDate = function(d)
 <script>
   $(function(){
     var tileApp = angular.module('tileAcceleratorApp', []);
-    //$("body").attr('ng-app','tileAcceleratorApp');
-    //$('#services').attr('ng-controller', 'ServicesController');
-    //var tileApp = angular.module('tileAcceleratorApp', []);
-    
-    //$(function(){
+
     tileApp.controller('ServicesControllerAll', function($scope, $http) {
       $http.get(url_services)
         .success(function(response)
@@ -56,14 +52,8 @@ var formatDate = function(d)
           $scope.services = response;
         });
     });
-    //});
 
     angular.bootstrap(document, ['tileAcceleratorApp']);
-
-    //$('#services .nav-tabs a').click(function (e) {
-    //  e.preventDefault();
-    //  $(this).tab('show');
-    //})
   });
 </script>
 {% endblock %}
@@ -84,76 +74,32 @@ var formatDate = function(d)
         <li class=""><a href="#month" aria-controls="month" data-toggle="tab"><i class=""></i>Month</a></li>
       </ul>
       <div class="tab-content">
-        <div id="today" class="tab-pane active">
+        <div id="today" class="tab-pane active" data-requests-var="requests_today">
           <div>
-            {% verbatim %}
             <div ng-controller="ServicesControllerToday">
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <th>Name</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="service in services">
-                    <td>{{ service.name }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              {% include "cache/_services_table.html" %}
             </div>
-            {% endverbatim %}
           </div>
         </div>
-        <div id="all" class="tab-pane">
+        <div id="all" class="tab-pane" data-requests-var="requests_all">
           <div>
-            {% verbatim %}
-            <div ng-controller="ServicesControllerAll"> 
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <th>Name</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="service in services">
-                    <td>{{ service.name }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div ng-controller="ServicesControllerAll">
+              {% include "cache/_services_table.html" %}
             </div>
-            {% endverbatim %}
           </div>
         </div>
-        <div id="year" class="tab-pane">
+        <div id="year" class="tab-pane" data-requests-var="requests_year">
           <div>
-            {% verbatim %}
             <div ng-controller="ServicesControllerYear">
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <th>Name</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="service in services">
-                    <td>{{ service.name }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              {% include "cache/_services_table.html" %}
             </div>
-            {% endverbatim %}
           </div>
         </div>
-        <div id="month" class="tab-pane">
+        <div id="month" class="tab-pane" data-requests-var="requests_month">
           <div>
-            {% verbatim %}
             <div ng-controller="ServicesControllerMonth">
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <th>Name</th>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="service in services">
-                    <td>{{ service.name }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              {% include "cache/_services_table.html" %}
             </div>
-            {% endverbatim %}
           </div>
         </div>
       </div>

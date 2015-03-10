@@ -16,7 +16,7 @@ import StringIO
 from PIL import Image, ImageEnhance
 import umemcache
 
-from ittc.capabilities.models import TileService
+from .models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue
 from ittc.utils import logs_tilerequest, formatMemorySize
 from ittc.stats import stats_tilerequest, clearStats, reloadStats
@@ -24,7 +24,7 @@ from ittc.logs import clearLogs, reloadLogs, logTileRequest
 
 from ittc.source.models import TileOrigin,TileSource
 from ittc.cache.tasks import taskRequestTile
-from ittc.cache.forms import TileOriginForm, TileSourceForm
+from ittc.cache.forms import TileOriginForm, TileSourceForm, TileServiceForm
 import json
 #from ittc.cache.models import Tile
 from bson.json_util import dumps
@@ -41,7 +41,7 @@ def capabilities_all_xml(request, template='capabilities/capabilities_1_0_0.xml'
     return capabilities_all(request,template,'xml')
 
 def capabilities_all(request, template=None, extension=None):
-    ctx = {'tileservices': TileService.objects.filter(serviceType__in=[TYPE_TMS,TYPE_TMS_FLIPPED]),'title':'All Tile Services', 'SITEURL': settings.SITEURL,}
+    ctx = {'tileservices': TileService.objects.filter(type__in=[TYPE_TMS,TYPE_TMS_FLIPPED]),'title':'All Tile Services', 'SITEURL': settings.SITEURL,}
     if extension=="xml":
         if template is None:
             template = 'capabilities/capabilities_1_0_0.xml'
@@ -461,6 +461,68 @@ def sources_edit(request, source=None, template="cache/sources_edit.html"):
             RequestContext(request, context_dict))
 
 
+@login_required
+def services_new(request, source=None, template="cache/services_edit.html"):
+
+    if request.method == "POST":
+        service_form = TileServiceForm(request.POST)
+        if service_form.is_valid():
+            service_form.save()
+            ###
+            stats = stats_tilerequest()
+            context_dict = {
+                'service_form': TileServiceForm()
+            }
+            return HttpResponseRedirect(reverse('services_list',args=()))
+
+    else:
+        stats = stats_tilerequest()
+        service_form = None
+        if source:
+            source_object = TileSource.objects.get(name=source)
+            source_form = TileServiceForm(initial={'source': source_object, 'type': origin_object.type, 'url': '/cache/tms/', 'extensions': [u'png']})
+        else:
+            service_form = TileServiceForm()
+        context_dict = {
+            'service_form': service_form
+        }
+        return render_to_response(
+            template,
+            RequestContext(request, context_dict))
+
+
+@login_required
+def services_edit(request, servicee=None, template="cache/services_edit.html"):
+
+    if request.method == "POST":
+        instance = TileService.objects.get(name=service)
+        service_form = TileServiceForm(request.POST,instance=instance)
+        if service_form.is_valid():
+            service_form.save()
+            ###
+            stats = stats_tilerequest()
+            context_dict = {
+                'service': instance,
+                'service_form': TileServiceForm(instance=instance)
+            }
+            return HttpResponseRedirect(reverse('services_list',args=()))
+        else:
+            return HttpResponse(
+                'An unknown error has occured.',
+                mimetype="text/plain",
+                status=401
+            )
+    else:
+        stats = stats_tilerequest()
+        instance = TileService.objects.get(name=service)
+        context_dict = {
+            'service': instance,
+            'service_form': TileServiceForm(instance=instance)
+        }
+        return render_to_response(
+            template,
+            RequestContext(request, context_dict))
+
 
 @login_required
 def origins_json(request):
@@ -527,14 +589,14 @@ def services_json(request):
     #######
     stats = stats_tilerequest()
     services = []
-    #for source in TileSource.objects.all().order_by('name'):
+    for service in TileService.objects.all().order_by('name'):
     #    link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source.name+'.geojson'
     #    link_proxy = settings.SITEURL+'proxy/?url='+(source.url).replace("{ext}","png")
-    #    sources.append({
-    #        'name': source.name,
-    #        'type': source.type_title(),
-    #        'origin': source.origin.name,
-    #        'url': source.url,
+        services.append({
+            'name': service.name,
+            'type': service.type_title(),
+            'source': service.source.name,
+            'url': service.url,
     #        'requests_all': getValue(stats['by_source'], source.name,0),
     #        'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
     #        'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source.name, 0),
@@ -543,7 +605,7 @@ def services_json(request):
     #        'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy,
     #        'link_geojson': link_geojson,
     #        'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
-    #    })
+        })
 
     return HttpResponse(json.dumps(services),
                         content_type="application/json"
@@ -553,10 +615,10 @@ def services_json(request):
 
 @login_required
 def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
-    tileservice = get_object_or_404(TileService, slug=slug)
+    tileservice = get_object_or_404(TileService, name=slug)
 
     if tileservice:
-        tilesource = tileservice.tileSource
+        tilesource = tileservice.source
         if tilesource:
             return requestTile(request,tileservice=tileservice,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
         else:

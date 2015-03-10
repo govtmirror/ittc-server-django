@@ -11,7 +11,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 
-from ittc.capabilities.models import Layer, Collection, CollectionMember, TileService, TileServiceType
+from ittc.capabilities.models import Layer, Collection, CollectionMember, TileServiceType
+from ittc.cache.models import TileService
 
 def index(request, template='capabilities/index.html'):
     ctx = {'title':'Index','collections':Collection.objects.all(),'layers':Layer.objects.all(),'tileservices': TileService.objects.all()}

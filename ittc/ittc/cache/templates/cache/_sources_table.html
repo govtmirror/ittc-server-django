@@ -12,7 +12,7 @@
     <tr ng-repeat="source in sources">
       <td><a href="/cache/sources/edit/{{ source.name }}">{{ source.name }}</a></td>
       <td>{{ source.type }}</td>
-      <td>{{ source.origin }}</td>
+      <td><a href="/cache/origins/edit/{{ source.origin }}">{{ source.origin }}</a></td>
       <td style="text-align:center;">{{ source.requests }} <a ng-if="source.requests &gt; 0" class="btn btn-primary btn-xs" href="/cache/stats/map/source/{{ source.name }}/date/{{ sDate }}">map</a></td>
       <td>{{ source.url }}</td>
       <td><a href="{{ source.link_proxy }}">proxy</a>, <a href="{{ source.link_id }}">iD</a>, <a href="{{ source.link_geojsonio }}">geojson.io</a></td>
