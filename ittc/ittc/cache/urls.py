@@ -13,7 +13,7 @@ urlpatterns = patterns('ittc.cache.views',
     url(r'^services$', 'services_list', name='services_list'),
     url(r'^services/new$', 'services_new', name='services_new'),
     url(r'^services/new/source/(?P<source>[^/]+)$', 'services_new', name='services_new_source'),
-    url(r'^services/edit/(?P<source>[^/]+)$', 'services_edit', name='services_edit'),
+    url(r'^services/edit/(?P<service>[^/]+)$', 'services_edit', name='services_edit'),
     url(r'^services/export/services.json$', 'services_json', name='services_json'),
 
     url(r'^sources$', 'sources_list', name='sources_list'),

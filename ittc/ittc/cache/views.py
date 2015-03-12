@@ -350,12 +350,13 @@ def origins_new(request, template="cache/origins_edit.html"):
 
     if request.method == "POST":
         origin_form = TileOriginForm(request.POST)
-        origin_form.save()
-        ###
-        stats = stats_tilerequest()
-        context_dict = {
-            'origin_form': TileOriginForm()
-        }
+        if origin_form.is_valid():
+            origin_form.save()
+            ###
+            stats = stats_tilerequest()
+            context_dict = {
+                'origin_form': TileOriginForm()
+            }
 
         return HttpResponseRedirect(reverse('origins_list',args=()))
     else:
@@ -374,15 +375,16 @@ def origins_edit(request, origin=None, template="cache/origins_edit.html"):
     if request.method == "POST":
         instance = TileOrigin.objects.get(name=origin)
         origin_form = TileOriginForm(request.POST,instance=instance)
-        origin_form.save()
-        ###
-        stats = stats_tilerequest()
-        context_dict = {
-            'origin': instance,
-            'origin_form': TileOriginForm(instance=instance)
-        }
+        if origin_form.is_valid():
+            origin_form.save()
+            ###
+            stats = stats_tilerequest()
+            context_dict = {
+                'origin': instance,
+                'origin_form': TileOriginForm(instance=instance)
+            }
 
-        return HttpResponseRedirect(reverse('origins_list',args=()))
+            return HttpResponseRedirect(reverse('origins_list',args=()))
 
     else:
         stats = stats_tilerequest()
@@ -480,7 +482,7 @@ def services_new(request, source=None, template="cache/services_edit.html"):
         service_form = None
         if source:
             source_object = TileSource.objects.get(name=source)
-            source_form = TileServiceForm(initial={'source': source_object, 'type': origin_object.type, 'url': '/cache/tms/', 'extensions': [u'png']})
+            service_form = TileServiceForm(initial={'source': source_object, 'type': source_object.type, 'url': '/cache/tms/', 'extensions': [u'png']})
         else:
             service_form = TileServiceForm()
         context_dict = {
@@ -492,7 +494,7 @@ def services_new(request, source=None, template="cache/services_edit.html"):
 
 
 @login_required
-def services_edit(request, servicee=None, template="cache/services_edit.html"):
+def services_edit(request, service=None, template="cache/services_edit.html"):
 
     if request.method == "POST":
         instance = TileService.objects.get(name=service)
@@ -538,6 +540,7 @@ def origins_json(request):
             'description': origin.description,
             'type': origin.type_title(),
             'multiple': origin.multiple,
+            'auto': origin.auto,
             'url': origin.url,
             'requests_all': getValue(stats['by_origin'], origin.name,0),
             'requests_year': getValue(getValue(stats['by_year_origin'],dt.strftime('%Y')),origin.name, 0),

@@ -236,13 +236,13 @@ def getYValues(tileservice, tilesource, ix, iy, iz):
             iyf = iy
             iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
         elif tileservice.type == TYPE_TMS and tilesource.type == TYPE_TMS_FLIPPED:
-            ify = flip_y(ix,iy,iz,256,webmercator_bbox)
+            iyf = flip_y(ix,iy,iz,256,webmercator_bbox)
     else:
         if tilesource.type == TYPE_TMS_FLIPPED:
             iyf = iy
             iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
         elif tilesource.type == TYPE_TMS:
-            ify = flip_y(ix,iy,iz,256,webmercator_bbox)
+            iyf = flip_y(ix,iy,iz,256,webmercator_bbox)
     
     return iy, iyf
 
@@ -422,9 +422,11 @@ def url_to_pattern(url, extensions=['png','gif','jpg','jpeg']):
     o = urlparse(url)
     pattern = o.scheme + "://" + o.netloc + o.path
     # Pattern = url without querystring
+    pattern = pattern.replace('{slug}','(?P<slug>[^/]+)')
     a = ['x','y','z']
     for i in range(len(a)):
-      pattern = pattern.replace('{'+a[i]+'}','(?P<'+a[i]+'>[^/]+)')
+      #pattern = pattern.replace('{'+a[i]+'}','(?P<'+a[i]+'>[^/]+)')
+      pattern = pattern.replace('{'+a[i]+'}','(?P<'+a[i]+'>[\\d]+)')
     pattern = pattern.replace('{ext}','(?P<ext>('+("|".join(extensions))+'))')
     return pattern
 

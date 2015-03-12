@@ -6,6 +6,7 @@
     <!--<th>Description</th>-->
     <th>Requests</th>
     <th>Multiple</th>
+    <th>Auto</th>
     <th>URL</th>
     <th>Links</th>
   </thead>
@@ -16,6 +17,7 @@
       <!--<td>{{ origin.description }}</td>-->
       <td style="text-align:center;">{{ origin.requests }} <a ng-if="origin.requests_today &gt; 0" class="btn btn-primary btn-xs" href="/cache/stats/map/origin/{{ origin.name }}/date/{{ sDate }}">map</a></td>
       <td>{{ origin.multiple }}</td>
+      <td>{{ origin.auto }}</td>
       <td>{{ origin.url }}</td>
       <td><a href="{{ source.link_geojsonio }}">geojson.io</a></td>
     </tr>

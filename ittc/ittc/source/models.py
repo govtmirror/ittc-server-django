@@ -79,8 +79,11 @@ class TileOrigin(models.Model):
     description = models.CharField(max_length=400, help_text=_('Human-readable description of the services provided by this tile origin.'))
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
     multiple = models.BooleanField(default=True, help_text=_('If true, make sure to include {slug} in the url to be replaced by each source.'))
+    auto = models.BooleanField(default=True, help_text=_('Should the proxy automatically create tile sources for this origin?'))
     url = models.CharField(max_length=400, help_text=_('Used to generate url for new tilesource.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.png.'))
-    auth= models.CharField(max_length=400, help_text=_('Authentication or access token.  Dynamically replaced in downstream sources by replacing {auth}.'))
+    extensions = models.CharField(max_length=400,null=True,blank=True)
+    pattern = models.CharField(max_length=400,null=True,blank=True)
+    auth= models.CharField(max_length=400, blank=True, null=True, help_text=_('Authentication or access token.  Dynamically replaced in downstream sources by replacing {auth}.'))
 
     def __unicode__(self):
         return self.name
@@ -96,11 +99,17 @@ class TileOrigin(models.Model):
 
     def match(self, url):
         match = None
-        patterns = TileOriginPattern.objects.filter(origin__pk=self.pk)
-        for pattern in patterns:
-            match = pattern.match(url)
-            if match:
-                break
+
+        # If matches primary pattern, then check secondary patterns/filters.
+        if self.pattern:
+            match = re.match(self.pattern, url, re.M|re.I)
+
+            #patterns = TileOriginPattern.objects.filter(origin__pk=self.pk)
+            #for pattern in patterns:
+            #    match = pattern.match(url)
+            #    if match:
+            #        break
+
         return match
 
 class TileOriginPattern(models.Model):
@@ -136,7 +145,7 @@ class TileSource(models.Model):
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
     auto = models.BooleanField(default=True, help_text=_('Was the tile source created automatically by the proxy or manually by a user?'))
     origin = models.ForeignKey(TileOrigin,null=True,blank=True,help_text=_('The Tile Origin, if there is one.'))
-    url = models.CharField(max_length=400, help_text=_('Standard Tile URL.  If applicable, replace {slug} from origin.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.png.  If url includes {auth}, it is dynamically replaced with the relevant auth token stored with origin.'))
+    url = models.CharField(max_length=400, help_text=_('Standard Tile URL.  If applicable, replace {slug} from origin.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.{ext}.  If url includes {auth}, it is dynamically replaced with the relevant auth token stored with origin.'))
     extensions = models.CharField(max_length=400,null=True,blank=True)
     pattern = models.CharField(max_length=400,null=True,blank=True)
     extents = models.CharField(max_length=100,blank=True,null=True)

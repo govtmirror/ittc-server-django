@@ -21,7 +21,7 @@ import StringIO
 from PIL import Image, ImageEnhance
 
 from ittc.cache.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue, url_to_pattern
 from ittc.source.models import TileOrigin, TileOriginPattern, TileSource
 from ittc.cache.views import requestTile
 
@@ -68,6 +68,8 @@ def proxy(request):
     print "Raw URL: "+ raw_url
     match_regex = None
     match_tilesource = None
+
+    # Try to match against existing tile sources
     tilesources = TileSource.objects.exclude(pattern__isnull=True).exclude(pattern__exact='')
     for tilesource in tilesources:
         match = tilesource.match(raw_url)
@@ -78,12 +80,36 @@ def proxy(request):
 
     if match_tilesource and match_regex:
         return proxy_tilesource(request, match_tilesource, match_regex)
-    else:
-        return HttpResponse('No matching tilesource found.',RequestContext(request, {}), status=404)
+    #else:
+    #    return HttpResponse('No matching tilesource found.',RequestContext(request, {}), status=404)
 
-    #origins = Origin.objects.all()
-    #for origin in origins:
-    #    match = origin.match(raw_url)
+    # Try to match against existing origins that can automatically create tile sources (auto=true)
+    match_tileorigin = None
+    tileorigins = TileOrigin.objects.exclude(pattern__isnull=True).exclude(pattern__exact='').filter(auto=True)
+    for tileorigin in tileorigins:
+        match = tileorigin.match(raw_url)
+        if match:
+            print "Matched against TileOrigin", tileorigin
+            match_regex = match
+            match_tileorigin = tileorigin
+            break
+
+    if match_tileorigin and match_regex:
+        to = match_tileorigin
+        if to.multiple:
+            slug = getRegexValue(match_regex, 'slug')
+            ts_url = to.url.replace('{slug}', slug)
+            ts_pattern = url_to_pattern(ts_url, extensions=to.extensions)
+            ts = TileSource(auto=True,url=ts_url,pattern=ts_pattern,name=slug,type=to.type,extensions=to.extensions,origin=to)
+            ts.save()
+            return proxy_tilesource(request, ts, match_regex)
+        else:
+            ts = TileSource(auto=True,url=to.url,pattern=to.pattern,name=to.name,type=to.type,extensions=to.extensions)
+            ts.save()
+            return proxy_tilesource(request, ts, match_regex)
+    else:
+        return HttpResponse('No matching tile origin or tile source found.',RequestContext(request, {}), status=404)
+
     #return None 
 
 

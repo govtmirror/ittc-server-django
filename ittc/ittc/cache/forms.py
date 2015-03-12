@@ -16,21 +16,33 @@ class TileOriginForm(forms.ModelForm):
     #url = forms.CharField(max_length=400, help_text=_('Used to generate url for new tilesource.'))
     #type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
 
+    extensions = forms.MultipleChoiceField(required=False,widget=forms.CheckboxSelectMultiple, choices=IMAGE_EXTENSION_CHOICES, help_text = _("Select which extensions are accepted for the {ext} parameter in the url.  If none are selected, then all that the source supports are allowed."))
+
     def __init__(self, *args, **kwargs):
         super(TileOriginForm, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        if self.cleaned_data['extensions']:
+            extensions = self.cleaned_data['extensions']
+            self.instance.pattern = url_to_pattern(self.cleaned_data['url'], extensions=extensions)
+        else:
+            self.instance.pattern = url_to_pattern(self.cleaned_data['url'])
         return super(TileOriginForm, self).save(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super(TileOriginForm, self).clean()
+
+        return cleaned_data
 
     class Meta():
         model = TileOrigin
-        #exclude = ResourceBaseForm.Meta.exclude + (
+        exclude = (
         #    'content_type',
         #    'object_id',
         #    'doc_file',
         #    'extension',
         #    'doc_type',
-        #    'doc_url')
+            'pattern',)
 
 class TileSourceForm(forms.ModelForm):
 
@@ -53,11 +65,7 @@ class TileSourceForm(forms.ModelForm):
         return super(TileSourceForm, self).save(*args, **kwargs)
 
     def clean(self):
-        """
-        Ensures the doc_file or the doc_url field is populated.
-        """
         cleaned_data = super(TileSourceForm, self).clean()
-
         return cleaned_data
 
     class Meta():
@@ -89,11 +97,7 @@ class TileServiceForm(forms.ModelForm):
         return super(TileServiceForm, self).save(*args, **kwargs)
 
     def clean(self):
-        """
-        Ensures the doc_file or the doc_url field is populated.
-        """
         cleaned_data = super(TileServiceForm, self).clean()
-
         return cleaned_data
 
     class Meta():
