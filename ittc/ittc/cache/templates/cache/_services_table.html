@@ -9,6 +9,7 @@
     <th>Links</th>
   </thead>
   <tbody>
+    <tr ng-if="services.length == 0"><td style="color:lightCoral;" colspan=6><div>No services yet.</div></td></tr>
     <tr ng-repeat="service in services">
       <td><a href="/cache/services/edit/{{ service.name }}">{{ service.name }}</a></td>
       <td>{{ service.type }}</td>

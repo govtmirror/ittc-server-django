@@ -11,6 +11,7 @@
     <th>Links</th>
   </thead>
   <tbody>
+    <tr ng-if="origins.length == 0"><td style="color:lightCoral;" colspan=7><div>No origins yet.</div></td></tr>
     <tr ng-repeat="origin in origins">
       <td><a href="/cache/origins/edit/{{ origin.name }}">{{ origin.name }}</a></td>
       <td>{{ origin.type }}</td>

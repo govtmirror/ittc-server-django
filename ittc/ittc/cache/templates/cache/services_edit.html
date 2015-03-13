@@ -41,6 +41,7 @@ var formatDate = function(d)
         <div class="form-actions">
           {% if service %}
             <input type="submit" class="btn btn-primary" value="Save"/>
+            <a href="{% url "services_delete" service.name %}" class="btn btn-danger">Delete</a>
           {% else %}
             <input type="submit" class="btn btn-primary" value="Create"/>
           {% endif %}

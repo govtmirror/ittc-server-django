@@ -142,16 +142,18 @@ class TileOriginPattern(models.Model):
 class TileSource(models.Model):
 
     name = models.CharField(max_length=100)
+    description = models.CharField(max_length=400, null=True, blank=True, help_text=_('Human-readable description of this tile source.'))
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
     auto = models.BooleanField(default=True, help_text=_('Was the tile source created automatically by the proxy or manually by a user?'))
     origin = models.ForeignKey(TileOrigin,null=True,blank=True,help_text=_('The Tile Origin, if there is one.'))
     url = models.CharField(max_length=400, help_text=_('Standard Tile URL.  If applicable, replace {slug} from origin.  For example, http://c.tile.openstreetmap.org/{z}/{x}/{y}.{ext}.  If url includes {auth}, it is dynamically replaced with the relevant auth token stored with origin.'))
+    #extensions = models.CharField(max_length=400,null=True,blank=True,choices=IMAGE_EXTENSION_CHOICES)
     extensions = models.CharField(max_length=400,null=True,blank=True)
     pattern = models.CharField(max_length=400,null=True,blank=True)
     extents = models.CharField(max_length=100,blank=True,null=True)
     minZoom = models.IntegerField(default=0,null=True,blank=True)
     maxZoom = models.IntegerField(default=None,null=True,blank=True)
-
+    
     def __unicode__(self):
         return self.name
 
@@ -159,6 +161,9 @@ class TileSource(models.Model):
         ordering = ("name",)
         verbose_name_plural = _("Tile Sources")
 
+    @property
+    def tileservices(self):
+        return self.tileservice_set
 
     def type_title(self):
         return unicode([v for i, v in enumerate(TYPE_CHOICES) if v[0] == self.type][0][1]);

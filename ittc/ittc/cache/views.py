@@ -411,6 +411,12 @@ def sources_new(request, origin=None, template="cache/sources_edit.html"):
                 'source_form': TileSourceForm()
             }
             return HttpResponseRedirect(reverse('sources_list',args=()))
+        else:
+            return HttpResponse(
+                'An unknown error has occured.'+json.dumps(source_form.errors),
+                content_type="text/plain",
+                status=401
+            )
 
     else:
         stats = stats_tilerequest()
@@ -448,7 +454,7 @@ def sources_edit(request, source=None, template="cache/sources_edit.html"):
         else:
             return HttpResponse(
                 'An unknown error has occured.',
-                mimetype="text/plain",
+                content_type="text/plain",
                 status=401
             )
     else:
@@ -457,6 +463,30 @@ def sources_edit(request, source=None, template="cache/sources_edit.html"):
         context_dict = {
             'source': instance,
             'source_form': TileSourceForm(instance=instance)
+        }
+        return render_to_response(
+            template,
+            RequestContext(request, context_dict))
+
+
+def sources_delete(request, source=None, template="cache/sources_delete.html"):
+
+    if request.method == "POST":
+        instance = TileSource.objects.get(name=source)
+        if instance:
+            instance.delete()
+            return HttpResponseRedirect(reverse('sources_list',args=()))
+        else:
+            return HttpResponse(
+                'Could not find source with name '+name,
+                content_type="text/plain",
+                status=401
+            )
+    else:
+        stats = stats_tilerequest()
+        instance = TileSource.objects.get(name=source)
+        context_dict = {
+            'source': instance
         }
         return render_to_response(
             template,
@@ -482,7 +512,7 @@ def services_new(request, source=None, template="cache/services_edit.html"):
         service_form = None
         if source:
             source_object = TileSource.objects.get(name=source)
-            service_form = TileServiceForm(initial={'source': source_object, 'type': source_object.type, 'url': '/cache/tms/', 'extensions': [u'png']})
+            service_form = TileServiceForm(initial={'source': source_object, 'name': source_object.name, 'description': source_object.description, 'type': source_object.type, 'url': '/cache/tms/', 'extensions': [u'png']})
         else:
             service_form = TileServiceForm()
         context_dict = {
@@ -511,7 +541,7 @@ def services_edit(request, service=None, template="cache/services_edit.html"):
         else:
             return HttpResponse(
                 'An unknown error has occured.',
-                mimetype="text/plain",
+                content_type="text/plain",
                 status=401
             )
     else:
@@ -520,6 +550,30 @@ def services_edit(request, service=None, template="cache/services_edit.html"):
         context_dict = {
             'service': instance,
             'service_form': TileServiceForm(instance=instance)
+        }
+        return render_to_response(
+            template,
+            RequestContext(request, context_dict))
+
+
+def services_delete(request, service=None, template="cache/services_delete.html"):
+
+    if request.method == "POST":
+        instance = TileService.objects.get(name=service)
+        if instance:
+            instance.delete()
+            return HttpResponseRedirect(reverse('services_list',args=()))
+        else:
+            return HttpResponse(
+                'Could not find service with name '+name,
+                content_type="text/plain",
+                status=401
+            )
+    else:
+        stats = stats_tilerequest()
+        instance = TileService.objects.get(name=service)
+        context_dict = {
+            'service': instance
         }
         return render_to_response(
             template,
@@ -594,7 +648,8 @@ def services_json(request):
     services = []
     for service in TileService.objects.all().order_by('name'):
     #    link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source.name+'.geojson'
-    #    link_proxy = settings.SITEURL+'proxy/?url='+(source.url).replace("{ext}","png")
+        #link_proxy = settings.SITEURL+'cache/tms/proxy/?url='+(source.url).replace("{ext}","png")
+        link_proxy = service.url
         services.append({
             'name': service.name,
             'type': service.type_title(),
@@ -604,8 +659,8 @@ def services_json(request):
     #        'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
     #        'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source.name, 0),
     #        'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source.name, 0),\
-    #        'link_proxy': link_proxy,
-    #        'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy,
+            'link_proxy': link_proxy,
+            'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy,
     #        'link_geojson': link_geojson,
     #        'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
         })

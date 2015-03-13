@@ -9,6 +9,7 @@
     <th>Links</th>
   </thead>
   <tbody>
+    <tr ng-if="sources.length == 0"><td style="color:lightCoral;" colspan=6><div>No sources yet.</div></td></tr>
     <tr ng-repeat="source in sources">
       <td><a href="/cache/sources/edit/{{ source.name }}">{{ source.name }}</a></td>
       <td>{{ source.type }}</td>

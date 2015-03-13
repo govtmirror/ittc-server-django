@@ -28,23 +28,21 @@ var formatDate = function(d)
 {% block content %}
   <div class="row">
     <div class="col-md-12">
-      <div class="page-header" style="padding-left:10px;"><h3>{% if source %}Edit Source: {{ source.name }}{% else %}Create New Tile Source{% endif %}</h3></div>
+      <div class="page-header" style="padding-left:10px;"><h3>Delete Source: <a href="{% url "sources_edit" source.name %}">{{ source.name }}</a></h3></div>
    </div>
   </div>
   <div class="row">
     <div id="services" class="col-md-8">
-      <form class="form-horizontal" action="{% if source %}{% url "sources_edit" source.name %}{% else %}{% url "sources_new"%}{% endif %}" method="POST" style="padding:40px;">
+      <form class="form-horizontal" action="{% url "sources_delete" source.name %}" method="POST" style="padding:40px;">
         {% csrf_token %}
         <div class="form-controls">
-          {{ source_form|as_bootstrap }}
+        Are you sure you want to delete tile source <a href="{% url "sources_edit" source.name %}">{{ source.name }}</a>?  This will also remove any related tile services.
+        <br>
+        There are {{ source.tileservices.count }} related tile services.
+
         </div>
         <div class="form-actions">
-          {% if source %}
-            <input type="submit" class="btn btn-primary" value="Save"/>
-            <a href="{% url "sources_delete" source.name %}" class="btn btn-danger">Delete</a>
-          {% else %}
-            <input type="submit" class="btn btn-primary" value="Create"/>
-          {% endif %}
+          <input type="submit" class="btn btn-danger" value="Delete"/>
         </div>
       </form>
     </div>

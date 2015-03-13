@@ -25,7 +25,7 @@ class TileService(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=400, null=True, blank=True, help_text=_('Human-readable description of the services provided by this tile origin.'))
     type = models.IntegerField(choices=TYPE_CHOICES, default=TYPE_TMS)
-    source = models.ForeignKey(TileSource,null=True,blank=True,help_text=_('The source of the tiles.'))
+    source = models.ForeignKey(TileSource,null=True,blank=True,help_text=_('The source of the tiles.'), related_name='tileservice_set')
     extensions = models.CharField(max_length=400,null=True,blank=True)
     url = models.CharField(max_length=400,null=True,blank=True)
     #slug = models.CharField(max_length=100,null=True,blank=True)

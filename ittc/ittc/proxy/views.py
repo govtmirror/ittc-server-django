@@ -21,7 +21,7 @@ import StringIO
 from PIL import Image, ImageEnhance
 
 from ittc.cache.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue, url_to_pattern
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue, url_to_pattern, string_to_list
 from ittc.source.models import TileOrigin, TileOriginPattern, TileSource
 from ittc.cache.views import requestTile
 
@@ -99,8 +99,9 @@ def proxy(request):
         if to.multiple:
             slug = getRegexValue(match_regex, 'slug')
             ts_url = to.url.replace('{slug}', slug)
-            ts_pattern = url_to_pattern(ts_url, extensions=to.extensions)
-            ts = TileSource(auto=True,url=ts_url,pattern=ts_pattern,name=slug,type=to.type,extensions=to.extensions,origin=to)
+            exts = string_to_list(to.extensions)
+            ts_pattern = url_to_pattern(ts_url, extensions=exts)
+            ts = TileSource(auto=True,url=ts_url,pattern=ts_pattern,name=slug,type=to.type,extensions=exts,origin=to)
             ts.save()
             return proxy_tilesource(request, ts, match_regex)
         else:

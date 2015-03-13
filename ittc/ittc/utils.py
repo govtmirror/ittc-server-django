@@ -16,12 +16,16 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.core.cache import cache, caches, get_cache
 from django.http import Http404
+from django.utils.encoding import force_str, force_text, smart_text
+from django.core.exceptions import ValidationError
 
 from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
 from urlparse import urlparse
 
 from pymongo import MongoClient
+
+import json
 
 from .stats import buildStats, incStats
 
@@ -434,3 +438,17 @@ def url_to_pattern(url, extensions=['png','gif','jpg','jpeg']):
 def service_to_url(base, name, extensions=['png','gif','jpg','jpeg']):
     url = base + 'cache/tms/'+name+'/{z}/{x}/{y}.png'
     return url
+
+
+def string_to_list(value):
+    print value
+    if not value:
+        return []
+    else:
+        print value[2:-1]
+        a = value[2:-1].split(u",")
+        print a
+        if not isinstance(a, (list, tuple)):
+            raise ValidationError('value can not be converted to list', code='invalid_list')
+        else:
+            return [smart_text(b[1:-1]) for b in a]
