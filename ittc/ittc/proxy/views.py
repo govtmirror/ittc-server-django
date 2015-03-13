@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
-from django.core.cache import caches, get_cache
+from django.core.cache import cache, caches, get_cache
 
 import StringIO
 from PIL import Image, ImageEnhance
@@ -23,6 +23,7 @@ from PIL import Image, ImageEnhance
 from ittc.cache.models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue, url_to_pattern, string_to_list
 from ittc.source.models import TileOrigin, TileOriginPattern, TileSource
+from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
 from ittc.cache.views import requestTile
 
 def proxy(request):
@@ -70,9 +71,11 @@ def proxy(request):
     match_tilesource = None
 
     # Try to match against existing tile sources
-    tilesources = TileSource.objects.exclude(pattern__isnull=True).exclude(pattern__exact='')
+    #tilesources = TileSource.objects.exclude(pattern__isnull=True).exclude(pattern__exact='')
+    tilesources = getTileSources(proxy=True)
     for tilesource in tilesources:
         match = tilesource.match(raw_url)
+        #print tilesource.pattern
         if match:
             match_regex = match
             match_tilesource = tilesource
@@ -85,11 +88,12 @@ def proxy(request):
 
     # Try to match against existing origins that can automatically create tile sources (auto=true)
     match_tileorigin = None
-    tileorigins = TileOrigin.objects.exclude(pattern__isnull=True).exclude(pattern__exact='').filter(auto=True)
+    #tileorigins = TileOrigin.objects.exclude(pattern__isnull=True).exclude(pattern__exact='').filter(auto=True)
+    tileorigins = getTileOrigins(proxy=True)
     for tileorigin in tileorigins:
         match = tileorigin.match(raw_url)
         if match:
-            print "Matched against TileOrigin", tileorigin
+            #print "Matched against TileOrigin", tileorigin
             match_regex = match
             match_tileorigin = tileorigin
             break
@@ -99,14 +103,22 @@ def proxy(request):
         if to.multiple:
             slug = getRegexValue(match_regex, 'slug')
             ts_url = to.url.replace('{slug}', slug)
+            #print "ts_url: "+ts_url
+            if TileSource.objects.filter(url=ts_url).count() > 0:
+                print "Error: This souldn't happen.  You should have matched the tilesource earlier so you don't duplicate"
+                return None
             exts = string_to_list(to.extensions)
             ts_pattern = url_to_pattern(ts_url, extensions=exts)
             ts = TileSource(auto=True,url=ts_url,pattern=ts_pattern,name=slug,type=to.type,extensions=exts,origin=to)
             ts.save()
+            reloadTileSources(proxy=False)
+            reloadTileSources(proxy=True)
             return proxy_tilesource(request, ts, match_regex)
         else:
             ts = TileSource(auto=True,url=to.url,pattern=to.pattern,name=to.name,type=to.type,extensions=to.extensions)
             ts.save()
+            reloadTileSources(proxy=False)
+            reloadTileSources(proxy=True)
             return proxy_tilesource(request, ts, match_regex)
     else:
         return HttpResponse('No matching tile origin or tile source found.',RequestContext(request, {}), status=404)

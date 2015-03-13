@@ -157,7 +157,7 @@ CACHES = {
     }
 }
 
-CELERY_CACHE_BACKEND = 'default'
+CELERY_CACHE_BACKEND = 'celery_results'
 
 ###Settings ITTC Capabilities
 ITTC_SERVER = {
@@ -182,12 +182,12 @@ ITTC_SERVER = {
             'maxZoom': 18
         },
         'up': {
-            'enabled': True,
+            'enabled': False,
             'description': 'Indirectly requests all tiles above the requested tile.  All tiles within a zoom level of "depth" are indirectly requested.',
-            'depth': 2
+            'depth': 1
         },
         'nearby': {
-            'enabled': False,
+            'enabled': True,
             'description': 'Indirectly requests all neighboring tiles within a given radius.',
             'radius': 2
         }

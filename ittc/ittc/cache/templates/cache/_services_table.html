@@ -16,7 +16,7 @@
       <td><a href="/cache/sources/edit/{{ service.source }}">{{ service.source }}</a></td>
       <td style="text-align:center;">{{ service.requests }} <a ng-if="service.requests &gt; 0" class="btn btn-primary btn-xs" href="/cache/stats/map/service/{{ service.name }}/date/{{ sDate }}">map</a></td>
       <td>{{ service.url }}</td>
-      <td><a href="{{ service.link_proxy }}">proxy</a>, <a href="{{ service.link_id }}">iD</a>, <a href="{{ service.link_geojsonio }}">geojson.io</a></td>
+      <td><a target="_blank" href="{{ service.link_proxy }}">proxy</a>, <a target="_blank" href="{{ service.link_id }}">iD</a>, <a target="_blank" href="{{ service.link_geojsonio }}">geojson.io</a></td>
     </tr>
   </tbody>
 </table>

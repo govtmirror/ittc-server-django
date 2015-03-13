@@ -18,6 +18,7 @@ import umemcache
 
 from .models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue
+from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
 from ittc.utils import logs_tilerequest, formatMemorySize
 from ittc.stats import stats_tilerequest, clearStats, reloadStats
 from ittc.logs import clearLogs, reloadLogs, logTileRequest
@@ -60,6 +61,10 @@ def capabilities_service(request, template='capabilities/capabilities_service_1_
 @login_required
 def flush(request):
    
+    defaultcache = umemcache.Client(settings.CACHES['default']['LOCATION'])
+    defaultcache.connect()
+    defaultcache.flush_all()
+
     tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
     tilecache.connect()
     tilecache.flush_all()
@@ -352,6 +357,8 @@ def origins_new(request, template="cache/origins_edit.html"):
         origin_form = TileOriginForm(request.POST)
         if origin_form.is_valid():
             origin_form.save()
+            reloadTileOrigins(proxy=False)
+            reloadTileOrigins(proxy=True)
             ###
             stats = stats_tilerequest()
             context_dict = {
@@ -377,6 +384,8 @@ def origins_edit(request, origin=None, template="cache/origins_edit.html"):
         origin_form = TileOriginForm(request.POST,instance=instance)
         if origin_form.is_valid():
             origin_form.save()
+            reloadTileOrigins(proxy=False)
+            reloadTileOrigins(proxy=True)
             ###
             stats = stats_tilerequest()
             context_dict = {
@@ -405,6 +414,8 @@ def sources_new(request, origin=None, template="cache/sources_edit.html"):
         source_form = TileSourceForm(request.POST)
         if source_form.is_valid():
             source_form.save()
+            reloadTileSources(proxy=False)
+            reloadTileSources(proxy=True)
             ###
             stats = stats_tilerequest()
             context_dict = {
@@ -444,6 +455,8 @@ def sources_edit(request, source=None, template="cache/sources_edit.html"):
         source_form = TileSourceForm(request.POST,instance=instance)
         if source_form.is_valid():
             source_form.save()
+            reloadTileSources(proxy=False)
+            reloadTileSources(proxy=True)
             ###
             stats = stats_tilerequest()
             context_dict = {
