@@ -137,59 +137,6 @@ def proxy_tilesource(request, tilesource, match):
         return HttpResponse(RequestContext(request, {}), status=404)
 
 
-def proxy_tms(request, origin=None, source=None, z=None, x=None, y=None, u=None, ext=None):
-
-    # Check Existing Tile Sources    
-    tilesources = getTileSources(proxy=True)
-    for tilesource in tilesources:
-        if tilesource.name == source:
-            match_regex = match
-            match_tilesource = tilesource
-            break
-
-    if tilsource.origin.name != origin:
-        print "Origin is not correct.  Tilesource is unique, but origin need to match too."
-        return None
-
-    if tilesource:
-        return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
-
-
-    # Check Existing Tile Origins to see if we need to create a new tile source
-    match_tileorigin = None
-    if origin:
-        tileorigins = getTileOrigins(proxy=True)
-        for tileorigin in tileorigins:
-            if tileorigin.name == origin:
-                match_tileorigin = tileorigin
-                break
-
-    if match_tileorigin:
-        to = match_tileorigin
-        if to.multiple:
-            ts_url = to.url.replace('{slug}', source)
-            if TileSource.objects.filter(url=ts_url).count() > 0:
-                print "Error: This souldn't happen.  You should have matched the tilesource earlier so you don't duplicate"
-                return None
-            exts = string_to_list(to.extensions)
-            ts_pattern = url_to_pattern(ts_url, extensions=exts)
-            ts = TileSource(auto=True,url=ts_url,pattern=ts_pattern,name=slug,type=to.type,extensions=exts,origin=to)
-            ts.save()
-            reloadTileSources(proxy=False)
-            reloadTileSources(proxy=True)
-            return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
-        else:
-            ts = TileSource(auto=True,url=to.url,pattern=to.pattern,name=to.name,type=to.type,extensions=to.extensions)
-            ts.save()
-            reloadTileSources(proxy=False)
-            reloadTileSources(proxy=True)
-            return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
-    else:
-        return None
-
-    #return None 
-
-
     #if url.scheme == 'https':
     #    conn = HTTPSConnection(url.hostname, url.port)
     #else:
