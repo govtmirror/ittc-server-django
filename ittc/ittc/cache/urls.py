@@ -59,5 +59,9 @@ urlpatterns = patterns('ittc.cache.views',
     url(r'^tms/$', 'capabilities_all_xml', name='capabilities_all_xml'),
     url(r'^tms/(?P<slug>[^/]+)/$', 'capabilities_service', name='capabilities_service'),
     url(r'^tms/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\.(?P<ext>(png|gif|jpg|jpeg))$', 'tile_tms', name='tile_tms'),
-    url(r'^bing/(?P<slug>[^/]+)/(?P<u>[^/]+)\.(?P<ext>(png|gif|jpg|jpeg))$', 'tile_tms', name='tile_bing')
+    url(r'^bing/(?P<slug>[^/]+)/(?P<u>[^/]+)\.(?P<ext>(png|gif|jpg|jpeg))$', 'tile_tms', name='tile_bing'),
+
+    url(r'^proxy/tms/origin/(?P<origin>[^/]+)/source/(?P<slug>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\.(?P<ext>(png|gif|jpg|jpeg))$', 'proxy_tms', name='proxy_tms'),
+    url(r'^proxy/bing/origin/(?P<origin>[^/]+)/source/(?P<slug>[^/]+)/(?P<u>[^/]+)\.(?P<ext>(png|gif|jpg|jpeg))$', 'proxy_tms', name='proxy_bing')
+
 )

@@ -261,6 +261,9 @@ def getRegexValue(match,name):
 def getNearbyTiles(ix0, iy0, iz0, ir, size=256, bbox=[-20037508.34,-20037508.34,20037508.34,20037508.34]):
     nearbyTiles = []
 
+    if iz0 == 0:
+        return nearbyTiles
+
     res = resolutions[int(iz0)]
     maxX = getMaxX(res, size, bbox)
     maxY = getMaxY(res, size, bbox)

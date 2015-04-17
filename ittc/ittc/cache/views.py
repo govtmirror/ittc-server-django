@@ -17,7 +17,7 @@ from PIL import Image, ImageEnhance
 import umemcache
 
 from .models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue, url_to_pattern, string_to_list
 from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
 from ittc.utils import logs_tilerequest, formatMemorySize
 from ittc.stats import stats_tilerequest, clearStats, reloadStats
@@ -26,6 +26,7 @@ from ittc.logs import clearLogs, reloadLogs, logTileRequest
 from ittc.source.models import TileOrigin,TileSource
 from ittc.cache.tasks import taskRequestTile
 from ittc.cache.forms import TileOriginForm, TileSourceForm, TileServiceForm
+
 import json
 #from ittc.cache.models import Tile
 from bson.json_util import dumps
@@ -698,7 +699,6 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
         return HttpResponse(RequestContext(request, {}), status=404)
 
 
-@login_required
 def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=None, x=None, y=None, u=None, ext=None):
 
     print "requestTile"
@@ -854,3 +854,55 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
     response = HttpResponse(content_type="image/png")
     image.save(response, "PNG")
     return response
+
+def proxy_tms(request, origin=None, slug=None, z=None, x=None, y=None, u=None, ext=None):
+    # Check Existing Tile Sources
+    match_tilesource = None
+    tilesources = getTileSources(proxy=True)
+    for tilesource in tilesources:
+        if tilesource.name == slug:
+            match_tilesource = tilesource
+            break
+
+    if match_tilesource:
+        if match_tilesource.origin.name != origin:
+            print "Origin is not correct.  Tilesource is unique, but origin need to match too."
+            print origin
+            print tilesource.origin.name
+            return None
+        else:
+            return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+
+
+    # Check Existing Tile Origins to see if we need to create a new tile source
+    match_tileorigin = None
+    if origin:
+        tileorigins = getTileOrigins(proxy=True)
+        for tileorigin in tileorigins:
+            if tileorigin.name == origin:
+                match_tileorigin = tileorigin
+                break
+
+    if match_tileorigin:
+        to = match_tileorigin
+        if to.multiple:
+            ts_url = to.url.replace('{slug}', slug)
+            if TileSource.objects.filter(url=ts_url).count() > 0:
+                print "Error: This souldn't happen.  You should have matched the tilesource earlier so you don't duplicate"
+                return None
+            exts = string_to_list(to.extensions)
+            ts_pattern = url_to_pattern(ts_url, extensions=exts)
+            ts = TileSource(auto=True,url=ts_url,pattern=ts_pattern,name=slug,type=to.type,extensions=exts,origin=to)
+            ts.save()
+            reloadTileSources(proxy=False)
+            reloadTileSources(proxy=True)
+            return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+        else:
+            ts = TileSource(auto=True,url=to.url,pattern=to.pattern,name=to.name,type=to.type,extensions=to.extensions)
+            ts.save()
+            reloadTileSources(proxy=False)
+            reloadTileSources(proxy=True)
+            return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+    else:
+        return None
+
