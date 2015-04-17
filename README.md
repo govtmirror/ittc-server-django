@@ -31,6 +31,7 @@ git clone https://github.com/state-hiu/ittc-server-django.git ittc-server-django
 
 Then, as root, then install python packages with:
 ```
+cd ittc-server-django.git
 pip install -r requirements.txt
 ```
 
