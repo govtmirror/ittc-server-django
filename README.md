@@ -76,6 +76,8 @@ sudo python manage.py collectstatic
 
 The application can be run through the Django built-in development server or Gnuicron ([http://gunicorn.org/](http://gunicorn.org/)).
 
+There is a [supervisord.conf configuration file](https://github.com/state-hiu/ittc-server-django/blob/master/supervisord.conf) that should automate some of this process in a full production environment.  It is configured for vagrant, but can be easily configured for other users.
+
 First, as root, clear the RabbitMQ cache of messages with:
 
 ```
