@@ -55,3 +55,6 @@ docs/_build/
 
 # SQLite Database
 *.sqlite3
+
+# Supervisor
+supervisord.pid
