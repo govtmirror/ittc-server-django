@@ -36,7 +36,7 @@ def reloadStats():
     clearStats()
     client = MongoClient('localhost', 27017)
     db = client.ittc
-    for doc in db[settings.LOG_COLLECTION].find():
+    for doc in db[settings.LOG_REQUEST_COLLECTION].find():
         stats = buildStats(doc)
         incStats(db, stats)
 
@@ -84,19 +84,7 @@ def getStats(collection, fallback):
         return fallback
 
 def stats_tilerequest(mongo=True):
-    stats = {
-        'total': {
-            'count': 0
-        },
-        'tile': {
-            'max': 0
-        },
-        'global':{
-            'strict': {},
-            'parents': {}
-        },
-        'tilesource':{}
-    }
+    stats = {}
 
     if mongo:
         client = MongoClient('localhost', 27017)
@@ -133,51 +121,6 @@ def stats_tilerequest(mongo=True):
 
         return stats
 
-    if settings.LOG_ROOT:
-        if os.path.exists(settings.LOG_ROOT+"/"+"tile_requests.tsv"):
-            with open(settings.LOG_ROOT+"/"+"tile_requests.tsv",'r') as f:
-                lines =  f.readlines()
-                for line in lines:
-                    values = line.split("\t")
-                    status = values[0]
-                    tilesource = values[1]
-                    z = values[2]
-                    x = values[3]
-                    y = values[4]
-                    key = z+"/"+x+"/"+y
-                    total_count = stats['total']['count']
-                    global_count = 0
-                    source_count = 0
-                    if key in stats['global']['strict']:
-                        global_count = stats['global']['strict'][key]
-                    if tilesource in stats['tilesource']:
-                        if key in stats['tilesource'][tilesource]:
-                            source_count = stats['tilesource'][tilesource][key]
-                    else:
-                        stats['tilesource'][tilesource] = {}
-                    #==#
-                    total_count += 1
-                    global_count += 1
-                    source_count += 1
-                    stats['global']['strict'][key] = global_count
-                    stats['tilesource'][tilesource][key] = source_count
-                    stats['total']['count'] = total_count
+    else:
+        return stats
 
-                    #==#
-                    #Parent Tiles
-                    parentTiles = getParentTiles(int(x), int(y), int(z))
-                    for pt in parentTiles:
-                        px, py, pz = pt
-                        key = str(pz)+"/"+str(px)+"/"+str(py)
-                        if key in stats['global']['parents']:
-                            stats['global']['parents'][key] = stats['global']['parents'][key] + 1
-                        else:
-                            stats['global']['parents'][key] = 1
-
-    global_max = 0
-    for key in stats['global']['strict']:
-        if stats['global']['strict'][key] > global_max:
-            global_max = stats['global']['strict'][key]
-    stats['tile']['max'] = global_max
-
-    return stats

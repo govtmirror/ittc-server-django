@@ -7,6 +7,7 @@
             "description":"Main OpenStreetMap Server",
             "type": 2,
             "multiple": false,
+            "cacheable": false,
             "url": "http://c.tile.openstreetmap.org/{z}/{x}/{y}.{ext}"
         }
     },
@@ -26,6 +27,7 @@
             "name":"osm_france",
             "description":"OSM France Server.  This server primarily serves out the humanitarian style OSM tiles.",
             "type": 2,
+            "cacheable": false,
             "url": "http://b.tile.openstreetmap.fr/{slug}/{z}/{x}/{y}.{ext}"
         }
     },
@@ -45,6 +47,7 @@
             "name":"bing_aerial",
             "description":"Bing Aerial.  Satellite Imagery.  Allowed to trace for OSM vectors.",
             "type": 3,
+            "cacheable": false,
             "url": "http://ecn.t0.tiles.virtualearth.net/tiles/{slug}{u}.jpeg?g=3291&mkt=en-us"
         }
     },
@@ -64,6 +67,7 @@
             "name":"mapbox",
             "description":"MapBox.",
             "type": 2,
+            "cacheable": false,
             "url": "http://c.tiles.mapbox.com/v4/{slug}/{z}/{x}/{y}.png?access_token={auth}",
             "auth": "pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw"
         }
@@ -84,6 +88,7 @@
             "name": "osm",
             "type": 2,
             "auto": false,
+            "cacheable": false,
             "origin": 1,
             "pattern": "^http://b.tile.openstreetmap.org/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
             "url": "http://b.tile.openstreetmap.org/{z}/{x}/{y}.{ext}"
@@ -96,6 +101,7 @@
             "name": "osm-humanitarian",
             "type": 2,
             "auto": false,
+            "cacheable": false,
             "origin": 2,
             "pattern": "^http://b.tile.openstreetmap.fr/hot/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
             "url": "http://b.tile.openstreetmap.fr/hot/{z}/{x}/{y}.{ext}"
@@ -108,6 +114,7 @@
             "name": "Bing Aerial",
             "type": 3,
             "auto": false,
+            "cacheable": false,
             "origin": 3,
             "pattern": "^http://ecn.t0.tiles.virtualearth.net/tiles/a(?P<u>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]g=3291&mkt=en-us$",
             "url": "http://ecn.t0.tiles.virtualearth.net/tiles/a{u}.jpeg?g=3291&mkt=en-us"
@@ -120,6 +127,7 @@
             "name": "Bing Aerial with Labels",
             "type": 3,
             "auto": false,
+            "cacheable": false,
             "origin": 3,
             "pattern": "^http://ecn.t0.tiles.virtualearth.net/tiles/h(?P<u>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))[?]g=3291&mkt=en-us$",
             "url": "http://ecn.t0.tiles.virtualearth.net/tiles/h{u}.jpeg?g=3291&mkt=en-us"
@@ -132,6 +140,7 @@
             "name": "LSIB Dark",
             "type": 2,
             "auto": false,
+            "cacheable": false,
             "origin": 4,
             "pattern": "^http://c.tiles.mapbox.com/v4/hiu.lsib-dark/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
             "url": "http://c.tiles.mapbox.com/v4/hiu.lsib-dark/{z}/{x}/{y}.png"
@@ -144,6 +153,7 @@
             "name": "LSIB Dark Labelled",
             "type": 2,
             "auto": false,
+            "cacheable": false,
             "origin": 4,
             "pattern": "^http://c.tiles.mapbox.com/v4/hiu.lsib-dark-labelled/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\\.(?P<ext>(png|gif|jpg|jpeg))$",
             "url": "http://c.tiles.mapbox.com/v4/hiu.lsib-dark-labelled/{z}/{x}/{y}.png"

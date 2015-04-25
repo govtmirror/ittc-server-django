@@ -33,6 +33,8 @@ from bson.json_util import dumps
 
 from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
+import time
+
 def render(request, template='capabilities/services.html', ctx=None, contentType=None):
     if not (contentType is None):
         return render_to_response(template, RequestContext(request, ctx), content_type=contentType)
@@ -633,7 +635,12 @@ def sources_json(request):
     sources = []
     for source in TileSource.objects.all().order_by('name'):
         link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source.name+'.geojson'
-        link_proxy = settings.SITEURL+'proxy/?url='+(source.url).replace("{ext}","png")
+        link_proxy_internal = settings.SITEURL+'proxy/?url='+(source.url).replace("{ext}","png")
+        link_proxy_external = ""
+        if source.type in [TYPE_TMS, TYPE_TMS_FLIPPED]:
+            link_proxy_external = settings.SITEURL+'cache/proxy/tms/origin/'+source.origin.name+'/source/'+source.name+'/{z}/{x}/{y}.png' 
+        elif source.type == TYPE_BING:
+            link_proxy_external = settings.SITEURL+'cache/proxy/bing/origin/'+source.origin.name+'/source/'+source.name+'{u}.png'
         sources.append({
             'name': source.name,
             'type': source.type_title(),
@@ -643,8 +650,8 @@ def sources_json(request):
             'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
             'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source.name, 0),
             'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source.name, 0),\
-            'link_proxy': link_proxy,
-            'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy,
+            'link_proxy': link_proxy_internal,
+            'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy_external,
             'link_geojson': link_geojson,
             'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
         })
@@ -699,6 +706,13 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
         return HttpResponse(RequestContext(request, {}), status=404)
 
 
+def requestIndirectTiles(tilesource, ext, tiles):
+    if tiles:
+        for t in tiles:
+            tx, ty, tz = t
+            taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
+
+
 def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=None, x=None, y=None, u=None, ext=None):
 
     print "requestTile"
@@ -732,44 +746,35 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
 
     tile_bbox = tms_to_bbox(ix,iy,iz)
 
-    if settings.ITTC_SERVER['heuristic']['nearby']['enabled']:
-        ir = settings.ITTC_SERVER['heuristic']['nearby']['enabled']
-        nearbyTiles = getNearbyTiles(ix, iy, iz, ir)
-        #print "Nearby Tiles"
-        #print nearbyTiles
+    if tilesource.cacheable:
 
-    if settings.ITTC_SERVER['heuristic']['up']['enabled']:
-        iDepth = getValue(settings.ITTC_SERVER['heuristic']['up'],'depth')
-        if iDepth:
-            parentTiles = getParentTiles(ix, iy, iz, depth=iDepth)
-        else:
-            parentTiles = getParentTiles(ix, iy, iz)
-        #print "Parent Tiles"
-        #print parentTiles
+        if settings.ITTC_SERVER['heuristic']['nearby']['enabled']:
+            ir = settings.ITTC_SERVER['heuristic']['nearby']['radius']
+            nearbyTiles = getNearbyTiles(ix, iy, iz, ir)
+            #print "Nearby Tiles"
+            #print nearbyTiles
 
-    if settings.ITTC_SERVER['heuristic']['down']['enabled']:
-        depth = settings.ITTC_SERVER['heuristic']['down']['depth']
-        minZoom = settings.ITTC_SERVER['heuristic']['down']['minZoom']
-        maxZoom = settings.ITTC_SERVER['heuristic']['down']['maxZoom']
-        childrenTiles = getChildrenTiles(ix, iy, iz, depth, minZoom, maxZoom)
-        #print "Children Tiles: "+str(len(childrenTiles))
-        #print childrenTiles
+        if settings.ITTC_SERVER['heuristic']['up']['enabled']:
+            iDepth = getValue(settings.ITTC_SERVER['heuristic']['up'],'depth')
+            if iDepth:
+                parentTiles = getParentTiles(ix, iy, iz, depth=iDepth)
+            else:
+                parentTiles = getParentTiles(ix, iy, iz)
+            #print "Parent Tiles"
+            #print parentTiles
 
-    if nearbyTiles:
-        for t in nearbyTiles:
-            tx, ty, tz = t
-            taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
-            #taskRequestTile.delay(ts=tilesource.id, iz=tz, ix=tx, iy=ty, ext=ext)
+        heuristic_down = settings.ITTC_SERVER['heuristic']['down']
+        if heuristic_down['enabled']:
+            depth = heuristic_down['depth']
+            minZoom = heuristic_down['minZoom']
+            maxZoom = heuristic_down['maxZoom']
+            childrenTiles = getChildrenTiles(ix, iy, iz, depth, minZoom, maxZoom)
+            #print "Children Tiles: "+str(len(childrenTiles))
+            #print childrenTiles
 
-    if parentTiles:
-        for t in parentTiles:
-            tx, ty, tz = t
-            taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
-
-    if childrenTiles:
-        for t in childrenTiles:
-            tx, ty, tz = t
-            taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
+        requestIndirectTiles(tilesource, ext, nearbyTiles)
+        requestIndirectTiles(tilesource, ext, parentTiles)
+        requestIndirectTiles(tilesource, ext, childrenTiles)
 
     #Check if requested tile is within source's extents
     returnBlankTile = False
@@ -806,14 +811,16 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
         image.save(response, "PNG")
         return response
 
-    cache_available = check_cache_availability('tiles')
-    tilecache = caches['tiles']
-
-    if not cache_available:
-        print "Cache not available"
+    cache_available = False
+    tilecache = None
+    if tilesource.cacheable:
+        cache_available = check_cache_availability('tiles')
+        tilecache = caches['tiles']
+        if not cache_available:
+            print "Cache not available"
 
     tile = None
-    if cache_available and iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
+    if tilesource.cacheable and cache_available and iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         #tile = tilecache.get(key)
         tile = getTileFromCache(tilecache, key, True)
@@ -856,7 +863,9 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
     return response
 
 def proxy_tms(request, origin=None, slug=None, z=None, x=None, y=None, u=None, ext=None):
-    # Check Existing Tile Sources
+
+    #starttime = time.clock()
+    # Check Existing Tile Sourcesi
     match_tilesource = None
     tilesources = getTileSources(proxy=True)
     for tilesource in tilesources:
@@ -871,7 +880,9 @@ def proxy_tms(request, origin=None, slug=None, z=None, x=None, y=None, u=None, e
             print tilesource.origin.name
             return None
         else:
-            return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+            tile = requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+            #print "Time Elapsed: "+str(time.clock()-starttime)
+            return tile
 
 
     # Check Existing Tile Origins to see if we need to create a new tile source
