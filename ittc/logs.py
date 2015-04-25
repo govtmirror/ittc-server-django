@@ -27,6 +27,8 @@ import iso8601
 
 import time
 
+import glob
+
 #from ittc.source.models import TileSource
 
 http_client = httplib2.Http()
