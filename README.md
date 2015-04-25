@@ -20,6 +20,7 @@ apt-get update
 apt-get install -y curl vim git nginx
 apt-get install -y memcached zlib1g-dev libjpeg-dev rabbitmq-server
 apt-get install -y libapache2-mod-python python-dev python-pip
+apt-get install -y supervisor
 ```
 
 Then, as ubuntu, clone this repo with commands like the following.
