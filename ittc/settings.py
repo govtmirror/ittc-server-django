@@ -170,7 +170,7 @@ TILE_ACCELERATOR = {
             'description': 'Main in-memory cache for tiles.',
             'target':'tiles',
             'minZoom': 0,
-            'maxZoom': 16,
+            'maxZoom': 18,
             'expiration': 'origin'
         }
     },
@@ -190,7 +190,7 @@ TILE_ACCELERATOR = {
         'nearby': {
             'enabled': True,
             'description': 'Indirectly requests all neighboring tiles within a given radius.',
-            'radius': 4
+            'radius': 3
         }
     }
 }
