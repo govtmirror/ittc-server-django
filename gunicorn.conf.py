@@ -6,6 +6,7 @@ worker_class = 'gevent'
 #worker_class = 'egg:gunicorn#gevent'
 # Logging
 loglevel = 'info'
-acces_logfile = "/home/vagrant/ittc/logs/gunicorn/access.log"
-error_logfile = "/home/vagrant/ittc/logs/gunicorn/error.log"
+acces_logfile = "access.log"
+error_logfile = "error.log"
 enable_stdio_inheritance = True
+timeout = 360

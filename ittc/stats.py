@@ -21,9 +21,23 @@ from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
 from pymongo import MongoClient
 
+# Can't import for some reason
+#from .utils import check_cache_availability
+
 #from ittc.source.models import TileSource
 
 http_client = httplib2.Http()
+
+def check_cache_availability(cache):
+    available = False
+    tilecache = caches[cache]
+    try:
+        tilecache.get('')
+        available = True
+    except:
+        available = False
+    return available
+
 
 def clearStats():
     client = MongoClient('localhost', 27017)
@@ -36,9 +50,48 @@ def reloadStats():
     clearStats()
     client = MongoClient('localhost', 27017)
     db = client.ittc
-    for doc in db[settings.LOG_REQUEST_COLLECTION].find():
-        stats = buildStats(doc)
-        incStats(db, stats)
+    docs = db[settings.LOG_REQUEST_COLLECTION].find()
+
+    #Aggregate stats in memory, sorted by collection
+    totalstats_py = {}
+    try:
+        for doc in docs:
+            for s in buildStats(doc):
+                match = False
+                if not (s['collection'] in totalstats_py):
+                    totalstats_py[s['collection']] = []
+                for ts in totalstats_py[s['collection']]:
+                    diff = set(s['attributes'].items()) - set(ts['attributes'].items())
+                    if len(diff) == 0:
+                        ts['value'] = ts['value'] + 1
+                        match = True
+                        break
+
+                if not match:
+                    totalstats_py[s['collection']].append({'attributes': s['attributes'], 'value': 1})
+
+    except Exception, err:
+        print "##################################"
+        print "Error:"
+        print err
+        return
+
+    # Flatten / add values to attributes
+    totalstats_mongo = {}
+    for c in totalstats_py:
+        totalstats_mongo[c] = []
+        for ts in totalstats_py[c]:
+            a = ts['attributes']
+            a['value'] = ts['value']
+            totalstats_mongo[c].append(a)
+
+    # Write to MongoDB
+    for c in totalstats_mongo:
+        try:
+            (db[c]).insert(totalstats_mongo[c], continue_on_error=False) 
+        except Exception, err:
+            print err
+
 
 def buildStats(r):
     stats = []
@@ -124,3 +177,18 @@ def stats_tilerequest(mongo=True):
     else:
         return stats
 
+
+def stats_cache():
+
+    import umemcache
+
+    target = settings.TILE_ACCELERATOR['cache']['memory']['target']
+    if(check_cache_availability(target)):
+        location = settings.CACHES[target]['LOCATION']
+        tilecache = umemcache.Client(location)
+        tilecache.connect()
+        stats = tilecache.stats()
+
+        return stats
+    else:
+        return None

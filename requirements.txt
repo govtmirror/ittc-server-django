@@ -3,7 +3,7 @@ django
 django-cors-headers
 Pillow
 umemcache
-django-memcached-pool
+git+git://github.com/state-hiu/django-memcached-pool.git@ittc
 gunicorn
 greenlet
 gevent

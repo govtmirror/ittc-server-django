@@ -52,6 +52,7 @@ var formatDate = function(d)
                   <th>Expiration</th>
                   <th>MinZoom</th>
                   <th>MaxZoom</th>
+                  <th>Links</th>
                 </thead>
                 <tbody>
                   {% for cache in caches %}
@@ -60,10 +61,11 @@ var formatDate = function(d)
                     <td>{{ cache.name }}</td>
                     <td>{{ cache.type }}</td>
                     <td>{{ cache.description }}</td>
-                    <td>{{ cache.size }}</td>
+                    <td>{{ cache.size }} / {{ cache.maxsize }} ({{ cache.size_percentage }})</td>
                     <td>{{ cache.expiration }}</td>
                     <td>{{ cache.minzoom }}</td>
                     <td>{{ cache.maxzoom }}</td>
+                    <td><a target="_blank" href="{{ cache.link_memcached }}">Memcached</a></td>
                   </tr>
                   {% endfor %}
                 </tbody>

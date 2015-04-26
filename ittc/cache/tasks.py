@@ -54,7 +54,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
         return None
 
     tile = None
-    if iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
+    if iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         #raise Exception(key)
         tile = tilecache.get(key)
