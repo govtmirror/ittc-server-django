@@ -8,8 +8,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+# Imports
 import os
+from kombu import Queue
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -157,19 +160,17 @@ CACHES = {
     }
 }
 
-CELERY_CACHE_BACKEND = 'celery_results'
-
 ###Settings ITTC Capabilities
-ITTC_SERVER = {
-    'name': 'HIU Imagery Services',
+TILE_ACCELERATOR = {
+    'name': 'Tile Accelerator',
     'cache': {
         'memory': {
             'enabled': True,
             'type':'memory',
             'description': 'Main in-memory cache for tiles.',
-            'size': 1024,
+            'target':'tiles',
             'minZoom': 0,
-            'maxZoom': 16,
+            'maxZoom': 18,
             'expiration': 'origin'
         }
     },
@@ -189,7 +190,7 @@ ITTC_SERVER = {
         'nearby': {
             'enabled': True,
             'description': 'Indirectly requests all neighboring tiles within a given radius.',
-            'radius': 2
+            'radius': 3
         }
     }
 }
@@ -202,9 +203,15 @@ PROXY_ALLOWED_HOSTS = ( 'tile.openstreetmap.org', 'tile.openstreetmap.fr', 'tile
 
 PROXY_URL = '/proxy/?url='
 
+# CELERY Settings
 CELERY_RESULT_BACKEND = 'cache+memcached://127.0.0.1:11213/'
 BROKER_URL = 'amqp://guest:guest@localhost:5672//'
-
+CELERY_CACHE_BACKEND = 'celery_results'
+CELERY_DEFAULT_QUEUE = 'default'
+CELERY_QUEUES = (
+    Queue('default', routing_key='default'),
+    Queue('requests', routing_key='requests', queue_arguments={'x-message-ttl': 60}),
+)
 
 # Tile Request Logs
 LOG_REQUEST_ROOT = BASE_DIR+'/logs/requests'

@@ -36,6 +36,7 @@ urlpatterns = patterns('ittc.cache.views',
     url(r'^stats/reload$', 'stats_reload', name='stats_reload'), 
     url(r'^stats/clear$', 'stats_clear', name='stats_clear'),
     url(r'^stats/export/json$', 'stats_json', name='stats_json'),
+    url(r'^stats/export/cache.json$', 'stats_cache_json', name='stats_cache_json'),
     url(r'^stats/export/tms/(?P<t>[^/]+)/(?P<stat>[^/]+)/(?P<z>[^/]+)/(?P<x>[^/]+)/(?P<y>[^/]+)\.(?P<ext>(png|gif|jpg|jpeg))$', 'stats_tms', name='stats_tms'),
 
     url(r'^stats/export/geojson/(?P<z>[^/]+)\.geojson$', 'stats_geojson', name='stats_geojson'),

@@ -20,7 +20,7 @@ from .models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue, url_to_pattern, string_to_list
 from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
 from ittc.utils import logs_tilerequest, formatMemorySize
-from ittc.stats import stats_tilerequest, clearStats, reloadStats
+from ittc.stats import stats_cache, stats_tilerequest, clearStats, reloadStats
 from ittc.logs import clearLogs, reloadLogs, logTileRequest
 
 from ittc.source.models import TileOrigin,TileSource
@@ -64,13 +64,34 @@ def capabilities_service(request, template='capabilities/capabilities_service_1_
 @login_required
 def flush(request):
    
-    defaultcache = umemcache.Client(settings.CACHES['default']['LOCATION'])
-    defaultcache.connect()
-    defaultcache.flush_all()
+    # Using raw umemcache flush_all function
 
-    tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
-    tilecache.connect()
-    tilecache.flush_all()
+    #defaultcache = umemcache.Client(settings.CACHES['default']['LOCATION'])
+    #defaultcache.connect()
+    #defaultcache.flush_all()
+
+    #tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
+    #tilecache.connect()
+    #tilecache.flush_all()
+
+    #resultscache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
+    #resultscache.connect()
+    #resultscache.flush_all()
+
+    #==#
+
+    # Using custom clear function from https://github.com/mozilla/django-memcached-pool/blob/master/memcachepool/cache.py
+    if(check_cache_availability('default')):
+        defaultcache = caches['tiles']
+        defaultcache.clear()
+
+    if(check_cache_availability('tiles')):
+        tilecache = caches['tiles']
+        tilecache.clear()
+
+    if(check_cache_availability('celery_results')):
+        resultscache = caches['celery_results']
+        resultscache.clear()
 
     return HttpResponse("Tile cache flushed.",
                         content_type="text/plain"
@@ -124,6 +145,23 @@ def stats_json(request):
     return HttpResponse(json.dumps(stats),
                         content_type="application/json"
                         )
+
+@login_required
+def stats_cache_json(request):
+
+    stats = {}
+
+    target = settings.TILE_ACCELERATOR['cache']['memory']['target']
+    if(check_cache_availability(target)):
+        location = settings.CACHES[target]['LOCATION']
+        tilecache = umemcache.Client(location)
+        tilecache.connect()
+        stats = tilecache.stats()
+
+    return HttpResponse(json.dumps(stats),
+                        content_type="application/json"
+                        )
+
 
 
 @login_required
@@ -277,33 +315,43 @@ def stats_geojson(request, z=None, origin=None, source=None, date=None):
 
 @login_required
 def info(request):
-    stats = stats_tilerequest()
+    stats_tr = stats_tilerequest()
+    stats_c = stats_cache()
     caches = []
-    c = settings.ITTC_SERVER['cache']['memory']
+    c = settings.TILE_ACCELERATOR['cache']['memory']
+
+    size = int(stats_c['bytes'])
+    maxsize = int(stats_c['limit_maxbytes'])
+    size_percentage = str((100.0 * size) / maxsize)+"%" 
+
     caches.append({
         'name': 'memory',
         'enabled': c['enabled'],
         'description': c['description'],
         'type': c['type'],
-        'size': formatMemorySize(c['size'],original='M'),
+        'size': formatMemorySize(size, original='B'),
+        'maxsize': formatMemorySize(maxsize, original='B'),
+        'size_percentage': size_percentage,
         'minzoom': c['minZoom'],
         'maxzoom': c['maxZoom'],
-        'expiration': c['expiration']
+        'expiration': c['expiration'],
+        'link_memcached': '/cache/stats/export/cache.json'
     })
+
     heuristics = []
-    h = settings.ITTC_SERVER['heuristic']['down']
+    h = settings.TILE_ACCELERATOR['heuristic']['down']
     heuristics.append({
         'name': 'down',
         'enabled': h['enabled'],
         'description': h['description']
     })
-    h = settings.ITTC_SERVER['heuristic']['up']
+    h = settings.TILE_ACCELERATOR['heuristic']['up']
     heuristics.append({
         'name': 'up',
         'enabled': h['enabled'],
         'description': h['description']
     })
-    h = settings.ITTC_SERVER['heuristic']['nearby']
+    h = settings.TILE_ACCELERATOR['heuristic']['nearby']
     heuristics.append({
         'name': 'nearby',
         'enabled': h['enabled'],
@@ -710,7 +758,10 @@ def requestIndirectTiles(tilesource, ext, tiles):
     if tiles:
         for t in tiles:
             tx, ty, tz = t
-            taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
+            #taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
+            args = [tilesource.id, tz, tx, ty, ext]
+            #Expires handled by global queue setting
+            taskRequestTile.apply_async(args=args, kwargs=None, queue="requests")
 
 
 def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=None, x=None, y=None, u=None, ext=None):
@@ -748,14 +799,14 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
 
     if tilesource.cacheable:
 
-        if settings.ITTC_SERVER['heuristic']['nearby']['enabled']:
-            ir = settings.ITTC_SERVER['heuristic']['nearby']['radius']
+        if settings.TILE_ACCELERATOR['heuristic']['nearby']['enabled']:
+            ir = settings.TILE_ACCELERATOR['heuristic']['nearby']['radius']
             nearbyTiles = getNearbyTiles(ix, iy, iz, ir)
             #print "Nearby Tiles"
             #print nearbyTiles
 
-        if settings.ITTC_SERVER['heuristic']['up']['enabled']:
-            iDepth = getValue(settings.ITTC_SERVER['heuristic']['up'],'depth')
+        if settings.TILE_ACCELERATOR['heuristic']['up']['enabled']:
+            iDepth = getValue(settings.TILE_ACCELERATOR['heuristic']['up'],'depth')
             if iDepth:
                 parentTiles = getParentTiles(ix, iy, iz, depth=iDepth)
             else:
@@ -763,7 +814,7 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
             #print "Parent Tiles"
             #print parentTiles
 
-        heuristic_down = settings.ITTC_SERVER['heuristic']['down']
+        heuristic_down = settings.TILE_ACCELERATOR['heuristic']['down']
         if heuristic_down['enabled']:
             depth = heuristic_down['depth']
             minZoom = heuristic_down['minZoom']
@@ -820,7 +871,7 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
             print "Cache not available"
 
     tile = None
-    if tilesource.cacheable and cache_available and iz >= settings.ITTC_SERVER['cache']['memory']['minZoom'] and iz <= settings.ITTC_SERVER['cache']['memory']['maxZoom']:
+    if tilesource.cacheable and cache_available and iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         #tile = tilecache.get(key)
         tile = getTileFromCache(tilecache, key, True)
