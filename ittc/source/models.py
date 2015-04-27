@@ -7,8 +7,6 @@ import uuid
 from base64 import b64encode
 from optparse import make_option
 import json
-import urllib
-import urllib2
 import argparse
 import time
 import os
@@ -31,6 +29,15 @@ def make_request(url, params, auth=None, data=None, contentType=None):
     Prepares a request from a url, params, and optionally authentication.
     """
     #print 'make_request'
+
+    # Import Gevent and monkey patch
+    #import gevent
+    from gevent import monkey
+    monkey.patch_all()
+
+    # Import IO Libraries
+    import urllib
+    import urllib2
     
     if params:
         url = url + '?' + urllib.urlencode(params)
@@ -193,6 +200,7 @@ class TileSource(models.Model):
         params = None
         #params = {'access_token': 'pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw'}
 
+        print "Requesting Tile from"+url
         request = make_request(url=url, params=params, auth=None, data=None, contentType=contentType)
         
         if request.getcode() != 200:

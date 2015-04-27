@@ -23,8 +23,6 @@ from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
 from urlparse import urlparse
 
-from pymongo import MongoClient
-
 import json
 
 from .models import TileOrigin, TileSource

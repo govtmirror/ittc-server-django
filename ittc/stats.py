@@ -19,8 +19,6 @@ from django.http import Http404
 
 from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
-from pymongo import MongoClient
-
 # Can't import for some reason
 #from .utils import check_cache_availability
 
@@ -40,6 +38,11 @@ def check_cache_availability(cache):
 
 
 def clearStats():
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Update MongoDB
+    from pymongo import MongoClient
     client = MongoClient('localhost', 27017)
     db = client.ittc
     for stat in settings.CUSTOM_STATS:
@@ -47,13 +50,21 @@ def clearStats():
 
 
 def reloadStats():
-    clearStats()
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Update MongoDB
+    from pymongo import MongoClient
     client = MongoClient('localhost', 27017)
     db = client.ittc
+    #Clear Stats
+    for stat in settings.CUSTOM_STATS:
+        db.drop_collection(stat['collection'])
+    # Reload Stats
     docs = db[settings.LOG_REQUEST_COLLECTION].find()
-
     #Aggregate stats in memory, sorted by collection
     totalstats_py = {}
+    print "Number of Tile Requests: "+str(docs.count())
     try:
         for doc in docs:
             for s in buildStats(doc):
@@ -140,6 +151,11 @@ def stats_tilerequest(mongo=True):
     stats = {}
 
     if mongo:
+        # Import Gevent and monkey patch
+        from gevent import monkey
+        monkey.patch_all()
+        # Update MongoDB
+        from pymongo import MongoClient
         client = MongoClient('localhost', 27017)
         db = client.ittc
         stats_total = db.stats_total

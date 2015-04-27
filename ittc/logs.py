@@ -19,8 +19,6 @@ from django.http import Http404
 
 from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
-from pymongo import MongoClient
-
 from .stats import buildStats, incStats
 
 import iso8601
@@ -35,19 +33,31 @@ http_client = httplib2.Http()
 
 
 def clearLogs():
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Init Mongo Client
+    from pymongo import MongoClient
     client = MongoClient('localhost', 27017)
     db = client.ittc
+    # Clear Logs
     db.drop_collection(settings.LOG_REQUEST_COLLECTION)
 
 def reloadLogs():
-    clearLogs()
-
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Init Mongo Client
+    from pymongo import MongoClient
+    client = MongoClient('localhost', 27017)
+    db = client.ittc
+    # Clear Logs
+    db.drop_collection(settings.LOG_REQUEST_COLLECTION)
+    # Reload Logs
     log_root = settings.LOG_REQUEST_ROOT
     if log_root:
         log_files = glob.glob(log_root+os.sep+"requests_tiles_*.tsv")
         if log_files:
-            client = MongoClient('localhost', 27017)
-            db = client.ittc
             collection = db[settings.LOG_REQUEST_COLLECTION]
             for log_file in log_files:
                 reloadLog(log_file,collection)
@@ -113,7 +123,12 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
         with open(log_file,'a') as f:
             line = log_format.format(status=status,tileorigin=tileorigin.name,tilesource=tilesource.name,z=z,x=x,y=y,ip=ip,datetime=datetime.isoformat())
             f.write(line+"\n")
+
+            # Import Gevent and monkey patch
+            from gevent import monkey
+            monkey.patch_all()
             # Update MongoDB
+            from pymongo import MongoClient
             client = MongoClient('localhost', 27017)
             db = client.ittc
             r = buildTileRequestDocument(tileorigin.name,tilesource.name, x, y, z, status, datetime, ip)

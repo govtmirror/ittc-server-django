@@ -23,8 +23,6 @@ from geojson import Polygon, Feature, FeatureCollection, GeometryCollection
 
 from urlparse import urlparse
 
-from pymongo import MongoClient
-
 import json
 
 from .stats import buildStats, incStats
@@ -395,6 +393,11 @@ def logs_tilerequest(mongo=True):
         'logs':[]
     }
     if mongo:
+        # Import Gevent and monkey patch
+        from gevent import monkey
+        monkey.patch_all()
+        # Update MongoDB
+        from pymongo import MongoClient
         client = MongoClient('localhost', 27017)
         db = client.ittc
         collection = db[settings.LOG_COLLECTION]
