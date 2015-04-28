@@ -14,7 +14,6 @@ from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
-from django.core.cache import cache, caches, get_cache
 from django.http import Http404
 from django.utils.encoding import force_str, force_text, smart_text
 from django.core.exceptions import ValidationError
@@ -335,6 +334,7 @@ def getValue(d, name, fallback=None):
 
 def check_cache_availability(cache):
     available = False
+    from django.core.cache import caches
     tilecache = caches[cache]
     try:
         tilecache.get('')
@@ -342,6 +342,45 @@ def check_cache_availability(cache):
     except:
         available = False
     return available
+
+
+def connect_to_cache(name):
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Import Django Cache (mozilla/django-memcached-pool)
+    #from django.core.cache import cache, caches, get_cache
+    #from django.core.cache import caches
+    # Get Tile Cache
+    cache = None
+    try:
+        from memcachepool.cache import UMemcacheCache
+        cache = UMemcacheCache(settings.CACHES[name]['LOCATION'], {})
+        cache.get('')
+    except:
+        cache = None
+    return cache
+
+
+def get_from_cache(name, key):
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Import Django Cache (mozilla/django-memcached-pool)
+    #from django.core.cache import cache, caches, get_cache
+    #from django.core.cache import caches
+    # Get Tile Cache
+    cache = None
+    obj = None
+    try:
+        from memcachepool.cache import UMemcacheCache
+        cache = UMemcacheCache(settings.CACHES[name]['LOCATION'], {})
+        obj = cache.get(key)
+    except:
+        cache = None
+        obj = None
+    return (cache, obj)
+
 
 #How to parse HTTP Expires header
 #http://stackoverflow.com/questions/1471987/how-do-i-parse-an-http-date-string-in-python
@@ -361,23 +400,19 @@ def check_tile_expired(tile):
 
     return expired
 
-def getTileFromCache(cache, key, check):
-    if cache:
-        if check:
-            tile = cache.get(key)
-            if tile is None:
-                return None
-            else:
-                if check_tile_expired(tile):
-                    print "Tile is expired.  Evicting and returning None"
-                    cache.delete(tile)
-                    return None
-                else:
-                    return tile
-        else:
-            return cache.get(key)
-    else:
+def getTileFromCache(name, key, check):
+    tilecache, tile = get_from_cache(name, key):
+    if not tile:
         return None
+
+    if check:
+        if check_tile_expired(tile):
+            print "Tile is expired.  Evicting and returning None"
+            tilecache.delete(tile)
+            return None
+
+    return tilecache, tile
+
 
 def getIPAddress(request):
     ip = None

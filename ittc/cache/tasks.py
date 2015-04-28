@@ -7,25 +7,37 @@ from celery import shared_task
 
 #import umemcache
 
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, get_from_cache
 from ittc.source.models import TileSource
 
 @shared_task
 def taskRequestTile(ts, iz, ix, iy, ext):
 
-    # Import Gevent and monkey patch
-    from gevent import monkey
-    monkey.patch_all()
-    # Import Django Cache (mozilla/django-memcached-pool)
-    from django.core.cache import cache, caches, get_cache
-    # Get Tile Cache
-    tilecache = caches['tiles']
-    #tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
-    #tilecache.connect()
-    #==#
     verbose = True
+    now = datetime.datetime.now()
+    # Load Logging Info
+    log_root = settings.LOG_REQUEST_ROOT
+    log_format = settings.LOG_REQUEST_FORMAT
+    if log_root and log_format:
+        if not os.path.exists(log_root):
+            os.makedirs(log_root)
 
-    tilesource = get_object_or_404(TileSource, pk=ts)
+    indirect_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_indirect.tsv"
+    error_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.tsv"
+    # Find TileSource
+    tilesource = None
+    tilesources = getTileSources(proxy=True)
+    for candidate in tilesources:
+        if candidate.id == ts:
+            tilesource = candidate
+            break
+
+    if not tilesource:
+        with open(error_file,'a') as f:
+            line = "Error: Could not find tilesource for primary key "+str(ts)+"."
+            f.write(line+"\n")
+        return
+
     #Y is always in regualar TMS before being added to task queue
     iyf = flip_y(ix,iy,iz)
     #iy, iyf = getYValues(None,tilesource,ix,iy,iz)
@@ -53,16 +65,20 @@ def taskRequestTile(ts, iz, ix, iy, ext):
             #returnBlank = True
             returnErrorTile = True
 
-
     if returnBlankTile or returnErrorTile:
-        return None
+        return
 
     tile = None
     if iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
-        #raise Exception(key)
-        tile = tilecache.get(key)
-        #raise Exception(str(tile))
+        tilecache, tile = getTileFromCache('tiles', key, True)
+
+        if not tilecache:
+            with open(error_file,'a') as f:
+                line = "Error: Could not connect to cache (tiles)."
+                f.write(line+"\n")
+            return
+
         if tile:
             if verbose:
                 print "task / cache hit for "+key
@@ -70,29 +86,51 @@ def taskRequestTile(ts, iz, ix, iy, ext):
             if verbose:
                 print "task / cache miss for "+key
 
-            if tilesource.type == TYPE_TMS:
-                tile = tilesource.requestTile(ix,iy,iz,ext,True)
-            elif tilesource.type == TYPE_TMS_FLIPPED:
-                tile = tilesource.requestTile(ix,iyf,iz,ext,True)
+            with open(indirect_file,'a') as f:
+                line = log_format.format(
+                    status='indirect',
+                    tileorigin=tilesource.origin.name,
+                    tilesource=tilesource.name,
+                    z=z,x=x,y=y,
+                    ip='-',
+                    datetime=now.isoformat())
+                f.write(line+"\n")
+
+            from urllib2 import HTTPError
+            try:
+                if tilesource.type == TYPE_TMS:
+                    tile = tilesource.requestTile(ix,iy,iz,ext,True)
+                elif tilesource.type == TYPE_TMS_FLIPPED:
+                    tile = tilesource.requestTile(ix,iyf,iz,ext,True)
+            except HTTPError, err:
+                with open(error_file,'a') as f:
+                    line = "Error: HTTPError.  Could not get tile ("+key+") from source."
+                    f.write(line+"\n")
+                return
+            except:
+                with open(error_file,'a') as f:
+                    line = "Error: Unknown Error for tile ("+key+")."
+                    f.write(line+"\n")
+                return
 
             tilecache.set(key, tile)
 
 
 @shared_task
 def taskWriteBackTile(key, headers, data):
-    # Import Gevent and monkey patch
-    from gevent import monkey
-    monkey.patch_all()
-    # Import Django Cache (mozilla/django-memcached-pool)
-    #from django.core.cache import cache, caches, get_cache
-    from django.core.cache import caches
-    # Get Tile Cache
-    tilecache = caches['tiles']
-    #tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
-    #tilecache.connect()
-    #==#
+    tilecache, tile = getTileFromCache('tiles', key, True)
+    if not tilecache:
+        log_root = settings.LOG_REQUEST_ROOT
+        if log_root:
+            if not os.path.exists(log_root):
+                os.makedirs(log_root)
+        error_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.tsv"
+        with open(error_file,'a') as f:
+            line = "Error: Could not connect to cache (tiles)."
+            f.write(line+"\n")
+        return
     # Double check that another thread didn't writeback already
-    if not tilecache.get(key):
+    if not tile:
         from json import loads
         from base64 import b64decode
         tile = {

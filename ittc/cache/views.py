@@ -862,27 +862,24 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
         image.save(response, "PNG")
         return response
 
-    cache_available = False
-    tilecache = None
-    if tilesource.cacheable:
-        cache_available = check_cache_availability('tiles')
-        tilecache = caches['tiles']
-        if not cache_available:
-            print "Cache not available"
-
     tile = None
-    if tilesource.cacheable and cache_available and iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
+    if tilesource.cacheable and iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
-        #tile = tilecache.get(key)
-        tile = getTileFromCache(tilecache, key, True)
+        tilecache, tile = getTileFromCache('tiles', key, True)
+        if not tilecache:
+            with open(error_file,'a') as f:
+                line = "Error: Could not connect to cache (tiles)."
+                f.write(line+"\n")
+            return
+
         if tile:
             if verbose:
                 print "cache hit for "+key
-                logTileRequest(tileorigin, tilesource, x, y, z, 'hit', now, ip)
+            logTileRequest(tileorigin, tilesource, x, y, z, 'hit', now, ip)
         else:
             if verbose:
                 print "cache miss for "+key
-                logTileRequest(tileorigin, tilesource, x, y, z, 'miss', now, ip)
+            logTileRequest(tileorigin, tilesource, x, y, z, 'miss', now, ip)
 
             if tilesource.type == TYPE_TMS:
                 tile = tilesource.requestTile(ix,iy,iz,ext,True)
