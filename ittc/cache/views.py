@@ -886,13 +886,13 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
             elif tilesource.type == TYPE_TMS_FLIPPED:
                 tile = tilesource.requestTile(ix,iyf,iz,ext,True)
 
-            from base64 import b64encode
-            taskWriteBackTile.apply_async(
-                args=[key, json.dumps(tile['headers']), b64encode(tile['data'])],
-                kwargs=None,
-                queue="writeback")
+            #from base64 import b64encode
+            #taskWriteBackTile.apply_async(
+            #    args=[key, json.dumps(tile['headers']), b64encode(tile['data'])],
+            #    kwargs=None,
+            #    queue="writeback")
             # Using async algorithm instead of sync
-            #tilecache.set(key, tile)
+            tilecache.set(key, tile)
 
     else:
         if verbose:
