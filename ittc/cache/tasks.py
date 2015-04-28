@@ -79,8 +79,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
 
 
 @shared_task
-def taskWriteBackTile(key, tile):
-
+def taskWriteBackTile(key, headers, data):
     # Import Gevent and monkey patch
     from gevent import monkey
     monkey.patch_all()
@@ -94,5 +93,11 @@ def taskWriteBackTile(key, tile):
     #==#
     # Double check that another thread didn't writeback already
     if not tilecache.get(key):
+        from json import loads
+        from base64 import b64decode
+        tile = {
+            'headers': loads(headers),
+            'data': b64decode(data)
+        }
         tilecache.set(key, tile)
 
