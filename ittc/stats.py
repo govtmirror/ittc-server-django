@@ -66,7 +66,7 @@ def reloadStats():
         attributes = {}
         for a in desc['attributes']:
             attributes[a] = "$"+a
-        stat = {'name': desc['name'],'collection': desc['collection'], 'attributes': attributes}}
+        stat = {'name': desc['name'],'collection': desc['collection'], 'attributes': attributes}
         stats.append(stat)
     # Calculate Statistics
     values = []
