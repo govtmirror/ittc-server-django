@@ -48,8 +48,46 @@ def clearStats():
     for stat in settings.CUSTOM_STATS:
         db.drop_collection(stat['collection'])
 
-
 def reloadStats():
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Update MongoDB
+    from pymongo import MongoClient
+    client = MongoClient('localhost', 27017)
+    db = client.ittc
+    #Clear Stats
+    for stat in settings.CUSTOM_STATS:
+        db.drop_collection(stat['collection'])
+    # Reload Stats
+    logs = db[settings.LOG_REQUEST_COLLECTION]
+    stats = []
+    for desc in settings.CUSTOM_STATS:
+        attributes = {}
+        for a in desc['attributes']:
+            attributes[a] = "$"+a
+        stat = {'name': desc['name'],'collection': desc['collection'], 'attributes': attributes}}
+        stats.append(stat)
+    # Calculate Statistics
+    values = []
+    for stat in stats:
+        agg = logs.aggregate([
+            { "$group": {
+                "_id": stat.attributes
+                "value": { 
+                    "$sum": 1
+                }
+            }}
+        ])
+        docs = []
+        for v in list(agg):
+            doc = {u'stat': name, u'value': v[u'value']}
+            doc.update(v[u'id'])
+            docs.append(doc)
+        db[stat.collection].insert(docs, continue_on_error=False)
+
+
+def reloadStatsOld():
     # Import Gevent and monkey patch
     from gevent import monkey
     monkey.patch_all()
