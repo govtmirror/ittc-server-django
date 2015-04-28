@@ -24,7 +24,7 @@ from ittc.stats import stats_cache, stats_tilerequest, clearStats, reloadStats
 from ittc.logs import clearLogs, reloadLogs, logTileRequest
 
 from ittc.source.models import TileOrigin,TileSource
-from ittc.cache.tasks import taskRequestTile
+from ittc.cache.tasks import taskRequestTile, taskWriteBackTile
 from ittc.cache.forms import TileOriginForm, TileSourceForm, TileServiceForm
 
 import json
@@ -889,7 +889,9 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
             elif tilesource.type == TYPE_TMS_FLIPPED:
                 tile = tilesource.requestTile(ix,iyf,iz,ext,True)
 
-            tilecache.set(key, tile)
+            taskWriteBackTile.apply_async(args=[key, tile], kwargs=None, queue="writeback")
+            # Using async algorithm instead of sync
+            #tilecache.set(key, tile)
 
     else:
         if verbose:

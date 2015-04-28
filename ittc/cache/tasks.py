@@ -1,12 +1,11 @@
 from __future__ import absolute_import
 
 from django.conf import settings
-from django.core.cache import cache, caches, get_cache
 from django.shortcuts import render_to_response, get_object_or_404, render
 
 from celery import shared_task
 
-import umemcache
+#import umemcache
 
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles
 from ittc.source.models import TileSource
@@ -14,6 +13,16 @@ from ittc.source.models import TileSource
 @shared_task
 def taskRequestTile(ts, iz, ix, iy, ext):
 
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Import Django Cache (mozilla/django-memcached-pool)
+    from django.core.cache import cache, caches, get_cache
+    # Get Tile Cache
+    tilecache = caches['tiles']
+    #tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
+    #tilecache.connect()
+    #==#
     verbose = True
 
     tilesource = get_object_or_404(TileSource, pk=ts)
@@ -22,11 +31,6 @@ def taskRequestTile(ts, iz, ix, iy, ext):
     #iy, iyf = getYValues(None,tilesource,ix,iy,iz)
 
     tile_bbox = tms_to_bbox(ix,iy,iz)
-    tilecache = caches['tiles']
-    #tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
-    #tilecache.connect()
-
-    #raise Exception(str(tilecache))
 
     #Check if requested tile is within source's extents
     returnBlankTile = False
@@ -72,3 +76,23 @@ def taskRequestTile(ts, iz, ix, iy, ext):
                 tile = tilesource.requestTile(ix,iyf,iz,ext,True)
 
             tilecache.set(key, tile)
+
+
+@shared_task
+def taskWriteBackTile(key, tile):
+
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Import Django Cache (mozilla/django-memcached-pool)
+    #from django.core.cache import cache, caches, get_cache
+    from django.core.cache import caches
+    # Get Tile Cache
+    tilecache = caches['tiles']
+    #tilecache = umemcache.Client(settings.CACHES['tiles']['LOCATION'])
+    #tilecache.connect()
+    #==#
+    # Double check that another thread didn't writeback already
+    if not tilecache.get(key):
+        tilecache.set(key, tile)
+
