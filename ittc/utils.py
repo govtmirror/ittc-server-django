@@ -374,11 +374,16 @@ def get_from_cache(name, key):
     obj = None
     try:
         from memcachepool.cache import UMemcacheCache
-        cache = UMemcacheCache(settings.CACHES[name]['LOCATION'], {})
-        obj = cache.get(key)
+        cache = UMemcacheCache(settings.CACHES[name]['LOCATION'], settings.CACHES[name]['OPTIONS'])
+        #cache = caches['tiles']
     except:
         cache = None
-        obj = None
+
+    if cache:
+        try:
+            obj = cache.get(key)
+        except:
+            obj = None
     return (cache, obj)
 
 
@@ -401,15 +406,15 @@ def check_tile_expired(tile):
     return expired
 
 def getTileFromCache(name, key, check):
-    tilecache, tile = get_from_cache(name, key):
+    tilecache, tile = get_from_cache(name, key)
     if not tile:
-        return None
+        return tilecache, None
 
     if check:
         if check_tile_expired(tile):
             print "Tile is expired.  Evicting and returning None"
             tilecache.delete(tile)
-            return None
+            return tilecache, None
 
     return tilecache, tile
 

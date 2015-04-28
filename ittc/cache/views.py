@@ -21,7 +21,7 @@ from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox
 from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
 from ittc.utils import logs_tilerequest, formatMemorySize
 from ittc.stats import stats_cache, stats_tilerequest, clearStats, reloadStats
-from ittc.logs import clearLogs, reloadLogs, logTileRequest
+from ittc.logs import clearLogs, reloadLogs, logTileRequest, logTileRequestError
 
 from ittc.source.models import TileOrigin,TileSource
 from ittc.cache.tasks import taskRequestTile, taskWriteBackTile
@@ -867,9 +867,9 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
         key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         tilecache, tile = getTileFromCache('tiles', key, True)
         if not tilecache:
-            with open(error_file,'a') as f:
-                line = "Error: Could not connect to cache (tiles)."
-                f.write(line+"\n")
+            print "Error: Could not connect to cache (tiles)."
+            line = "Error: Could not connect to cache (tiles)."
+            logTileRequestError(line, now)
             return
 
         if tile:

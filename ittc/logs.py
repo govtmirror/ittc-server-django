@@ -108,15 +108,15 @@ def buildTileRequestDocument(tileorigin, tilesource, x, y, z, status, datetime, 
     return r
 
 def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
-    starttime = time.clock()
+    #starttime = time.clock()
     #==#
     log_root = settings.LOG_REQUEST_ROOT
     #log_format = settings.LOG_REQUEST_FORMAT['tile_request']
     log_format = settings.LOG_REQUEST_FORMAT
 
     if log_root and log_format:
-        if not os.path.exists(log_root):
-            os.makedirs(log_root)
+        #if not os.path.exists(log_root):
+        #    os.makedirs(log_root)
 
         log_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+".tsv"
 
@@ -138,4 +138,14 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
             stats = buildStats(r)
             incStats(db, stats)
 
-    print "Time Elapsed: "+str(time.clock()-starttime)
+    #print "Time Elapsed: "+str(time.clock()-starttime)
+
+
+def logTileRequestError(line, datetime):
+    log_root = settings.LOG_ERRORS_ROOT
+    if log_root:
+        #if not os.path.exists(log_root):
+        #    os.makedirs(log_root)
+        error_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+        with open(error_file,'a') as f:
+            f.write(line+"\n")

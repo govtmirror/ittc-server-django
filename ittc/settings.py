@@ -216,6 +216,8 @@ CELERY_QUEUES = (
 
 # Tile Request Logs
 LOG_REQUEST_ROOT = BASE_DIR+'/logs/requests'
+LOG_INDIRECT_ROOT = BASE_DIR+'/logs/indirect'
+LOG_ERRORS_ROOT = BASE_DIR+'/logs/errors'
 LOG_REQUEST_FORMAT = '{status}	{tileorigin}	{tilesource}	{z}	{x}	{y}	{ip}	{datetime}'
 LOG_REQUEST_COLLECTION = 'logs'
 

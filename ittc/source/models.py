@@ -200,7 +200,6 @@ class TileSource(models.Model):
         params = None
         #params = {'access_token': 'pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw'}
 
-        print "Requesting Tile from"+url
         request = make_request(url=url, params=params, auth=None, data=None, contentType=contentType)
         
         if request.getcode() != 200:

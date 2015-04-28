@@ -7,8 +7,12 @@ from celery import shared_task
 
 #import umemcache
 
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, get_from_cache
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getTileFromCache
 from ittc.source.models import TileSource
+from ittc.source.utils import getTileSources
+
+import os
+import datetime
 
 @shared_task
 def taskRequestTile(ts, iz, ix, iy, ext):
@@ -18,12 +22,15 @@ def taskRequestTile(ts, iz, ix, iy, ext):
     # Load Logging Info
     log_root = settings.LOG_REQUEST_ROOT
     log_format = settings.LOG_REQUEST_FORMAT
-    if log_root and log_format:
-        if not os.path.exists(log_root):
-            os.makedirs(log_root)
+    #if log_root and log_format:
+    #    if not os.path.exists(log_root):
+    #        os.makedirs(log_root)
 
-    indirect_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_indirect.tsv"
-    error_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.tsv"
+    #if settings.LOG_ERRORS_ROOT
+    #    if not os.path.exists(log_root):
+    #        os.makedirs(log_root)
+
+    indirect_file = log_root+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_indirect.tsv"
     # Find TileSource
     tilesource = None
     tilesources = getTileSources(proxy=True)
@@ -33,6 +40,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
             break
 
     if not tilesource:
+        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
         with open(error_file,'a') as f:
             line = "Error: Could not find tilesource for primary key "+str(ts)+"."
             f.write(line+"\n")
@@ -74,6 +82,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
         tilecache, tile = getTileFromCache('tiles', key, True)
 
         if not tilecache:
+            error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
             with open(error_file,'a') as f:
                 line = "Error: Could not connect to cache (tiles)."
                 f.write(line+"\n")
@@ -91,7 +100,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
                     status='indirect',
                     tileorigin=tilesource.origin.name,
                     tilesource=tilesource.name,
-                    z=z,x=x,y=y,
+                    z=iz,x=ix,y=iy,
                     ip='-',
                     datetime=now.isoformat())
                 f.write(line+"\n")
@@ -103,11 +112,13 @@ def taskRequestTile(ts, iz, ix, iy, ext):
                 elif tilesource.type == TYPE_TMS_FLIPPED:
                     tile = tilesource.requestTile(ix,iyf,iz,ext,True)
             except HTTPError, err:
+                error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
                 with open(error_file,'a') as f:
                     line = "Error: HTTPError.  Could not get tile ("+key+") from source."
                     f.write(line+"\n")
                 return
             except:
+                error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
                 with open(error_file,'a') as f:
                     line = "Error: Unknown Error for tile ("+key+")."
                     f.write(line+"\n")
@@ -118,13 +129,14 @@ def taskRequestTile(ts, iz, ix, iy, ext):
 
 @shared_task
 def taskWriteBackTile(key, headers, data):
+    now = datetime.datetime.now()
     tilecache, tile = getTileFromCache('tiles', key, True)
     if not tilecache:
-        log_root = settings.LOG_REQUEST_ROOT
+        log_root = settings.LOG_ERRORS_ROOT
         if log_root:
             if not os.path.exists(log_root):
                 os.makedirs(log_root)
-        error_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.tsv"
+        error_file = log_root+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
         with open(error_file,'a') as f:
             line = "Error: Could not connect to cache (tiles)."
             f.write(line+"\n")
