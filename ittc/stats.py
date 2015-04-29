@@ -49,6 +49,7 @@ def clearStats():
         db.drop_collection(stat['collection'])
 
 def reloadStats():
+    print "Reloading Stats"
     # Import Gevent and monkey patch
     from gevent import monkey
     monkey.patch_all()
@@ -71,20 +72,32 @@ def reloadStats():
     # Calculate Statistics
     values = []
     for stat in stats:
-        agg = logs.aggregate([
-            { "$group": {
-                "_id": stat.attributes
-                "value": { 
-                    "$sum": 1
-                }
-            }}
-        ])
-        docs = []
-        for v in list(agg):
-            doc = {u'stat': name, u'value': v[u'value']}
-            doc.update(v[u'id'])
-            docs.append(doc)
-        db[stat.collection].insert(docs, continue_on_error=False)
+        print stat['name']
+        if len(stat['attributes']) == 0:
+            doc = {u'stat': stat['name'], u'value': logs.count()}
+            db[stat['collection']].insert(doc)
+        else:
+            query = [
+                { "$group": {
+                    "_id": stat['attributes'],
+                    "value": {
+                        "$sum": 1
+                    }
+                }}
+            ]
+            agg = logs.aggregate(query)
+            if u'ok' in agg and u'result' in agg and len(agg[u'result']) == 0:
+                doc = {u'stat': stat['name'], u'value': agg[u'result'][0][u'value']}
+                doc.update(agg[u'result'][0][u'_id'])
+                db[stat['collection']].insert(doc)
+            else:
+                values = list(agg[u'result'])
+                docs = []
+                for v in values:
+                    doc = {u'stat': stat['name'], u'value': v[u'value']}
+                    doc.update(v[u'_id'])
+                    docs.append(doc)
+                db[stat['collection']].insert(docs, continue_on_error=False)
 
 
 def reloadStatsOld():
