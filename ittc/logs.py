@@ -133,22 +133,43 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
             monkey.patch_all()
             # Update MongoDB
             from pymongo import MongoClient
-            #client = MongoClient('localhost', 27017)
-            client = MongoClient('/tmp/mongodb-27017.sock')
-            db = client.ittc
-            r = buildTileRequestDocument(tileorigin.name,tilesource.name, x, y, z, status, datetime, ip)
+            client = None
+            db = None
+            r = None
+            try:
+                #client = MongoClient('localhost', 27017)
+                client = MongoClient('/tmp/mongodb-27017.sock')
+                db = client.ittc
+                r = buildTileRequestDocument(tileorigin.name,tilesource.name, x, y, z, status, datetime, ip)
+            except:
+                client = None
+                db = None
+                errorline = "Error: Could not connet to log database. Most likely issue with connection pool"
+                error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+                with open(error_file,'a') as f:
+                    f.write(errorline+"\n")
+
             # Update Mongo Logs
-            db[settings.LOG_REQUEST_COLLECTION].insert(r, w=0)
-            # Update Mongo Aggregate Stats
-            stats = buildStats(r)
-            # Sync stats
-            if settings.ASYNC_STATS:
-                taskIncStats.apply_async(
-                args=[stats],
-                kwargs=None,
-                queue="statistics")
-            else:
-                incStats(db, stats)
+            if client and db and r:
+                try:
+                    db[settings.LOG_REQUEST_COLLECTION].insert(r, w=0)
+                except:
+                    errorline = "Error: Could not write log entry into database.  Most likely socket issue.  For the following: "+line
+                    error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+                    with open(error_file,'a') as f:
+                        f.write(errorline+"\n")
+
+                # Update Mongo Aggregate Stats
+                stats = buildStats(r)
+                # Sync stats
+                if settings.ASYNC_STATS:
+                    taskIncStats.apply_async(
+                    args=[stats],
+                    kwargs=None,
+                    queue="statistics")
+                else:
+                    incStats(db, stats)
+
 
     #print "Time Elapsed: "+str(time.clock()-starttime)
 

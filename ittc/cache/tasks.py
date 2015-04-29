@@ -160,10 +160,29 @@ def taskIncStats(stats):
     monkey.patch_all()
     # Update MongoDB
     from pymongo import MongoClient
-    #client = MongoClient('localhost', 27017)
-    client = MongoClient('/tmp/mongodb-27017.sock')
-    db = client.ittc
+    client = None
+    db = None
+    try:
+        #client = MongoClient('localhost', 27017)
+        client = MongoClient('/tmp/mongodb-27017.sock')
+        db = client.ittc
+    except:
+        client = None
+        db = None
+        errorline = "Error: Could not connet to stats database from taskIncStats. Most likely issue with connection pool"
+        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+        with open(error_file,'a') as f:
+            f.write(errorline+"\n")
+
     # Increment Statistics
-    for stat in stats:
-        collection = db[stat['collection']]
-        collection.update(attributes, {'$set': stat['attributes'], '$inc': {'value': 1}}, upsert=True, w=0)
+    if client and db:
+        for stat in stats:
+            try:
+                collection = db[stat['collection']]
+                collection.update(stat['attributes'], {'$set': stat['attributes'], '$inc': {'value': 1}}, upsert=True, w=0)
+            except:
+                errorline = "Error: Could not connet to log upsert stats from taskIncStats.  Most likely issue with sockets"
+                error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+                with open(error_file,'a') as f:
+                    f.write(errorline+"\n")
+
