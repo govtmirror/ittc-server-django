@@ -159,7 +159,7 @@ class TileSource(models.Model):
     #extensions = models.CharField(max_length=400,null=True,blank=True,choices=IMAGE_EXTENSION_CHOICES)
     extensions = models.CharField(max_length=400,null=True,blank=True)
     pattern = models.CharField(max_length=400,null=True,blank=True)
-    extents = models.CharField(max_length=100,blank=True,null=True)
+    extents = models.CharField(max_length=800,blank=True,null=True)
     minZoom = models.IntegerField(default=0,null=True,blank=True)
     maxZoom = models.IntegerField(default=None,null=True,blank=True)
     
