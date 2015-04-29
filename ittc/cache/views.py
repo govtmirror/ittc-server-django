@@ -681,7 +681,8 @@ def sources_json(request):
     #######
     stats = stats_tilerequest()
     sources = []
-    for source in TileSource.objects.all().order_by('name'):
+    #for source in TileSource.objects.all().order_by('name'):
+    for source in getTileSources():
         link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source.name+'.geojson'
         link_proxy_internal = settings.SITEURL+'proxy/?url='+(source.url).replace("{ext}","png")
         link_proxy_external = ""
@@ -864,7 +865,8 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
 
     tile = None
     if tilesource.cacheable and iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
-        key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
+        #key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
+        key = ",".join([tilesource.name,str(iz),str(ix),str(iy),ext])
         tilecache, tile = getTileFromCache('tiles', key, True)
         if not tilecache:
             print "Error: Could not connect to cache (tiles)."
@@ -934,7 +936,12 @@ def proxy_tms(request, origin=None, slug=None, z=None, x=None, y=None, u=None, e
             print tilesource.origin.name
             return None
         else:
-            tile = requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+            tile = requestTile(
+                request,
+                tileservice=None,
+                tilesource=match_tilesource,
+                tileorigin=match_tilesource.origin,
+                z=z,x=x,y=y,u=u,ext=ext)
             #print "Time Elapsed: "+str(time.clock()-starttime)
             return tile
 

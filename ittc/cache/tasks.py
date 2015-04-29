@@ -78,7 +78,8 @@ def taskRequestTile(ts, iz, ix, iy, ext):
 
     tile = None
     if iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
-        key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
+        #key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
+        key = ",".join([tilesource.name,str(iz),str(ix),str(iy),ext])
         tilecache, tile = getTileFromCache('tiles', key, True)
 
         if not tilecache:
