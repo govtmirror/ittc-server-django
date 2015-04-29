@@ -19,7 +19,7 @@ import umemcache
 from .models import TileService
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue, url_to_pattern, string_to_list
 from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
-from ittc.utils import logs_tilerequest, formatMemorySize
+from ittc.utils import logs_tilerequest, formatMemorySize, get_from_cache
 from ittc.stats import stats_cache, stats_tilerequest, clearStats, reloadStats
 from ittc.logs import clearLogs, reloadLogs, logTileRequest, logTileRequestError
 
@@ -140,8 +140,9 @@ def stats_reload(request):
 
 @login_required
 def stats_json(request):
-
-    stats = stats_tilerequest()
+    cache, stats = get_from_cache('default','stats_tilerequests')
+    if not stats:
+        stats = {}
     return HttpResponse(json.dumps(stats),
                         content_type="application/json"
                         )
@@ -190,9 +191,13 @@ def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=No
         iy = flip_y(ix,ify,iz,256,webmercator_bbox)
 
 
-    stats = stats_tilerequest()
+    #stats = stats_tilerequest()
+    cache, stats = get_from_cache('default','stats_tilerequests')
 
     key = z+"/"+x+"/"+y
+
+    if not stats:
+        return None
 
     if not stat:
         return None
@@ -649,24 +654,42 @@ def origins_json(request):
     now = datetime.datetime.now()
     dt = now
     #######
-    stats = stats_tilerequest()
+    #stats = stats_tilerequest()
+    cache, stats = get_from_cache('default','stats_tilerequests')
     origins = []
     for origin in TileOrigin.objects.all().order_by('name','type'):
         link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/origin/'+origin.name+'.geojson'
-        origins.append({
-            'name': origin.name,
-            'description': origin.description,
-            'type': origin.type_title(),
-            'multiple': origin.multiple,
-            'auto': origin.auto,
-            'url': origin.url,
-            'requests_all': getValue(stats['by_origin'], origin.name,0),
-            'requests_year': getValue(getValue(stats['by_year_origin'],dt.strftime('%Y')),origin.name, 0),
-            'requests_month': getValue(getValue(stats['by_month_origin'],dt.strftime('%Y-%m')),origin.name, 0),
-            'requests_today': getValue(getValue(stats['by_date_origin'],dt.strftime('%Y-%m-%d')),origin.name, 0),
-            'link_geojson': link_geojson,
-            'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
-        })
+        if stats:
+            origins.append({
+                'name': origin.name,
+                'description': origin.description,
+                'type': origin.type_title(),
+                'multiple': origin.multiple,
+                'auto': origin.auto,
+                'url': origin.url,
+                'requests_all': getValue(stats['by_origin'], origin.name,0),
+                'requests_year': getValue(getValue(stats['by_year_origin'],dt.strftime('%Y')),origin.name, 0),
+                'requests_month': getValue(getValue(stats['by_month_origin'],dt.strftime('%Y-%m')),origin.name, 0),
+                'requests_today': getValue(getValue(stats['by_date_origin'],dt.strftime('%Y-%m-%d')),origin.name, 0),
+                'link_geojson': link_geojson,
+                'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
+            })
+        else:
+            origins.append({
+                'name': origin.name,
+                'description': origin.description,
+                'type': origin.type_title(),
+                'multiple': origin.multiple,
+                'auto': origin.auto,
+                'url': origin.url,
+                'requests_all': 0,
+                'requests_year': 0,
+                'requests_month': 0,
+                'requests_today': 0,
+                'link_geojson': link_geojson,
+                'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
+            })
+
 
     return HttpResponse(json.dumps(origins),
                         content_type="application/json"
@@ -679,7 +702,8 @@ def sources_json(request):
     now = datetime.datetime.now()
     dt = now
     #######
-    stats = stats_tilerequest()
+    #stats = stats_tilerequest()
+    cache, stats = get_from_cache('default','stats_tilerequests')
     sources = []
     #for source in TileSource.objects.all().order_by('name'):
     for source in getTileSources():
@@ -690,20 +714,36 @@ def sources_json(request):
             link_proxy_external = settings.SITEURL+'cache/proxy/tms/origin/'+source.origin.name+'/source/'+source.name+'/{z}/{x}/{y}.png' 
         elif source.type == TYPE_BING:
             link_proxy_external = settings.SITEURL+'cache/proxy/bing/origin/'+source.origin.name+'/source/'+source.name+'{u}.png'
-        sources.append({
-            'name': source.name,
-            'type': source.type_title(),
-            'origin': source.origin.name,
-            'url': source.url,
-            'requests_all': getValue(stats['by_source'], source.name,0),
-            'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
-            'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source.name, 0),
-            'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source.name, 0),\
-            'link_proxy': link_proxy_internal,
-            'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy_external,
-            'link_geojson': link_geojson,
-            'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
-        })
+        if stats:
+            sources.append({
+                'name': source.name,
+                'type': source.type_title(),
+                'origin': source.origin.name,
+                'url': source.url,
+                'requests_all': getValue(stats['by_source'], source.name,0),
+                'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
+                'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source.name, 0),
+                'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source.name, 0),
+                'link_proxy': link_proxy_internal,
+                'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy_external,
+                'link_geojson': link_geojson,
+                'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
+            })
+        else:
+            sources.append({
+                'name': source.name,
+                'type': source.type_title(),
+                'origin': source.origin.name,
+                'url': source.url,
+                'requests_all': -1
+                'requests_year': -1,
+                'requests_month': -1,
+                'requests_today': -1,
+                'link_proxy': link_proxy_internal,
+                'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy_external,
+                'link_geojson': link_geojson,
+                'link_geojsonio': 'http://geojson.io/#data=data:text/x-url,'+link_geojson
+            })
 
     return HttpResponse(json.dumps(sources),
                         content_type="application/json"
@@ -714,7 +754,7 @@ def services_json(request):
     now = datetime.datetime.now()
     dt = now
     #######
-    stats = stats_tilerequest()
+    #stats = stats_tilerequest()
     services = []
     for service in TileService.objects.all().order_by('name'):
     #    link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source.name+'.geojson'

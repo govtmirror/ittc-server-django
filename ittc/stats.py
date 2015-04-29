@@ -265,3 +265,18 @@ def stats_cache():
         return stats
     else:
         return None
+
+
+def getStatsFromMemory():
+    defaultCache = caches['default']
+    tilesources = defaultCache.get('tilesources_proxy')
+    if tilesources:
+        if debug:
+            print "tilesources cached"
+        return tilesources
+    else:
+        tilesources_django = TileSource.objects.exclude(pattern__isnull=True).exclude(pattern__exact='')
+        tilesources_cache = tilesources_django
+        defaultCache.set('tilesources_proxy', tilesources_cache)
+        return tilesources_cache
+

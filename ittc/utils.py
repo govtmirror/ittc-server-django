@@ -387,6 +387,32 @@ def get_from_cache(name, key):
     return (cache, obj)
 
 
+def commit_to_cache(name, key, obj):
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Import Django Cache (mozilla/django-memcached-pool)
+    #from django.core.cache import cache, caches, get_cache
+    #from django.core.cache import caches
+    # Get Tile Cache
+    cache = None
+    success = False
+    try:
+        from memcachepool.cache import UMemcacheCache
+        cache = UMemcacheCache(settings.CACHES[name]['LOCATION'], settings.CACHES[name]['OPTIONS'])
+        #cache = caches['tiles']
+    except:
+        cache = None
+
+    if cache:
+        try:
+            cache.set(key, obj)
+            success = True
+        except:
+            success = False
+    return success
+
+
 #How to parse HTTP Expires header
 #http://stackoverflow.com/questions/1471987/how-do-i-parse-an-http-date-string-in-python
 def check_tile_expired(tile):

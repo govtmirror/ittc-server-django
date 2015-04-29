@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Imports
 import os
 from kombu import Queue
+from celery.schedules import crontab
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -203,7 +204,7 @@ PROXY_ALLOWED_HOSTS = ( 'tile.openstreetmap.org', 'tile.openstreetmap.fr', 'tile
 
 PROXY_URL = '/proxy/?url='
 
-# CELERY Settings
+# Celery Settings
 CELERY_RESULT_BACKEND = 'cache+memcached://127.0.0.1:11213/'
 BROKER_URL = 'amqp://guest:guest@localhost:5672//'
 CELERY_CACHE_BACKEND = 'celery_results'
@@ -214,6 +215,15 @@ CELERY_QUEUES = (
     Queue('writeback', routing_key='writeback', queue_arguments={'x-message-ttl': 60}),
     Queue('statistics', routing_key='statistics', queue_arguments={'x-message-ttl': 240}),
 )
+
+CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+CELERYBEAT_SCHEDULE = {
+    "scrape-officials": {
+        "task": "ittc.cache.tasks.taskUpdateStats",
+        "schedule": crontab(minute='*/5'),
+        "args": (),
+    },
+}
 
 # Tile Request Logs
 LOG_REQUEST_ROOT = BASE_DIR+'/logs/requests'

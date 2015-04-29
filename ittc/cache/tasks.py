@@ -7,7 +7,7 @@ from celery import shared_task
 
 #import umemcache
 
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getTileFromCache
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getTileFromCache, commit_to_cache
 from ittc.source.models import TileSource
 from ittc.source.utils import getTileSources
 
@@ -186,3 +186,58 @@ def taskIncStats(stats):
                 with open(error_file,'a') as f:
                     f.write(errorline+"\n")
 
+@shared_task
+def taskUpdateStats():
+    stats = {}
+
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Update MongoDB
+    from pymongo import MongoClient
+    client = None
+    db = None
+    try:
+        #client = MongoClient('localhost', 27017)
+        client = MongoClient('/tmp/mongodb-27017.sock')
+        db = client.ittc
+    except:
+        client = None
+        db = None
+        errorline = "Error: Could not connet to stats database from scheduled taskUpdateStats. Most likely issue with connection pool"
+        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+        with open(error_file,'a') as f:
+            f.write(errorline+"\n")
+
+    if client and db:
+        stats_total = db.stats_total
+        stats = {
+            'total': {
+                'count': getStat(stats_total, 'total.count', 0)
+            }
+        }
+        for desc in settings.CUSTOM_STATS:
+            name = desc['name']
+            attrs = desc['attributes']
+
+            if len(attrs) == 0:
+                for doc in getStats(db[desc['collection']],[]):
+                    stats[name] = doc['value']
+
+            elif len(attrs) > 0:
+                stats[name] = {}
+                docs = getStats(db[desc['collection']],[])
+                for doc in docs:
+                    v = doc['value']
+                    obj = stats[name]
+                    for i in range(len(attrs)-1):
+                        a = attrs[i]
+                        try:
+                            obj = obj[doc[a]]
+                        except KeyError, e:
+                            obj[doc[a]] = {}
+                            obj = obj[doc[a]]
+
+                    obj[doc[attrs[len(attrs)-1]]] = v
+
+        commit_to_cache('default', 'stats_tilerequests', stats)
