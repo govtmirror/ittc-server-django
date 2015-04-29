@@ -29,6 +29,8 @@ import glob
 
 #from ittc.source.models import TileSource
 
+from ittc.cache.tasks import taskIncStats
+
 http_client = httplib2.Http()
 
 
