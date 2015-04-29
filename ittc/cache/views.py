@@ -377,9 +377,9 @@ def info(request):
 
 @login_required
 def origins_list(request):
-    stats = stats_tilerequest()
+    #cache, stats = get_from_cache('default','stats_tilerequests')
     context_dict = {
-        'origins': TileOrigin.objects.all().order_by('name','type'),
+        'origins': getTileOrigins()
     }
     return render_to_response(
         "cache/origins_list.html",
@@ -388,9 +388,9 @@ def origins_list(request):
 
 @login_required
 def sources_list(request):
-    stats = stats_tilerequest()
+    #cache, stats = get_from_cache('default','stats_tilerequests')
     context_dict = {
-        'sources': TileSource.objects.all().order_by('name'),
+        'sources': getTileSources()
     }
     return render_to_response(
         "cache/sources_list.html",
@@ -398,7 +398,7 @@ def sources_list(request):
 
 @login_required
 def services_list(request):
-    stats = stats_tilerequest()
+    #cache, stats = get_from_cache('default','stats_tilerequests')
     context_dict = {
         'services': TileService.objects.all().order_by('name','type'),
     }
@@ -473,7 +473,6 @@ def sources_new(request, origin=None, template="cache/sources_edit.html"):
             reloadTileSources(proxy=False)
             reloadTileSources(proxy=True)
             ###
-            stats = stats_tilerequest()
             context_dict = {
                 'source_form': TileSourceForm()
             }
@@ -486,7 +485,6 @@ def sources_new(request, origin=None, template="cache/sources_edit.html"):
             )
 
     else:
-        stats = stats_tilerequest()
         source_form = None
         if origin:
             origin_object = TileOrigin.objects.get(name=origin)
@@ -514,7 +512,6 @@ def sources_edit(request, source=None, template="cache/sources_edit.html"):
             reloadTileSources(proxy=False)
             reloadTileSources(proxy=True)
             ###
-            stats = stats_tilerequest()
             context_dict = {
                 'source': instance,
                 'source_form': TileSourceForm(instance=instance)
@@ -527,7 +524,6 @@ def sources_edit(request, source=None, template="cache/sources_edit.html"):
                 status=401
             )
     else:
-        stats = stats_tilerequest()
         instance = TileSource.objects.get(name=source)
         context_dict = {
             'source': instance,
@@ -552,7 +548,6 @@ def sources_delete(request, source=None, template="cache/sources_delete.html"):
                 status=401
             )
     else:
-        stats = stats_tilerequest()
         instance = TileSource.objects.get(name=source)
         context_dict = {
             'source': instance
@@ -570,14 +565,12 @@ def services_new(request, source=None, template="cache/services_edit.html"):
         if service_form.is_valid():
             service_form.save()
             ###
-            stats = stats_tilerequest()
             context_dict = {
                 'service_form': TileServiceForm()
             }
             return HttpResponseRedirect(reverse('services_list',args=()))
 
     else:
-        stats = stats_tilerequest()
         service_form = None
         if source:
             source_object = TileSource.objects.get(name=source)
@@ -601,7 +594,6 @@ def services_edit(request, service=None, template="cache/services_edit.html"):
         if service_form.is_valid():
             service_form.save()
             ###
-            stats = stats_tilerequest()
             context_dict = {
                 'service': instance,
                 'service_form': TileServiceForm(instance=instance)
@@ -614,7 +606,6 @@ def services_edit(request, service=None, template="cache/services_edit.html"):
                 status=401
             )
     else:
-        stats = stats_tilerequest()
         instance = TileService.objects.get(name=service)
         context_dict = {
             'service': instance,
@@ -639,7 +630,6 @@ def services_delete(request, service=None, template="cache/services_delete.html"
                 status=401
             )
     else:
-        stats = stats_tilerequest()
         instance = TileService.objects.get(name=service)
         context_dict = {
             'service': instance
@@ -735,7 +725,7 @@ def sources_json(request):
                 'type': source.type_title(),
                 'origin': source.origin.name,
                 'url': source.url,
-                'requests_all': -1
+                'requests_all': -1,
                 'requests_year': -1,
                 'requests_month': -1,
                 'requests_today': -1,

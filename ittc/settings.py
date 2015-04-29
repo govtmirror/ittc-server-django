@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
 # Imports
+from __future__ import absolute_import
 import os
 from kombu import Queue
 from celery.schedules import crontab
@@ -216,7 +217,7 @@ CELERY_QUEUES = (
     Queue('statistics', routing_key='statistics', queue_arguments={'x-message-ttl': 240}),
 )
 
-CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+#CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
 CELERYBEAT_SCHEDULE = {
     "scrape-officials": {
         "task": "ittc.cache.tasks.taskUpdateStats",
