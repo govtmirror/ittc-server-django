@@ -220,6 +220,7 @@ LOG_INDIRECT_ROOT = BASE_DIR+'/logs/indirect'
 LOG_ERRORS_ROOT = BASE_DIR+'/logs/errors'
 LOG_REQUEST_FORMAT = '{status}	{tileorigin}	{tilesource}	{z}	{x}	{y}	{ip}	{datetime}'
 LOG_REQUEST_COLLECTION = 'logs'
+MONGO_AGG_FLAG = False
 
 # Tile Request Stats
 CUSTOM_STATS = [

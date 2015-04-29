@@ -86,12 +86,18 @@ def reloadStats():
                 }}
             ]
             agg = logs.aggregate(query)
-            if u'ok' in agg and u'result' in agg and len(agg[u'result']) == 0:
-                doc = {u'stat': stat['name'], u'value': agg[u'result'][0][u'value']}
-                doc.update(agg[u'result'][0][u'_id'])
-                db[stat['collection']].insert(doc)
+            values = None
+            if settings.MONGO_AGG_FLAG:
+                values = list(agg)
             else:
-                values = list(agg[u'result'])
+                if u'ok' in agg and u'result' in agg and len(agg[u'result']) == 0:
+                    doc = {u'stat': stat['name'], u'value': agg[u'result'][0][u'value']}
+                    doc.update(agg[u'result'][0][u'_id'])
+                    db[stat['collection']].insert(doc)
+                else:
+                    values = list(agg[u'result'])
+
+            if values:
                 docs = []
                 for v in values:
                     doc = {u'stat': stat['name'], u'value': v[u'value']}
