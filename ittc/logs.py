@@ -163,10 +163,16 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
                 stats = buildStats(r)
                 # Sync stats
                 if settings.ASYNC_STATS:
-                    taskIncStats.apply_async(
-                    args=[stats],
-                    kwargs=None,
-                    queue="statistics")
+                    try:
+                        taskIncStats.apply_async(
+                        args=[stats],
+                        kwargs=None,
+                        queue="statistics")
+                    except:
+                        errorline = "Error: Could not queue taskIncStats.  Most likely issue with rabbitmq."
+                        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+                        with open(error_file,'a') as f:
+                            f.write(errorline+"\n")
                 else:
                     incStats(db, stats)
 

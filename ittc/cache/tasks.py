@@ -181,7 +181,7 @@ def taskIncStats(stats):
                 collection = db[stat['collection']]
                 collection.update(stat['attributes'], {'$set': stat['attributes'], '$inc': {'value': 1}}, upsert=True, w=0)
             except:
-                errorline = "Error: Could not connet to log upsert stats from taskIncStats.  Most likely issue with sockets"
+                errorline = "Error: Could not connect to upsert stats from taskIncStats.  Most likely issue with sockets"
                 error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
                 with open(error_file,'a') as f:
                     f.write(errorline+"\n")

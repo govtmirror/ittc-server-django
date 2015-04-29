@@ -755,14 +755,19 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
         return HttpResponse(RequestContext(request, {}), status=404)
 
 
-def requestIndirectTiles(tilesource, ext, tiles):
+def requestIndirectTiles(tilesource, ext, tiles, now):
     if tiles:
         for t in tiles:
             tx, ty, tz = t
             #taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
             args = [tilesource.id, tz, tx, ty, ext]
             #Expires handled by global queue setting
-            taskRequestTile.apply_async(args=args, kwargs=None, queue="requests")
+            try:
+                taskRequestTile.apply_async(args=args, kwargs=None, queue="requests")
+            except:
+                print "Error: Could not connect to indirect request queue."
+                line = "Error: Could not connect to indirect request queue."
+                logTileRequestError(line, now)
 
 
 def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=None, x=None, y=None, u=None, ext=None):
@@ -824,9 +829,9 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
             #print "Children Tiles: "+str(len(childrenTiles))
             #print childrenTiles
 
-        requestIndirectTiles(tilesource, ext, nearbyTiles)
-        requestIndirectTiles(tilesource, ext, parentTiles)
-        requestIndirectTiles(tilesource, ext, childrenTiles)
+        requestIndirectTiles(tilesource, ext, nearbyTiles, now)
+        requestIndirectTiles(tilesource, ext, parentTiles, now)
+        requestIndirectTiles(tilesource, ext, childrenTiles, now)
 
     #Check if requested tile is within source's extents
     returnBlankTile = False
@@ -890,10 +895,15 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
 
             if settings.ASYNC_WRITEBACK:
                 from base64 import b64encode
-                taskWriteBackTile.apply_async(
-                    args=[key, json.dumps(tile['headers']), b64encode(tile['data'])],
-                    kwargs=None,
-                    queue="writeback")
+                try:
+                    taskWriteBackTile.apply_async(
+                        args=[key, json.dumps(tile['headers']), b64encode(tile['data'])],
+                        kwargs=None,
+                        queue="writeback")
+                except:
+                    print "Error: Could not connect to writeback queue."
+                    line = "Error: Could not connect to writeback queue."
+                    logTileRequestError(line, now)
             else:
                 tilecache.set(key, tile)
 

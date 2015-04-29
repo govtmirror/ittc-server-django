@@ -212,7 +212,7 @@ CELERY_QUEUES = (
     Queue('default', routing_key='default'),
     Queue('requests', routing_key='requests', queue_arguments={'x-message-ttl': 60}),
     Queue('writeback', routing_key='writeback', queue_arguments={'x-message-ttl': 60}),
-    Queue('statistics', routing_key='statistics', queue_arguments={}),
+    Queue('statistics', routing_key='statistics', queue_arguments={'x-message-ttl': 240}),
 )
 
 # Tile Request Logs
