@@ -144,7 +144,7 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
                 taskIncStats.apply_async(
                 args=[stats],
                 kwargs=None,
-                queue="writeback")
+                queue="statistics")
             else:
                 incStats(db, stats)
 
