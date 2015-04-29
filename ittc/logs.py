@@ -38,7 +38,8 @@ def clearLogs():
     monkey.patch_all()
     # Init Mongo Client
     from pymongo import MongoClient
-    client = MongoClient('localhost', 27017)
+    #client = MongoClient('localhost', 27017)
+    client = MongoClient('/tmp/mongodb-27017.sock')
     db = client.ittc
     # Clear Logs
     db.drop_collection(settings.LOG_REQUEST_COLLECTION)
@@ -49,7 +50,8 @@ def reloadLogs():
     monkey.patch_all()
     # Init Mongo Client
     from pymongo import MongoClient
-    client = MongoClient('localhost', 27017)
+    #client = MongoClient('localhost', 27017)
+    client = MongoClient('/tmp/mongodb-27017.sock')
     db = client.ittc
     # Clear Logs
     db.drop_collection(settings.LOG_REQUEST_COLLECTION)
@@ -129,14 +131,22 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
             monkey.patch_all()
             # Update MongoDB
             from pymongo import MongoClient
-            client = MongoClient('localhost', 27017)
+            #client = MongoClient('localhost', 27017)
+            client = MongoClient('/tmp/mongodb-27017.sock')
             db = client.ittc
             r = buildTileRequestDocument(tileorigin.name,tilesource.name, x, y, z, status, datetime, ip)
             # Update Mongo Logs
-            db[settings.LOG_REQUEST_COLLECTION].insert(r)
+            db[settings.LOG_REQUEST_COLLECTION].insert(r, w=0)
             # Update Mongo Aggregate Stats
             stats = buildStats(r)
-            incStats(db, stats)
+            # Sync stats
+            if settings.ASYNC_STATS:
+                taskIncStats.apply_async(
+                args=[stats],
+                kwargs=None,
+                queue="writeback")
+            else:
+                incStats(db, stats)
 
     #print "Time Elapsed: "+str(time.clock()-starttime)
 

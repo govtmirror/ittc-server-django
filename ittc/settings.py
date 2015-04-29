@@ -211,7 +211,8 @@ CELERY_DEFAULT_QUEUE = 'default'
 CELERY_QUEUES = (
     Queue('default', routing_key='default'),
     Queue('requests', routing_key='requests', queue_arguments={'x-message-ttl': 60}),
-    Queue('writeback', routing_key='writeback', queue_arguments={}),
+    Queue('writeback', routing_key='writeback', queue_arguments={'x-message-ttl': 60}),
+    Queue('statistics', routing_key='statistics', queue_arguments={}),
 )
 
 # Tile Request Logs
@@ -221,6 +222,8 @@ LOG_ERRORS_ROOT = BASE_DIR+'/logs/errors'
 LOG_REQUEST_FORMAT = '{status}	{tileorigin}	{tilesource}	{z}	{x}	{y}	{ip}	{datetime}'
 LOG_REQUEST_COLLECTION = 'logs'
 MONGO_AGG_FLAG = False
+ASYNC_STATS = True
+ASYNC_WRITEBACK = False
 
 # Tile Request Stats
 CUSTOM_STATS = [

@@ -438,7 +438,8 @@ def logs_tilerequest(mongo=True):
         monkey.patch_all()
         # Update MongoDB
         from pymongo import MongoClient
-        client = MongoClient('localhost', 27017)
+        #client = MongoClient('localhost', 27017)
+        client = MongoClient('/tmp/mongodb-27017.sock')
         db = client.ittc
         collection = db[settings.LOG_COLLECTION]
         for doc in collection.find():

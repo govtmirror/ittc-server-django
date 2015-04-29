@@ -152,3 +152,18 @@ def taskWriteBackTile(key, headers, data):
         }
         tilecache.set(key, tile)
 
+
+@shared_task
+def taskIncStats(stats):
+    # Import Gevent and monkey patch
+    from gevent import monkey
+    monkey.patch_all()
+    # Update MongoDB
+    from pymongo import MongoClient
+    #client = MongoClient('localhost', 27017)
+    client = MongoClient('/tmp/mongodb-27017.sock')
+    db = client.ittc
+    # Increment Statistics
+    for stat in stats:
+        collection = db[stat['collection']]
+        collection.update(attributes, {'$set': stat['attributes'], '$inc': {'value': 1}}, upsert=True, w=0)
