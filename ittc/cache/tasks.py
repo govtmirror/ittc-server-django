@@ -20,7 +20,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
     verbose = True
     now = datetime.datetime.now()
     # Load Logging Info
-    log_root = settings.LOG_REQUEST_ROOT
+    #log_root = settings.LOG_REQUEST_ROOT
     log_format = settings.LOG_REQUEST_FORMAT
     #if log_root and log_format:
     #    if not os.path.exists(log_root):
@@ -30,7 +30,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
     #    if not os.path.exists(log_root):
     #        os.makedirs(log_root)
 
-    indirect_file = log_root+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_indirect.tsv"
+    indirect_file = settings.LOG_INDIRECT_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_indirect.tsv"
     # Find TileSource
     tilesource = None
     tilesources = getTileSources(proxy=True)
@@ -132,11 +132,11 @@ def taskWriteBackTile(key, headers, data):
     now = datetime.datetime.now()
     tilecache, tile = getTileFromCache('tiles', key, True)
     if not tilecache:
-        log_root = settings.LOG_ERRORS_ROOT
-        if log_root:
-            if not os.path.exists(log_root):
-                os.makedirs(log_root)
-        error_file = log_root+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
+        #log_root = settings.LOG_ERRORS_ROOT
+        #if log_root:
+        #    if not os.path.exists(log_root):
+        #        os.makedirs(log_root)
+        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
         with open(error_file,'a') as f:
             line = "Error: Could not connect to cache (tiles)."
             f.write(line+"\n")
