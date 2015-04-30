@@ -10,6 +10,7 @@ from celery import shared_task
 from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getTileFromCache, commit_to_cache
 from ittc.source.models import TileSource
 from ittc.source.utils import getTileSources
+from ittc.stats import getStat, getStats
 
 import os
 import datetime
@@ -155,6 +156,7 @@ def taskWriteBackTile(key, headers, data):
 
 @shared_task
 def taskIncStats(stats):
+    now = datetime.datetime.now()
     # Import Gevent and monkey patch
     from gevent import monkey
     monkey.patch_all()
@@ -170,7 +172,7 @@ def taskIncStats(stats):
         client = None
         db = None
         errorline = "Error: Could not connet to stats database from taskIncStats. Most likely issue with connection pool"
-        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
         with open(error_file,'a') as f:
             f.write(errorline+"\n")
 
@@ -182,12 +184,13 @@ def taskIncStats(stats):
                 collection.update(stat['attributes'], {'$set': stat['attributes'], '$inc': {'value': 1}}, upsert=True, w=0)
             except:
                 errorline = "Error: Could not connect to upsert stats from taskIncStats.  Most likely issue with sockets"
-                error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+                error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
                 with open(error_file,'a') as f:
                     f.write(errorline+"\n")
 
 @shared_task
 def taskUpdateStats():
+    now = datetime.datetime.now()
     stats = {}
 
     # Import Gevent and monkey patch
@@ -205,7 +208,7 @@ def taskUpdateStats():
         client = None
         db = None
         errorline = "Error: Could not connet to stats database from scheduled taskUpdateStats. Most likely issue with connection pool"
-        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
+        error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
         with open(error_file,'a') as f:
             f.write(errorline+"\n")
 
@@ -216,10 +219,12 @@ def taskUpdateStats():
                 'count': getStat(stats_total, 'total.count', 0)
             }
         }
+        print stats
         for desc in settings.CUSTOM_STATS:
             name = desc['name']
             attrs = desc['attributes']
 
+            print desc
             if len(attrs) == 0:
                 for doc in getStats(db[desc['collection']],[]):
                     stats[name] = doc['value']

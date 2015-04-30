@@ -58,3 +58,7 @@ docs/_build/
 
 # Supervisor
 supervisord.pid
+
+# Celery
+celerybeat.pid
+celerybeat-schedule

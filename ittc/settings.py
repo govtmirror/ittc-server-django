@@ -136,7 +136,7 @@ CACHES = {
         'OPTIONS': {
             'MAX_POOL_SIZE': 40,
             'BLACKLIST_TIME': 60,
-            'SOCKET_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 60,
             'MAX_ITEM_SIZE': 1000*1000*1000
         }
     },
