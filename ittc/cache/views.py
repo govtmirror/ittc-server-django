@@ -17,7 +17,7 @@ from PIL import Image, ImageEnhance
 import umemcache
 
 from .models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue, url_to_pattern, string_to_list
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue, url_to_pattern, string_to_list, get_from_file
 from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
 from ittc.utils import logs_tilerequest, formatMemorySize, get_from_cache
 from ittc.stats import stats_cache, stats_tilerequest, clearStats, reloadStats
@@ -692,8 +692,11 @@ def sources_json(request):
     now = datetime.datetime.now()
     dt = now
     #######
-    #stats = stats_tilerequest()
-    cache, stats = get_from_cache('default','stats_tilerequests')
+    stats = None
+    if settings.STATS_SAVE_MEMORY:
+        cache, stats = get_from_cache('default','stats_tilerequests')
+    if settings.STATS_SAVE_FILE and not stats:
+        stats = get_from_file(settings.STATS_REQUEST_FILE, filetype='json')
     sources = []
     #for source in TileSource.objects.all().order_by('name'):
     for source in getTileSources():
@@ -907,14 +910,13 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
             print "Error: Could not connect to cache (tiles)."
             line = "Error: Could not connect to cache (tiles)."
             logTileRequestError(line, now)
-            return
 
         if tile:
             if verbose:
                 print "cache hit for "+key
             logTileRequest(tileorigin, tilesource, x, y, z, 'hit', now, ip)
         else:
-            if verbose:
+            if tilecache and verbose:
                 print "cache miss for "+key
             logTileRequest(tileorigin, tilesource, x, y, z, 'miss', now, ip)
 
@@ -935,7 +937,12 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
                     line = "Error: Could not connect to writeback queue."
                     logTileRequestError(line, now)
             else:
-                tilecache.set(key, tile)
+                try:
+                    tilecache.set(key, tile)
+                except:
+                    print "Error: Could not write back tile synchronously."
+                    line = "Error: Could not write back tile synchronously."
+                    logTileRequestError(line, now)
 
     else:
         if verbose:

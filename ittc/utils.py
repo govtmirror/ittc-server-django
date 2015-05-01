@@ -371,20 +371,53 @@ def get_from_cache(name, key):
     #from django.core.cache import caches
     # Get Tile Cache
     cache = None
-    obj = None
+    item = None
     try:
         from memcachepool.cache import UMemcacheCache
-        cache = UMemcacheCache(settings.CACHES[name]['LOCATION'], settings.CACHES[name]['OPTIONS'])
+        cache = UMemcacheCache(settings.CACHES[name]['LOCATION'], settings.CACHES[name])
         #cache = caches['tiles']
     except:
         cache = None
 
     if cache:
         try:
-            obj = cache.get(key)
+            item = cache.get(key)
+        except umemcache.MemcachedError, e:
+            print e
+            item = None
+    return (cache, item)
+
+
+def commit_to_file(filename, data, binary=False):
+    if filename and data:
+        if os.path.isfile(filename):
+            os.remove(filename)
+        mode = 'wb' if binary else 'w'
+        try:
+            with open(filename, mode) as f:
+                f.write(data)
         except:
-            obj = None
-    return (cache, obj)
+            print "Could not commit data to file "+filename+"."
+    else:
+        print "Called commit_to_file with empty/None filename or empty/None data."
+
+
+def get_from_file(filename, binary=False, filetype=None):
+    if filename:
+        data = None
+        mode = 'rb' if binary else 'r'
+        try:
+            with open(filename, mode) as f:
+                data = f.read()
+        except:
+            print "Could not open file "+filename+"."
+        if filetype.lower()=="json":
+            import json
+            return json.loads(data)
+        else:
+            return data
+    else:
+        print "Called get_from_file with empty/None filename."
 
 
 def commit_to_cache(name, key, obj):

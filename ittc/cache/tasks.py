@@ -7,7 +7,7 @@ from celery import shared_task
 
 #import umemcache
 
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getTileFromCache, commit_to_cache
+from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getTileFromCache, commit_to_cache, commit_to_file
 from ittc.source.models import TileSource
 from ittc.source.utils import getTileSources
 from ittc.stats import getStat, getStats
@@ -245,4 +245,9 @@ def taskUpdateStats():
 
                     obj[doc[attrs[len(attrs)-1]]] = v
 
-        commit_to_cache('default', 'stats_tilerequests', stats)
+        if settings.STATS_SAVE_FILE:
+            import json
+            commit_to_file(settings.STATS_REQUEST_FILE, json.dumps(stats), binary=False)
+
+        if settings.STATS_SAVE_MEMORY:
+            commit_to_cache('default', 'stats_tilerequests', stats)
