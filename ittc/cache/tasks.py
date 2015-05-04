@@ -205,22 +205,35 @@ def taskIncStats(stats):
                 with open(error_file,'a') as f:
                     f.write(errorline+"\n")
 
+
+#==#
+#        settings.TILEJET_LIST_STATS,
+#        host = settings.TILEJET_DBHOST,
+#        port = settings.TILEJET_DBPORT,
+#        dbname = settings.TILEJET_DBNAME,
+#        collection_logs = settings.TILEJET_COLLECTION_LOGS,
+#        MONGO_AGG_FLAG = settings.MONGO_AGG_FLAG,
+#        GEVENT_MONKEY_PATCH = True)
+#==#
 @shared_task
 def taskUpdateStats():
+    GEVENT_MONKEY_PATCH = True
+    #=======#
     now = datetime.datetime.now()
     stats = {}
-
-    # Import Gevent and monkey patch
-    from gevent import monkey
-    monkey.patch_all()
+    if GEVENT_MONKEY_PATCH:
+        # Import Gevent and monkey patch
+        from gevent import monkey
+        monkey.patch_all()
     # Update MongoDB
     from pymongo import MongoClient
     client = None
     db = None
     try:
         #client = MongoClient('localhost', 27017)
-        client = MongoClient('/tmp/mongodb-27017.sock')
-        db = client.ittc
+        #client = MongoClient('/tmp/mongodb-27017.sock')
+        client = MongoClient(settings.TILEJET_DBHOST, settings.TILEJET_DBPORT)
+        db = client[settings.TILEJET_DBNAME]
     except:
         client = None
         db = None
@@ -237,7 +250,7 @@ def taskUpdateStats():
             }
         }
         print stats
-        for desc in settings.CUSTOM_STATS:
+        for desc in settings.TILEJET_LIST_STATS:
             name = desc['name']
             attrs = desc['attributes']
 
@@ -263,8 +276,10 @@ def taskUpdateStats():
                     obj[doc[attrs[len(attrs)-1]]] = v
 
         if settings.STATS_SAVE_FILE:
+            print "Saving to file"
             import json
             commit_to_file(settings.STATS_REQUEST_FILE, json.dumps(stats), binary=False)
 
         if settings.STATS_SAVE_MEMORY:
-            commit_to_cache('default', 'stats_tilerequests', stats, GEVENT_MONKEY_PATCH=True)
+            print "Saving to memory"
+            commit_to_cache('default', 'stats_tilerequests', stats, GEVENT_MONKEY_PATCH=GEVENT_MONKEY_PATCH)

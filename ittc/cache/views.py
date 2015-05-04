@@ -35,7 +35,7 @@ from ittc.stats import stats_cache, stats_tilerequest
 from ittc.logs import logTileRequest, logTileRequestError
 
 from ittc.source.models import TileOrigin,TileSource
-from ittc.cache.tasks import taskRequestTile, taskWriteBackTile
+from ittc.cache.tasks import taskRequestTile, taskWriteBackTile, taskUpdateStats
 from ittc.cache.forms import TileOriginForm, TileSourceForm, TileServiceForm
 
 import json
@@ -169,7 +169,12 @@ def stats_reload(request):
         MONGO_AGG_FLAG = settings.MONGO_AGG_FLAG,
         GEVENT_MONKEY_PATCH = True)
 
-    return HttpResponse("Stats reloaded from MongoDB Logs.",
+    taskUpdateStats.apply_async(
+        args=[],
+        kwargs=None,
+        queue="default")
+
+    return HttpResponse("Stats updating from MongoDB Logs.",
                         content_type="text/plain"
                         )
 
