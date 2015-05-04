@@ -62,3 +62,6 @@ supervisord.pid
 # Celery
 celerybeat.pid
 celerybeat-schedule
+
+# TileJet Stats
+stats.json

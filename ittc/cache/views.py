@@ -16,12 +16,23 @@ import StringIO
 from PIL import Image, ImageEnhance
 import umemcache
 
+from tilejetutil.base import webmercator_bbox
+from tilejetutil.tilemath import flip_y, tms_to_bbox, quadkey_to_tms, tms_to_quadkey, tms_to_geojson
+from tilejetutil.nav import getNearbyTiles, getChildrenTiles, getParentTiles
+from tilejetutil.tilefactory import blankTile, redTile, solidTile
+
+from tilejetlogs.mongodb import clearLogs, reloadLogs
+
+from tilejetstats.mongodb import clearStats, reloadStats
+
+from tilejetcache.cache import getTileFromCache, get_from_cache, check_cache_availability
+
 from .models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getParentTiles, getChildrenTiles, check_cache_availability, getTileFromCache, getIPAddress, tms_to_geojson, getValue, url_to_pattern, string_to_list, get_from_file
+from ittc.utils import bbox_intersects_source, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getIPAddress, getValue, url_to_pattern, string_to_list, get_from_file
 from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
-from ittc.utils import logs_tilerequest, formatMemorySize, get_from_cache
-from ittc.stats import stats_cache, stats_tilerequest, clearStats, reloadStats
-from ittc.logs import clearLogs, reloadLogs, logTileRequest, logTileRequestError
+from ittc.utils import logs_tilerequest, formatMemorySize
+from ittc.stats import stats_cache, stats_tilerequest
+from ittc.logs import logTileRequest, logTileRequestError
 
 from ittc.source.models import TileOrigin,TileSource
 from ittc.cache.tasks import taskRequestTile, taskWriteBackTile
@@ -81,15 +92,15 @@ def flush(request):
     #==#
 
     # Using custom clear function from https://github.com/mozilla/django-memcached-pool/blob/master/memcachepool/cache.py
-    if(check_cache_availability('default')):
-        defaultcache = caches['tiles']
+    if(check_cache_availability(settings.CACHES['default']['LOCATION'], settings.CACHES['default'])):
+        defaultcache = caches['default']
         defaultcache.clear()
 
-    if(check_cache_availability('tiles')):
+    if(check_cache_availability(settings.CACHES['tiles']['LOCATION'], settings.CACHES['tiles'])):
         tilecache = caches['tiles']
         tilecache.clear()
 
-    if(check_cache_availability('celery_results')):
+    if(check_cache_availability(settings.CACHES['celery_results']['LOCATION'], settings.CACHES['celery_results'])):
         resultscache = caches['celery_results']
         resultscache.clear()
 
@@ -108,7 +119,11 @@ def logs_json(request):
 
 @login_required
 def logs_clear(request):
-    clearLogs()
+    clearLogs(
+        host = settings.TILEJET_DBHOST,
+        port = settings.TILEJET_DBPORT,
+        dbname = settings.TILEJET_DBNAME,
+        GEVENT_MONKEY_PATCH = True)
 
     return HttpResponse("Logs cleared.",
                         content_type="text/plain"
@@ -116,22 +131,43 @@ def logs_clear(request):
 
 @login_required
 def logs_reload(request):
-    clearLogs()
-    reloadLogs()
+    clearLogs(
+        host = settings.TILEJET_DBHOST,
+        port = settings.TILEJET_DBPORT,
+        dbname = settings.TILEJET_DBNAME,
+        GEVENT_MONKEY_PATCH = True)
+    reloadLogs(
+        settings.TILEJET_LOGS_REQUEST_ROOT,
+        host = settings.TILEJET_DBHOST,
+        port = settings.TILEJET_DBPORT,
+        dbname = settings.TILEJET_DBNAME,
+        GEVENT_MONKEY_PATCH = True)
 
     return HttpResponse("Logs reloaded from disk.",
                         content_type="text/plain"
                         )
 
 def stats_clear(request):
-    clearStats()
+    clearStats(
+        settings.TILEJET_LIST_STATS,
+        host = settings.TILEJET_DBHOST,
+        port = settings.TILEJET_DBPORT,
+        dbname = settings.TILEJET_DBNAME,
+        GEVENT_MONKEY_PATCH = True)
 
     return HttpResponse("Tile stats cleared.",
                         content_type="text/plain"
                         )
 
 def stats_reload(request):
-    reloadStats()
+    reloadStats(
+        settings.TILEJET_LIST_STATS,
+        host = settings.TILEJET_DBHOST,
+        port = settings.TILEJET_DBPORT,
+        dbname = settings.TILEJET_DBNAME,
+        collection_logs = settings.TILEJET_COLLECTION_LOGS,
+        MONGO_AGG_FLAG = settings.MONGO_AGG_FLAG,
+        GEVENT_MONKEY_PATCH = True)
 
     return HttpResponse("Stats reloaded from MongoDB Logs.",
                         content_type="text/plain"
@@ -153,7 +189,7 @@ def stats_cache_json(request):
     stats = {}
 
     target = settings.TILE_ACCELERATOR['cache']['memory']['target']
-    if(check_cache_availability(target)):
+    if(check_cache_availability(settings.CACHES[target]['LOCATION'], settings.CACHES[target])):
         location = settings.CACHES[target]['LOCATION']
         tilecache = umemcache.Client(location)
         tilecache.connect()
@@ -177,7 +213,7 @@ def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=No
 
 
     if u:
-        iz, ix, iy = bing_to_tms(u)
+        iz, ix, iy = quadkey_to_tms(u)
 
     elif x and y and z:
         ix = int(x)
@@ -205,9 +241,9 @@ def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=No
     image = None
     if key in stats['global'][stat]:
         blue =  (256.0 * stats['global'][stat][key]) / stats['tile']['max']
-        image = Image.new("RGBA", (256, 256), (0, 0, int(blue), 128) )
+        image = solidTile(width=256, height=256, b=int(blue), a=128)
     else:
-        image = Image.new("RGBA", (256, 256), (0, 0, 0, 0) )
+        image = blankTile(width=256, height=256)
 
     if image:
         response = HttpResponse(content_type="image/png")
@@ -217,12 +253,21 @@ def stats_tms(request, t=None, stat=None, z=None, x=None, y=None, u=None, ext=No
         return None
 
 def stats_dashboard(request, origin=None, source=None, date=None):
-    stats = stats_tilerequest()
-    dates = stats['by_date_location'].keys()
+    stats = None
+    if settings.STATS_SAVE_MEMORY:
+        cache, stats = get_from_cache('default','stats_tilerequests')
+    if settings.STATS_SAVE_FILE and not stats:
+        stats = get_from_file(settings.STATS_REQUEST_FILE, filetype='json')
+
+    dates = []
+    if stats:
+        if 'by_date' in stats:
+            dates = stats['by_date'].keys()
+
     context_dict = {
         'date': date,
-        'origins': TileOrigin.objects.all().order_by('name','type'),
-        'sources': TileSource.objects.all().order_by('name','type'),
+        'origins': getTileOrigins(),
+        'sources': getTileSources(),
         'dates': dates
     }
 
@@ -243,13 +288,20 @@ def stats_dashboard(request, origin=None, source=None, date=None):
 
 @login_required
 def stats_map(request, origin=None, source=None, date=None):
-    stats = stats_tilerequest()
-    dates = stats['by_date_location'].keys()
+    stats = None
+    if settings.STATS_SAVE_MEMORY:
+        cache, stats = get_from_cache('default','stats_tilerequests')
+    if settings.STATS_SAVE_FILE and not stats:
+        stats = get_from_file(settings.STATS_REQUEST_FILE, filetype='json')
+    dates = []
+    if stats:
+        if 'by_date' in stats:
+            dates = stats['by_date'].keys()
     #print stats['by_date_location'].keys()
     context_dict = {
         'date': date,
-        'origins': TileOrigin.objects.all().order_by('name','type'),
-        'sources': TileSource.objects.all().order_by('name','type'),
+        'origins': getTileOrigins(),
+        'sources': getTileSources(),
         'dates': dates
     }
 
@@ -825,7 +877,7 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
     #    print request.path
 
     if u:
-        iz, ix, iy = bing_to_tms(u)
+        iz, ix, iy = quadkey_to_tms(u)
 
     elif x and y and z:
         ix = int(x)
@@ -889,14 +941,14 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
 
     if returnBlankTile:
         print "responding with blank image"
-        image = Image.new("RGBA", (256, 256), (0, 0, 0, 0) )
+        image = blankTile(width=256, height=256)
         response = HttpResponse(content_type="image/png")
         image.save(response, "PNG")
         return response
 
     if returnErrorTile:
         print "responding with a red image"
-        image = Image.new("RGBA", (256, 256), (256, 0, 0, 256) )
+        image = redTile(width=256, height=256)
         response = HttpResponse(content_type="image/png")
         image.save(response, "PNG")
         return response
@@ -905,7 +957,14 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
     if tilesource.cacheable and iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
         #key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         key = ",".join([tilesource.name,str(iz),str(ix),str(iy),ext])
-        tilecache, tile = getTileFromCache('tiles', key, True)
+        tilecache, tile = getTileFromCache(
+            settings.CACHES['tiles']['LOCATION'],
+            settings.CACHES['tiles'],
+            'tiles',
+            key,
+            True,
+            GEVENT_MONKEY_PATCH=True)
+
         if not tilecache:
             print "Error: Could not connect to cache (tiles)."
             line = "Error: Could not connect to cache (tiles)."

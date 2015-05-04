@@ -219,9 +219,9 @@ CELERY_QUEUES = (
 
 #CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
 CELERYBEAT_SCHEDULE = {
-    "scrape-officials": {
+    "updateStats": {
         "task": "ittc.cache.tasks.taskUpdateStats",
-        "schedule": crontab(minute='*/5'),
+        "schedule": crontab(minute='*/1'),
         "args": (),
     },
 }
@@ -240,6 +240,7 @@ ASYNC_WRITEBACK = False
 STATS_REQUEST_FILE = "stats.json"
 STATS_SAVE_FILE = True
 STATS_SAVE_MEMORY = False
+
 CUSTOM_STATS = [
     {'name': 'total', 'collection': 'stats_total', 'attributes': []},
     #{'name': 'by_ip', 'collection': 'stats_by_ip', 'attributes': ['ip']},
@@ -271,3 +272,10 @@ CUSTOM_STATS = [
     #{'name': 'by_origin_date_location', 'collection': 'stats_by_origin_date_location', 'attributes': ['origin', 'date', 'location']},
     #{'name': 'by_source_date_location', 'collection': 'stats_by_source_date_location', 'attributes': ['source', 'date', 'location']},
 ]
+
+TILEJET_LIST_STATS = CUSTOM_STATS
+TILEJET_COLLECTION_LOGS = LOG_REQUEST_COLLECTION
+TILEJET_DBHOST = 'localhost'
+TILEJET_DBPORT = 27017
+TILEJET_DBNAME = 'tilejet'
+TILEJET_LOGS_REQUEST_ROOT = LOG_REQUEST_ROOT

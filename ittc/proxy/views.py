@@ -21,7 +21,7 @@ import StringIO
 from PIL import Image, ImageEnhance
 
 from ittc.cache.models import TileService
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue, url_to_pattern, string_to_list
+from ittc.utils import getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue, url_to_pattern, string_to_list
 from ittc.source.models import TileOrigin, TileOriginPattern, TileSource
 from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
 from ittc.cache.views import requestTile

@@ -14,3 +14,7 @@ iso8601
 django-jquery
 pinax-theme-bootstrap
 django_forms_bootstrap
+git+git://github.com/tilejet/tilejet-util.git@master
+git+git://github.com/tilejet/tilejet-logs.git@master
+git+git://github.com/tilejet/tilejet-stats.git@master
+git+git://github.com/tilejet/tilejet-cache.git@master

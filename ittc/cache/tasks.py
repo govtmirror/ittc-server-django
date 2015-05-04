@@ -7,10 +7,14 @@ from celery import shared_task
 
 #import umemcache
 
-from ittc.utils import bbox_intersects, bbox_intersects_source, webmercator_bbox, flip_y, bing_to_tms, tms_to_bing, tms_to_bbox, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getNearbyTiles, getTileFromCache, commit_to_cache, commit_to_file
+from tilejetutil.tilemath import tms_to_bbox, flip_y
+
+from ittc.utils import bbox_intersects_source, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, commit_to_file
 from ittc.source.models import TileSource
 from ittc.source.utils import getTileSources
-from ittc.stats import getStat, getStats
+
+from tilejetstats.mongodb import getStat, getStats
+from tilejetcache.cache import getTileFromCache, commit_to_cache
 
 import os
 import datetime
@@ -81,7 +85,14 @@ def taskRequestTile(ts, iz, ix, iy, ext):
     if iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
         #key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
         key = ",".join([tilesource.name,str(iz),str(ix),str(iy),ext])
-        tilecache, tile = getTileFromCache('tiles', key, True)
+        tilecache, tile = getTileFromCache(
+            settings.CACHES['tiles']['LOCATION'],
+            settings.CACHES['tiles'],
+            'tiles',
+            key,
+            True,
+            GEVENT_MONKEY_PATCH=True)
+
 
         if not tilecache:
             error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
@@ -132,7 +143,13 @@ def taskRequestTile(ts, iz, ix, iy, ext):
 @shared_task
 def taskWriteBackTile(key, headers, data):
     now = datetime.datetime.now()
-    tilecache, tile = getTileFromCache('tiles', key, True)
+    tilecache, tile = getTileFromCache(
+        settings.CACHES['tiles']['LOCATION'],
+        settings.CACHES['tiles'],
+        'tiles',
+        key,
+        True,
+        GEVENT_MONKEY_PATCH=True)
     if not tilecache:
         #log_root = settings.LOG_ERRORS_ROOT
         #if log_root:
@@ -250,4 +267,4 @@ def taskUpdateStats():
             commit_to_file(settings.STATS_REQUEST_FILE, json.dumps(stats), binary=False)
 
         if settings.STATS_SAVE_MEMORY:
-            commit_to_cache('default', 'stats_tilerequests', stats)
+            commit_to_cache('default', 'stats_tilerequests', stats, GEVENT_MONKEY_PATCH=True)
