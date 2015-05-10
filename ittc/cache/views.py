@@ -181,13 +181,16 @@ def stats_reload(request):
 
 @login_required
 def stats_json(request):
-    cache, stats = get_from_cache(
-        settings.CACHES['default']['LOCATION'],
-        settings.CACHES['default'],
-        'default',
-        'stats_tilerequests',
-        GEVENT_MONKEY_PATCH=settings.TILEJET_GEVENT_MONKEY_PATCH)
-
+    stats = None
+    if settings.STATS_SAVE_MEMORY:
+        cache, stats = get_from_cache(
+            settings.CACHES['default']['LOCATION'],
+            settings.CACHES['default'],
+            'default',
+            'stats_tilerequests',
+            GEVENT_MONKEY_PATCH=settings.TILEJET_GEVENT_MONKEY_PATCH)
+    if settings.STATS_SAVE_FILE and not stats:
+        stats = get_from_file(settings.STATS_REQUEST_FILE, filetype='json')
     if not stats:
         stats = {}
     return HttpResponse(json.dumps(stats),
