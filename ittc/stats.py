@@ -49,7 +49,7 @@ def stats_tilerequest(mongo=True):
         # Update MongoDB
         from pymongo import MongoClient
         client = MongoClient('localhost', 27017)
-        db = client.ittc
+        db = client[settings.TILEJET_DBNAME]
         stats_total = db.stats_total
         stats = {
             'total': {

@@ -29,7 +29,7 @@ from tilejetcache.cache import getTileFromCache, get_from_cache, check_cache_ava
 
 from .models import TileService
 from ittc.utils import bbox_intersects_source, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getIPAddress, getValue, url_to_pattern, string_to_list, get_from_file
-from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
+from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources, requestTileFromSource
 from ittc.utils import logs_tilerequest, formatMemorySize
 from ittc.stats import stats_cache, stats_tilerequest
 from ittc.logs import logTileRequest, logTileRequestError
@@ -181,7 +181,13 @@ def stats_reload(request):
 
 @login_required
 def stats_json(request):
-    cache, stats = get_from_cache('default','stats_tilerequests')
+    cache, stats = get_from_cache(
+        settings.CACHES['default']['LOCATION'],
+        settings.CACHES['default'],
+        'default',
+        'stats_tilerequests',
+        GEVENT_MONKEY_PATCH=settings.TILEJET_GEVENT_MONKEY_PATCH)
+
     if not stats:
         stats = {}
     return HttpResponse(json.dumps(stats),
@@ -377,14 +383,22 @@ def stats_geojson(request, z=None, origin=None, source=None, date=None):
 
 @login_required
 def info(request):
-    stats_tr = stats_tilerequest()
+    #stats_tr = stats_tilerequest()
+    #cache, stats_tr = get_from_cache(
+    #    settings.CACHES['default']['LOCATION'],
+    #    settings.CACHES['default'],
+    #    'default',
+    #    'stats_tilerequests',
+    #    GEVENT_MONKEY_PATCH=settings.TILEJET_GEVENT_MONKEY_PATCH)
+
     stats_c = stats_cache()
     caches = []
     c = settings.TILE_ACCELERATOR['cache']['memory']
 
     size = int(stats_c['bytes'])
     maxsize = int(stats_c['limit_maxbytes'])
-    size_percentage = str((100.0 * size) / maxsize)+"%" 
+    size_percentage = format(((100.0 * size) / maxsize),'.4f')+"%" 
+    items = int(stats_c['curr_items'])
 
     caches.append({
         'name': 'memory',
@@ -394,6 +408,7 @@ def info(request):
         'size': formatMemorySize(size, original='B'),
         'maxsize': formatMemorySize(maxsize, original='B'),
         'size_percentage': size_percentage,
+        'items': items,
         'minzoom': c['minZoom'],
         'maxzoom': c['maxZoom'],
         'expiration': c['expiration'],
@@ -473,14 +488,12 @@ def origins_new(request, template="cache/origins_edit.html"):
             reloadTileOrigins(proxy=False)
             reloadTileOrigins(proxy=True)
             ###
-            stats = stats_tilerequest()
             context_dict = {
                 'origin_form': TileOriginForm()
             }
 
         return HttpResponseRedirect(reverse('origins_list',args=()))
     else:
-        stats = stats_tilerequest()
         context_dict = {
             'origin_form': TileOriginForm()
         }
@@ -500,7 +513,6 @@ def origins_edit(request, origin=None, template="cache/origins_edit.html"):
             reloadTileOrigins(proxy=False)
             reloadTileOrigins(proxy=True)
             ###
-            stats = stats_tilerequest()
             context_dict = {
                 'origin': instance,
                 'origin_form': TileOriginForm(instance=instance)
@@ -509,7 +521,6 @@ def origins_edit(request, origin=None, template="cache/origins_edit.html"):
             return HttpResponseRedirect(reverse('origins_list',args=()))
 
     else:
-        stats = stats_tilerequest()
         instance = TileOrigin.objects.get(name=origin)
         context_dict = {
             'origin': instance,
@@ -702,7 +713,12 @@ def origins_json(request):
     dt = now
     #######
     #stats = stats_tilerequest()
-    cache, stats = get_from_cache('default','stats_tilerequests')
+    cache, stats = get_from_cache(
+        settings.CACHES['default']['LOCATION'],
+        settings.CACHES['default'],
+        'default',
+        'stats_tilerequests',
+        GEVENT_MONKEY_PATCH=settings.TILEJET_GEVENT_MONKEY_PATCH)
     origins = []
     for origin in TileOrigin.objects.all().order_by('name','type'):
         link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/origin/'+origin.name+'.geojson'
@@ -751,29 +767,34 @@ def sources_json(request):
     #######
     stats = None
     if settings.STATS_SAVE_MEMORY:
-        cache, stats = get_from_cache('default','stats_tilerequests')
+        cache, stats = get_from_cache(
+            settings.CACHES['default']['LOCATION'],
+            settings.CACHES['default'],
+            'default',
+            'stats_tilerequests',
+            GEVENT_MONKEY_PATCH=settings.TILEJET_GEVENT_MONKEY_PATCH)
     if settings.STATS_SAVE_FILE and not stats:
         stats = get_from_file(settings.STATS_REQUEST_FILE, filetype='json')
     sources = []
     #for source in TileSource.objects.all().order_by('name'):
     for source in getTileSources():
-        link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source.name+'.geojson'
-        link_proxy_internal = settings.SITEURL+'proxy/?url='+(source.url).replace("{ext}","png")
+        link_geojson = settings.SITEURL+'cache/stats/export/geojson/15/source/'+source['name']+'.geojson'
+        link_proxy_internal = settings.SITEURL+'proxy/?url='+(source['url']).replace("{ext}","png")
         link_proxy_external = ""
-        if source.type in [TYPE_TMS, TYPE_TMS_FLIPPED]:
-            link_proxy_external = settings.SITEURL+'cache/proxy/tms/origin/'+source.origin.name+'/source/'+source.name+'/{z}/{x}/{y}.png' 
-        elif source.type == TYPE_BING:
-            link_proxy_external = settings.SITEURL+'cache/proxy/bing/origin/'+source.origin.name+'/source/'+source.name+'{u}.png'
+        if source['type'] in [TYPE_TMS, TYPE_TMS_FLIPPED]:
+            link_proxy_external = settings.SITEURL+'cache/proxy/tms/origin/'+source['origin']+'/source/'+source['name']+'/{z}/{x}/{y}.png' 
+        elif source['type'] == TYPE_BING:
+            link_proxy_external = settings.SITEURL+'cache/proxy/bing/origin/'+source['origin']+'/source/'+source['name']+'{u}.png'
         if stats:
             sources.append({
-                'name': source.name,
-                'type': source.type_title(),
-                'origin': source.origin.name,
-                'url': source.url,
-                'requests_all': getValue(stats['by_source'], source.name,0),
-                'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source.name, 0),
-                'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source.name, 0),
-                'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source.name, 0),
+                'name': source['name'],
+                'type': source['type_title'],
+                'origin': source['origin'],
+                'url': source['url'],
+                'requests_all': getValue(stats['by_source'], source['name'],0),
+                'requests_year': getValue(getValue(stats['by_year_source'],dt.strftime('%Y')),source['name'], 0),
+                'requests_month': getValue(getValue(stats['by_month_source'],dt.strftime('%Y-%m')),source['name'], 0),
+                'requests_today': getValue(getValue(stats['by_date_source'],dt.strftime('%Y-%m-%d')),source['name'], 0),
                 'link_proxy': link_proxy_internal,
                 'link_id': 'http://www.openstreetmap.org/edit#?background=custom:'+link_proxy_external,
                 'link_geojson': link_geojson,
@@ -781,10 +802,10 @@ def sources_json(request):
             })
         else:
             sources.append({
-                'name': source.name,
-                'type': source.type_title(),
-                'origin': source.origin.name,
-                'url': source.url,
+                'name': source['name'],
+                'type': source['type_title'],
+                'origin': source['origin'],
+                'url': source['url'],
                 'requests_all': -1,
                 'requests_year': -1,
                 'requests_month': -1,
@@ -838,7 +859,7 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
     if tileservice:
         tilesource = tileservice.source
         if tilesource:
-            return requestTile(request,tileservice=tileservice,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+            return _requestTile(request,tileservice=tileservice,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
         else:
             return HttpResponse(RequestContext(request, {}), status=404)
     else:
@@ -850,7 +871,7 @@ def requestIndirectTiles(tilesource, ext, tiles, now):
         for t in tiles:
             tx, ty, tz = t
             #taskRequestTile.delay(tilesource.id, tz, tx, ty, ext)
-            args = [tilesource.id, tz, tx, ty, ext]
+            args = [tilesource['id'], tz, tx, ty, ext]
             #Expires handled by global queue setting
             try:
                 taskRequestTile.apply_async(args=args, kwargs=None, queue="requests")
@@ -860,14 +881,14 @@ def requestIndirectTiles(tilesource, ext, tiles, now):
                 logTileRequestError(line, now)
 
 
-def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=None, x=None, y=None, u=None, ext=None):
+def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=None, x=None, y=None, u=None, ext=None):
 
-    print "requestTile"
+    print "_requestTile"
     now = datetime.datetime.now()
     ip = getIPAddress(request)
     #==#
     if not tileorigin:
-        tileorigin = tilesource.origin
+        tileorigin = tilesource['origin']
     #==#
     verbose = True
     ix = None
@@ -893,7 +914,7 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
 
     tile_bbox = tms_to_bbox(ix,iy,iz)
 
-    if tilesource.cacheable:
+    if tilesource['cacheable']:
 
         if settings.TILE_ACCELERATOR['heuristic']['nearby']['enabled']:
             ir = settings.TILE_ACCELERATOR['heuristic']['nearby']['radius']
@@ -927,17 +948,17 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
     returnBlankTile = False
     returnErrorTile = False
     intersects = True
-    if tilesource.extents:
+    if tilesource['extents']:
         intersects = bbox_intersects_source(tilesource,ix,iyf,iz)
         if not intersects:
            returnBlankTile = True
 
     validZoom = 0
     #Check if inside source zoom levels
-    if tilesource.minZoom or tilesource.maxZoom:
-        if (tilesource.minZoom and iz < tilesource.minZoom):
+    if tilesource['minZoom'] or tilesource['maxZoom']:
+        if (tilesource['minZoom'] and iz < tilesource['minZoom']):
             validZoom = -1
-        elif (tilesource.maxZoom and iz > tilesource.maxZoom):
+        elif (tilesource['maxZoom'] and iz > tilesource['maxZoom']):
            validZoom = 1
 
         if validZoom != 0:
@@ -959,9 +980,9 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
         return response
 
     tile = None
-    if tilesource.cacheable and iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
+    if tilesource['cacheable'] and iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
         #key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
-        key = ",".join([tilesource.name,str(iz),str(ix),str(iy),ext])
+        key = ",".join([tilesource['name'],str(iz),str(ix),str(iy),ext])
         tilecache, tile = getTileFromCache(
             settings.CACHES['tiles']['LOCATION'],
             settings.CACHES['tiles'],
@@ -978,16 +999,16 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
         if tile:
             if verbose:
                 print "cache hit for "+key
-            logTileRequest(tileorigin, tilesource, x, y, z, 'hit', now, ip)
+            logTileRequest(tileorigin, tilesource['name'], x, y, z, 'hit', now, ip)
         else:
             if tilecache and verbose:
                 print "cache miss for "+key
-            logTileRequest(tileorigin, tilesource, x, y, z, 'miss', now, ip)
+            logTileRequest(tileorigin, tilesource['name'], x, y, z, 'miss', now, ip)
 
-            if tilesource.type == TYPE_TMS:
-                tile = tilesource.requestTile(ix,iy,iz,ext,True)
-            elif tilesource.type == TYPE_TMS_FLIPPED:
-                tile = tilesource.requestTile(ix,iyf,iz,ext,True)
+            if tilesource['type'] == TYPE_TMS:
+                tile = requestTileFromSource(tilesource,ix,iy,iz,ext,True)
+            elif tilesource['type'] == TYPE_TMS_FLIPPED:
+                tile = requestTileFromSource(tilesource,ix,iyf,iz,ext,True)
 
             if settings.ASYNC_WRITEBACK:
                 from base64 import b64encode
@@ -1010,13 +1031,13 @@ def requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=N
 
     else:
         if verbose:
-            print "cache bypass for "+tilesource.name+"/"+str(iz)+"/"+str(ix)+"/"+str(iy)
-        logTileRequest(tileorigin, tilesource, x, y, z, 'bypass', now, ip)
+            print "cache bypass for "+tilesource['name']+"/"+str(iz)+"/"+str(ix)+"/"+str(iy)
+        logTileRequest(tileorigin, tilesource['name'], x, y, z, 'bypass', now, ip)
 
         if tilesource.type == TYPE_TMS:
-            tile = tilesource.requestTile(ix,iy,iz,ext,True)
+            tile = requestTileFromSource(tilesource,ix,iy,iz,ext,True)
         elif tilesource.type == TYPE_TMS_FLIPPED:
-            tile = tilesource.requestTile(ix,iyf,iz,ext,True)
+            tile = requestTileFromSource(tilesource,ix,iyf,iz,ext,True)
 
     #print "Headers:"
     #print tile['headers']
@@ -1037,22 +1058,21 @@ def proxy_tms(request, origin=None, slug=None, z=None, x=None, y=None, u=None, e
     match_tilesource = None
     tilesources = getTileSources(proxy=True)
     for tilesource in tilesources:
-        if tilesource.name == slug:
+        if tilesource['name'] == slug:
             match_tilesource = tilesource
             break
 
     if match_tilesource:
-        if match_tilesource.origin.name != origin:
+        if match_tilesource['origin'] != origin:
             print "Origin is not correct.  Tilesource is unique, but origin need to match too."
-            print origin
-            print tilesource.origin.name
+            print tilesource['origin']
             return None
         else:
-            tile = requestTile(
+            tile = _requestTile(
                 request,
                 tileservice=None,
                 tilesource=match_tilesource,
-                tileorigin=match_tilesource.origin,
+                tileorigin=match_tilesource['origin'],
                 z=z,x=x,y=y,u=u,ext=ext)
             #print "Time Elapsed: "+str(time.clock()-starttime)
             return tile
@@ -1080,13 +1100,13 @@ def proxy_tms(request, origin=None, slug=None, z=None, x=None, y=None, u=None, e
             ts.save()
             reloadTileSources(proxy=False)
             reloadTileSources(proxy=True)
-            return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+            return _requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
         else:
             ts = TileSource(auto=True,url=to.url,pattern=to.pattern,name=to.name,type=to.type,extensions=to.extensions)
             ts.save()
             reloadTileSources(proxy=False)
             reloadTileSources(proxy=True)
-            return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+            return _requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
     else:
         return None
 

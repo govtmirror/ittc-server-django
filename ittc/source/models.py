@@ -24,42 +24,6 @@ from django.core.urlresolvers import reverse
 
 from ittc.utils import getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, TYPE_CHOICES, IMAGE_EXTENSION_CHOICES, getValue
 
-def make_request(url, params, auth=None, data=None, contentType=None):
-    """
-    Prepares a request from a url, params, and optionally authentication.
-    """
-    #print 'make_request'
-
-    # Import Gevent and monkey patch
-    #import gevent
-    from gevent import monkey
-    monkey.patch_all()
-
-    # Import IO Libraries
-    import urllib
-    import urllib2
-    
-    if params:
-        url = url + '?' + urllib.urlencode(params)
-
-    #print url
-    #print data
-    #print auth
-    #print contentType
-
-    req = urllib2.Request(url, data=data)
-
-    if auth:
-        req.add_header('AUTHORIZATION', 'Basic ' + auth)
-
-    if contentType:
-        req.add_header('Content-type', contentType)
-    else:
-        if data:
-            req.add_header('Content-type', 'text/xml')
-
-
-    return urllib2.urlopen(req)
 
 def parse_url(url):
 
@@ -105,12 +69,12 @@ class TileOrigin(models.Model):
         return unicode([v for i, v in enumerate(TYPE_CHOICES) if v[0] == self.type][0][1]);
 
 
-    def match(self, url):
-        match = None
+    #def match(self, url):
+    #    match = None
 
-        # If matches primary pattern, then check secondary patterns/filters.
-        if self.pattern:
-            match = re.match(self.pattern, url, re.M|re.I)
+    #    # If matches primary pattern, then check secondary patterns/filters.
+    #    if self.pattern:
+    #        match = re.match(self.pattern, url, re.M|re.I)
 
             #patterns = TileOriginPattern.objects.filter(origin__pk=self.pk)
             #for pattern in patterns:
@@ -176,45 +140,3 @@ class TileSource(models.Model):
 
     def type_title(self):
         return unicode([v for i, v in enumerate(TYPE_CHOICES) if v[0] == self.type][0][1]);
-
-
-    def match(self, url):
-        match = None
-        if self.pattern:
-            match = re.match(self.pattern, url, re.M|re.I)
-        return match
-
-    def requestTile(self,x,y,z,ext,verbose):
-        if self.origin.auth:
-            url = self.url.format(x=x,y=y,z=z,ext=ext,auth=self.origin.auth)
-        else:
-            url = self.url.format(x=x,y=y,z=z,ext=ext)
-        contentType = "image/png"
-        #contentType = "text/html"
-        
-        if verbose:
-            print "Requesting tile from "+url
-
-        #print "URL2: "+url
-
-        params = None
-        #params = {'access_token': 'pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw'}
-
-        request = make_request(url=url, params=params, auth=None, data=None, contentType=contentType)
-        
-        if request.getcode() != 200:
-            raise Exception("Could not fetch tile from source with url {url}: Status Code {status}".format(url=url,status=request.getcode()))
-
-        #image = binascii.hexlify(request.read())
-        #image = io.BytesIO(request.read()))
-        image = request.read()
-        info = request.info()
-        headers = {
-          'Expires': getValue(info, 'Expires', fallback='')
-        }
-        tile = {
-            'headers': headers,
-            'data': image
-        }
-        return tile
-

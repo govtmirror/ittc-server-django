@@ -11,7 +11,7 @@ from tilejetutil.tilemath import tms_to_bbox, flip_y
 
 from ittc.utils import bbox_intersects_source, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, commit_to_file
 from ittc.source.models import TileSource
-from ittc.source.utils import getTileSources
+from ittc.source.utils import getTileSources, requestTileFromSource
 
 from tilejetstats.mongodb import getStat, getStats
 from tilejetcache.cache import getTileFromCache, commit_to_cache
@@ -40,7 +40,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
     tilesource = None
     tilesources = getTileSources(proxy=True)
     for candidate in tilesources:
-        if candidate.id == ts:
+        if candidate['id'] == ts:
             tilesource = candidate
             break
 
@@ -68,10 +68,10 @@ def taskRequestTile(ts, iz, ix, iy, ext):
 
     validZoom = 0
     #Check if inside source zoom levels
-    if tilesource.minZoom or tilesource.maxZoom:
-        if (tilesource.minZoom and iz < tilesource.minZoom):
+    if tilesource['minZoom'] or tilesource['maxZoom']:
+        if (tilesource['minZoom'] and iz < tilesource['minZoom']):
             validZoom = -1
-        elif (tilesource.maxZoom and iz > tilesource.maxZoom):
+        elif (tilesource['maxZoom'] and iz > tilesource['maxZoom']):
            validZoom = 1
 
         if validZoom != 0:
@@ -84,7 +84,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
     tile = None
     if iz >= settings.TILE_ACCELERATOR['cache']['memory']['minZoom'] and iz <= settings.TILE_ACCELERATOR['cache']['memory']['maxZoom']:
         #key = "{layer},{z},{x},{y},{ext}".format(layer=tilesource.name,x=ix,y=iy,z=iz,ext=ext)
-        key = ",".join([tilesource.name,str(iz),str(ix),str(iy),ext])
+        key = ",".join([tilesource['name'],str(iz),str(ix),str(iy),ext])
         tilecache, tile = getTileFromCache(
             settings.CACHES['tiles']['LOCATION'],
             settings.CACHES['tiles'],
@@ -111,8 +111,8 @@ def taskRequestTile(ts, iz, ix, iy, ext):
             with open(indirect_file,'a') as f:
                 line = log_format.format(
                     status='indirect',
-                    tileorigin=tilesource.origin.name,
-                    tilesource=tilesource.name,
+                    tileorigin=tilesource['origin'],
+                    tilesource=tilesource['name'],
                     z=iz,x=ix,y=iy,
                     ip='-',
                     datetime=now.isoformat())
@@ -121,9 +121,9 @@ def taskRequestTile(ts, iz, ix, iy, ext):
             from urllib2 import HTTPError
             try:
                 if tilesource.type == TYPE_TMS:
-                    tile = tilesource.requestTile(ix,iy,iz,ext,True)
+                    tile = requestTileFromSource(tilesource,ix,iy,iz,ext,True)
                 elif tilesource.type == TYPE_TMS_FLIPPED:
-                    tile = tilesource.requestTile(ix,iyf,iz,ext,True)
+                    tile = requestTileFromSource(tilesource,ix,iyf,iz,ext,True)
             except HTTPError, err:
                 error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
                 with open(error_file,'a') as f:
@@ -142,6 +142,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
 
 @shared_task
 def taskWriteBackTile(key, headers, data):
+    GEVENT_MONKEY_PATCH = settings.TILEJET_GEVENT_MONKEY_PATCH
     now = datetime.datetime.now()
     tilecache, tile = getTileFromCache(
         settings.CACHES['tiles']['LOCATION'],
@@ -149,7 +150,7 @@ def taskWriteBackTile(key, headers, data):
         'tiles',
         key,
         True,
-        GEVENT_MONKEY_PATCH=True)
+        GEVENT_MONKEY_PATCH=GEVENT_MONKEY_PATCH)
     if not tilecache:
         #log_root = settings.LOG_ERRORS_ROOT
         #if log_root:
@@ -173,18 +174,21 @@ def taskWriteBackTile(key, headers, data):
 
 @shared_task
 def taskIncStats(stats):
+    print "taskIncStats(stats)"
+    GEVENT_MONKEY_PATCH = settings.TILEJET_GEVENT_MONKEY_PATCH
+    #=======#
     now = datetime.datetime.now()
-    # Import Gevent and monkey patch
-    from gevent import monkey
-    monkey.patch_all()
+    if GEVENT_MONKEY_PATCH:
+        # Import Gevent and monkey patch
+        from gevent import monkey
+        monkey.patch_all()
     # Update MongoDB
     from pymongo import MongoClient
     client = None
     db = None
     try:
-        #client = MongoClient('localhost', 27017)
-        client = MongoClient('/tmp/mongodb-27017.sock')
-        db = client.ittc
+        client = MongoClient(settings.TILEJET_DBHOST, settings.TILEJET_DBPORT)
+        db = client[settings.TILEJET_DBNAME]
     except:
         client = None
         db = None
@@ -217,7 +221,7 @@ def taskIncStats(stats):
 #==#
 @shared_task
 def taskUpdateStats():
-    GEVENT_MONKEY_PATCH = True
+    GEVENT_MONKEY_PATCH = settings.TILEJET_GEVENT_MONKEY_PATCH
     #=======#
     now = datetime.datetime.now()
     stats = {}
@@ -249,7 +253,7 @@ def taskUpdateStats():
                 'count': getStat(stats_total, 'total.count', 0)
             }
         }
-        print stats
+        #print stats
         for desc in settings.TILEJET_LIST_STATS:
             name = desc['name']
             attrs = desc['attributes']
@@ -274,6 +278,8 @@ def taskUpdateStats():
                             obj = obj[doc[a]]
 
                     obj[doc[attrs[len(attrs)-1]]] = v
+
+        print stats
 
         if settings.STATS_SAVE_FILE:
             print "Saving to file"

@@ -24,7 +24,9 @@ from ittc.cache.models import TileService
 from ittc.utils import getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getRegexValue, url_to_pattern, string_to_list
 from ittc.source.models import TileOrigin, TileOriginPattern, TileSource
 from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources
-from ittc.cache.views import requestTile
+from ittc.cache.views import _requestTile
+
+from tilejetutil.tileregex import match_pattern_url
 
 def proxy(request):
     PROXY_ALLOWED_HOSTS = getattr(settings, 'PROXY_ALLOWED_HOSTS', ())
@@ -74,8 +76,7 @@ def proxy(request):
     #tilesources = TileSource.objects.exclude(pattern__isnull=True).exclude(pattern__exact='')
     tilesources = getTileSources(proxy=True)
     for tilesource in tilesources:
-        match = tilesource.match(raw_url)
-        #print tilesource.pattern
+        match = match_pattern_url(tilesource.pattern, raw_url)
         if match:
             match_regex = match
             match_tilesource = tilesource
@@ -91,9 +92,8 @@ def proxy(request):
     #tileorigins = TileOrigin.objects.exclude(pattern__isnull=True).exclude(pattern__exact='').filter(auto=True)
     tileorigins = getTileOrigins(proxy=True)
     for tileorigin in tileorigins:
-        match = tileorigin.match(raw_url)
+        match = match_pattern_url(tileorigin.pattern, raw_url)
         if match:
-            #print "Matched against TileOrigin", tileorigin
             match_regex = match
             match_tileorigin = tileorigin
             break
@@ -132,7 +132,7 @@ def proxy_tilesource(request, tilesource, match):
         y = getRegexValue(match, 'y')
         u = getRegexValue(match, 'u')
         ext = getRegexValue(match, 'ext')
-        return requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+        return _requestTile(request,tileservice=None,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
     else:
         return HttpResponse(RequestContext(request, {}), status=404)
 

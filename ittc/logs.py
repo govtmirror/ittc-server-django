@@ -37,7 +37,7 @@ from ittc.cache.tasks import taskIncStats
 http_client = httplib2.Http()
 
 
-def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
+def logTileRequest(tileorigin, tilesource, x, y, z, status, datetime, ip):
     #starttime = time.clock()
     #==#
     log_root = settings.LOG_REQUEST_ROOT
@@ -51,7 +51,7 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
         log_file = log_root+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+".tsv"
 
         with open(log_file,'a') as f:
-            line = log_format.format(status=status,tileorigin=tileorigin.name,tilesource=tilesource.name,z=z,x=x,y=y,ip=ip,datetime=datetime.isoformat())
+            line = log_format.format(status=status,tileorigin=tileorigin,tilesource=tilesource,z=z,x=x,y=y,ip=ip,datetime=datetime.isoformat())
             f.write(line+"\n")
 
             # Import Gevent and monkey patch
@@ -65,8 +65,8 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
             try:
                 #client = MongoClient('localhost', 27017)
                 client = MongoClient('/tmp/mongodb-27017.sock')
-                db = client.ittc
-                r = buildTileRequestDocument(tileorigin.name,tilesource.name, x, y, z, status, datetime, ip)
+                db = client[settings.TILEJET_DBNAME]
+                r = buildTileRequestDocument(tileorigin, tilesource, x, y, z, status, datetime, ip)
             except:
                 client = None
                 db = None
@@ -78,7 +78,7 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
             # Update Mongo Logs
             if client and db and r:
                 try:
-                    db[settings.LOG_REQUEST_COLLECTION].insert(r, w=0)
+                    db[settings.TILEJET_COLLECTION_LOGS].insert(r, w=0)
                 except:
                     errorline = "Error: Could not write log entry into database.  Most likely socket issue.  For the following: "+line
                     error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
@@ -91,9 +91,9 @@ def logTileRequest(tileorigin,tilesource, x, y, z, status, datetime, ip):
                 if settings.ASYNC_STATS:
                     try:
                         taskIncStats.apply_async(
-                        args=[stats],
-                        kwargs=None,
-                        queue="statistics")
+                            args=[stats],
+                            kwargs=None,
+                            queue="statistics")
                     except:
                         errorline = "Error: Could not queue taskIncStats.  Most likely issue with rabbitmq."
                         error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+datetime.strftime('%Y-%m-%d')+"_errors.txt"
