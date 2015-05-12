@@ -924,6 +924,10 @@ def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=
         iy = int(y)
         iz = int(z)
 
+        if tileservice:
+            if tileservice['type'] == TYPE_BING:
+                u = tms_to_quadkey(ix, iy, iz)
+
     iy, iyf = getYValues(tileservice,tilesource,ix,iy,iz)
 
     tile_bbox = tms_to_bbox(ix,iy,iz)
@@ -1020,9 +1024,11 @@ def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=
             logTileRequest(tileorigin, tilesource['name'], x, y, z, 'miss', now, ip)
 
             if tilesource['type'] == TYPE_TMS:
-                tile = requestTileFromSource(tilesource,ix,iy,iz,ext,True)
+                tile = requestTileFromSource(tilesource=tilesource,x=ix,y=iy,z=iz,ext=ext,verbose=True)
             elif tilesource['type'] == TYPE_TMS_FLIPPED:
-                tile = requestTileFromSource(tilesource,ix,iyf,iz,ext,True)
+                tile = requestTileFromSource(tilesource=tilesource,x=ix,y=iyf,z=iz,ext=ext,verbose=True)
+            elif tilesource['type'] == TYPE_BING:
+                tile = requestTileFromSource(tilesource=tilesource,u=u,ext,verbose=True)
 
             if settings.ASYNC_WRITEBACK:
                 from base64 import b64encode
@@ -1049,9 +1055,12 @@ def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=
         logTileRequest(tileorigin, tilesource['name'], x, y, z, 'bypass', now, ip)
 
         if tilesource['type'] == TYPE_TMS:
-            tile = requestTileFromSource(tilesource,ix,iy,iz,ext,True)
+            tile = requestTileFromSource(tilesource=tilesource,x=ix,y=iy,z=iz,ext=ext,verbose=True)
         elif tilesource['type'] == TYPE_TMS_FLIPPED:
-            tile = requestTileFromSource(tilesource,ix,iyf,iz,ext,True)
+            tile = requestTileFromSource(tilesource=tilesource,x=ix,y=iyf,z=iz,ext=ext,verbose=True)
+        elif tilesource['type'] == TYPE_BING:
+            tile = requestTileFromSource(tilesource=tilesource,u=u,ext,verbose=True)
+
 
 
     if not tile:

@@ -29,7 +29,8 @@ from .models import TileOrigin, TileSource
 
 from ittc.cache.models import TileService
 
-from ittc.utils import getValue
+from ittc.utils import getValue, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS
+
 
 def reloadTileServices():
     defaultCache = caches['default']
@@ -215,12 +216,20 @@ def make_request(url, params, auth=None, data=None, contentType=None):
     return urllib2.urlopen(req)
 
 
-def requestTileFromSource(ts, x, y, z, ext, verbose):
+def requestTileFromSource(tilesource=None, x=None, y=None, z=None, u=None, ext=None, verbose=False):
     print "requestTileFromSource"
-    if ts['auth']:
-        url = ts['url'].format(x=x,y=y,z=z,ext=ext,auth=ts['auth'])
+    if ts['type'] == TYPE_BING:
+        if ts['auth']:
+            url = ts['url'].format(u=u,ext=ext,auth=ts['auth'])
+        else:
+            url = ts['url'].format(u=u,ext=ext)
     else:
-        url = ts['url'].format(x=x,y=y,z=z,ext=ext)
+        if ts['auth']:
+            url = ts['url'].format(x=x,y=y,z=z,ext=ext,auth=ts['auth'])
+        else:
+            url = ts['url'].format(x=x,y=y,z=z,ext=ext)
+
+
     contentType = "image/png"
     #contentType = "text/html"
 
