@@ -218,16 +218,16 @@ def make_request(url, params, auth=None, data=None, contentType=None):
 
 def requestTileFromSource(tilesource=None, x=None, y=None, z=None, u=None, ext=None, verbose=False):
     print "requestTileFromSource"
-    if ts['type'] == TYPE_BING:
-        if ts['auth']:
-            url = ts['url'].format(u=u,ext=ext,auth=ts['auth'])
+    if tilesource['type'] == TYPE_BING:
+        if tilesource['auth']:
+            url = tilesource['url'].format(u=u,ext=ext,auth=ts['auth'])
         else:
-            url = ts['url'].format(u=u,ext=ext)
+            url = tilesource['url'].format(u=u,ext=ext)
     else:
-        if ts['auth']:
-            url = ts['url'].format(x=x,y=y,z=z,ext=ext,auth=ts['auth'])
+        if tilesource['auth']:
+            url = tilesource['url'].format(x=x,y=y,z=z,ext=ext,auth=ts['auth'])
         else:
-            url = ts['url'].format(x=x,y=y,z=z,ext=ext)
+            url = tilesource['url'].format(x=x,y=y,z=z,ext=ext)
 
 
     contentType = "image/png"
