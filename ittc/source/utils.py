@@ -27,7 +27,47 @@ import json
 
 from .models import TileOrigin, TileSource
 
+from ittc.cache.models import TileService
+
 from ittc.utils import getValue
+
+def reloadTileServices():
+    defaultCache = caches['default']
+    tileservices_django = TileService.objects.all()
+    tileservices_cache = processTileServices(tileservices_django)
+    defaultCache.set('tileservices', tileservices_cache)
+
+
+def getTileServices(debug=False):
+    defaultCache = caches['default']
+    tileservices = defaultCache.get('tileservices')
+    if tileservices:
+        return tileservices
+    else:
+        tileservices_django = TileService.objects.all()
+        tileservices_cache = processTileServices(tileservices_django)
+        defaultCache.set('tileservices', tileservices_cache)
+        return tileservices_cache
+
+
+def processTileServices(tileservices_django):
+    if tileservices_django:
+        tileservices_cache = []
+        for ts_d in tileservices_django:
+            ts_c = {
+                'id': ts_d.id,
+                'name': ts_d.name,
+                'description': ts_d.description,
+                'type': ts_d.type,
+                'type_title': ts_d.type_title(),
+                'source': ts_d.source.name,
+                'url': ts_d.url,
+                'extensions': ts_d.extensions
+            }
+            tileservices_cache.append(ts_c)
+        return tileservices_cache
+    else:
+        return None
 
 
 def reloadTileSources(proxy=False):

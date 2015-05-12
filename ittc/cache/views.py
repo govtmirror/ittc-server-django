@@ -29,7 +29,7 @@ from tilejetcache.cache import getTileFromCache, get_from_cache, check_cache_ava
 
 from .models import TileService
 from ittc.utils import bbox_intersects_source, getYValues, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, getIPAddress, getValue, url_to_pattern, string_to_list, get_from_file
-from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources, requestTileFromSource
+from ittc.source.utils import getTileOrigins, reloadTileOrigins, getTileSources, reloadTileSources, getTileServices, reloadTileServices, requestTileFromSource
 from ittc.utils import logs_tilerequest, formatMemorySize
 from ittc.stats import stats_cache, stats_tilerequest
 from ittc.logs import logTileRequest, logTileRequestError
@@ -857,12 +857,23 @@ def services_json(request):
 
 @login_required
 def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
-    tileservice = get_object_or_404(TileService, name=slug)
+    match_tileservice = None
+    tileservices = getTileServices()
+    for tileservice in tileservices:
+        if tileservice['name'] == slug:
+            match_tileservice = tileservice
+            break
 
-    if tileservice:
-        tilesource = tileservice.source
-        if tilesource:
-            return _requestTile(request,tileservice=tileservice,tilesource=tilesource,z=z,x=x,y=y,u=u,ext=ext)
+    if match_tileservice:
+        match_tilesource = None
+        tilesources = getTileSources()
+        for tilesource in tilesources:
+            if tilesource['name'] == tileservice.source:
+                match_tilesource = tilesource
+                break
+
+        if match_tilesource:
+            return _requestTile(request,tileservice=match_tileservice,tilesource=match_tilesource,z=z,x=x,y=y,u=u,ext=ext)
         else:
             return HttpResponse(RequestContext(request, {}), status=404)
     else:

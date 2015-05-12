@@ -65,10 +65,10 @@ def bbox_intersects_source(tilesource,ix,iyf,iz):
 def getYValues(tileservice, tilesource, ix, iy, iz):
 
     if tileservice:
-        if tileservice.type == TYPE_TMS_FLIPPED or tileservice['type'] == TYPE_BING:
+        if tileservice['type'] == TYPE_TMS_FLIPPED or tileservice['type'] == TYPE_BING:
             iyf = iy
             iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
-        elif tileservice.type == TYPE_TMS and tilesource['type'] == TYPE_TMS_FLIPPED:
+        elif tileservice['type'] == TYPE_TMS and tilesource['type'] == TYPE_TMS_FLIPPED:
             iyf = flip_y(ix,iy,iz,256,webmercator_bbox)
     else:
         if tilesource['type'] == TYPE_TMS_FLIPPED:
