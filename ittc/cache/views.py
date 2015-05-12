@@ -1028,7 +1028,7 @@ def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=
             elif tilesource['type'] == TYPE_TMS_FLIPPED:
                 tile = requestTileFromSource(tilesource=tilesource,x=ix,y=iyf,z=iz,ext=ext,verbose=True)
             elif tilesource['type'] == TYPE_BING:
-                tile = requestTileFromSource(tilesource=tilesource,u=u,ext,verbose=True)
+                tile = requestTileFromSource(tilesource=tilesource,u=u,ext=ext,verbose=True)
 
             if settings.ASYNC_WRITEBACK:
                 from base64 import b64encode
@@ -1059,7 +1059,7 @@ def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=
         elif tilesource['type'] == TYPE_TMS_FLIPPED:
             tile = requestTileFromSource(tilesource=tilesource,x=ix,y=iyf,z=iz,ext=ext,verbose=True)
         elif tilesource['type'] == TYPE_BING:
-            tile = requestTileFromSource(tilesource=tilesource,u=u,ext,verbose=True)
+            tile = requestTileFromSource(tilesource=tilesource,u=u,ext=ext,verbose=True)
 
 
 
