@@ -216,35 +216,36 @@ def make_request(url, params, auth=None, data=None, contentType=None):
 
 
 def requestTileFromSource(ts, x, y, z, ext, verbose):
-        if ts['auth']:
-            url = ts['url'].format(x=x,y=y,z=z,ext=ext,auth=ts['auth'])
-        else:
-            url = ts['url'].format(x=x,y=y,z=z,ext=ext)
-        contentType = "image/png"
-        #contentType = "text/html"
+    print "requestTileFromSource"
+    if ts['auth']:
+        url = ts['url'].format(x=x,y=y,z=z,ext=ext,auth=ts['auth'])
+    else:
+        url = ts['url'].format(x=x,y=y,z=z,ext=ext)
+    contentType = "image/png"
+    #contentType = "text/html"
 
-        if verbose:
-            print "Requesting tile from "+url
+    if verbose:
+        print "Requesting tile from "+url
 
-        #print "URL2: "+url
+    print "URL: "+url
 
-        params = None
-        #params = {'access_token': 'pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw'}
+    params = None
+    #params = {'access_token': 'pk.eyJ1IjoiaGl1IiwiYSI6IlhLWFA4Z28ifQ.4gQiuOS-lzhigU5PgMHUzw'}
 
-        request = make_request(url=url, params=params, auth=None, data=None, contentType=contentType)
+    request = make_request(url=url, params=params, auth=None, data=None, contentType=contentType)
 
-        if request.getcode() != 200:
-            raise Exception("Could not fetch tile from source with url {url}: Status Code {status}".format(url=url,status=request.getcode()))
+    if request.getcode() != 200:
+        raise Exception("Could not fetch tile from source with url {url}: Status Code {status}".format(url=url,status=request.getcode()))
 
-        #image = binascii.hexlify(request.read())
-        #image = io.BytesIO(request.read()))
-        image = request.read()
-        info = request.info()
-        headers = {
-          'Expires': getValue(info, 'Expires', fallback='')
-        }
-        tile = {
-            'headers': headers,
-            'data': image
-        }
-        return tile
+    #image = binascii.hexlify(request.read())
+    #image = io.BytesIO(request.read()))
+    image = request.read()
+    info = request.info()
+    headers = {
+      'Expires': getValue(info, 'Expires', fallback='')
+    }
+    tile = {
+        'headers': headers,
+        'data': image
+    }
+    return tile

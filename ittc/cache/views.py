@@ -1048,9 +1048,9 @@ def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=
             print "cache bypass for "+tilesource['name']+"/"+str(iz)+"/"+str(ix)+"/"+str(iy)
         logTileRequest(tileorigin, tilesource['name'], x, y, z, 'bypass', now, ip)
 
-        if tilesource.type == TYPE_TMS:
+        if tilesource['type'] == TYPE_TMS:
             tile = requestTileFromSource(tilesource,ix,iy,iz,ext,True)
-        elif tilesource.type == TYPE_TMS_FLIPPED:
+        elif tilesource['type'] == TYPE_TMS_FLIPPED:
             tile = requestTileFromSource(tilesource,ix,iyf,iz,ext,True)
 
     #print "Headers:"
