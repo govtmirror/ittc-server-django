@@ -868,7 +868,7 @@ def tile_tms(request, slug=None, z=None, x=None, y=None, u=None, ext=None):
         match_tilesource = None
         tilesources = getTileSources()
         for tilesource in tilesources:
-            if tilesource['name'] == tileservice.source:
+            if tilesource['name'] == tileservice['source']:
                 match_tilesource = tilesource
                 break
 
