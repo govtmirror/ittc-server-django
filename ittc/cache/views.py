@@ -1053,6 +1053,14 @@ def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=
         elif tilesource['type'] == TYPE_TMS_FLIPPED:
             tile = requestTileFromSource(tilesource,ix,iyf,iz,ext,True)
 
+
+    if not tile:
+        print "responding with a red image"
+        image = redTile(width=256, height=256)
+        response = HttpResponse(content_type="image/png")
+        image.save(response, "PNG")
+        return response
+
     #print "Headers:"
     #print tile['headers']
     image = Image.open(StringIO.StringIO(tile['data']))

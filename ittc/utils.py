@@ -69,13 +69,13 @@ def getYValues(tileservice, tilesource, ix, iy, iz):
         if tileservice['type'] == TYPE_TMS_FLIPPED or tileservice['type'] == TYPE_BING:
             iyf = iy
             iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
-        elif tileservice['type'] == TYPE_TMS and tilesource['type'] == TYPE_TMS_FLIPPED:
+        elif #tileservice['type'] == TYPE_TMS and (tilesource['type'] == TYPE_TMS_FLIPPED or tilesource['type'] == BING):
             iyf = flip_y(ix,iy,iz,256,webmercator_bbox)
     else:
-        if tilesource['type'] == TYPE_TMS_FLIPPED:
+        if tilesource['type'] == TYPE_TMS_FLIPPED or tilesource['type'] == TYPE_BING:
             iyf = iy
             iy = flip_y(ix,iyf,iz,256,webmercator_bbox)
-        elif tilesource['type'] == TYPE_TMS:
+        elif #itilesource['type'] == TYPE_TMS:
             iyf = flip_y(ix,iy,iz,256,webmercator_bbox)
     
     return (iy, iyf)
