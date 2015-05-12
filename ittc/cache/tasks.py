@@ -61,7 +61,7 @@ def taskRequestTile(ts, iz, ix, iy, ext):
     returnBlankTile = False
     returnErrorTile = False
     intersects = True
-    if tilesource.extents:
+    if tilesource['extents']:
         intersects = bbox_intersects_source(tilesource,ix,iyf,iz)
         if not intersects:
            returnBlankTile = True
@@ -120,9 +120,9 @@ def taskRequestTile(ts, iz, ix, iy, ext):
 
             from urllib2 import HTTPError
             try:
-                if tilesource.type == TYPE_TMS:
+                if tilesource['type'] == TYPE_TMS:
                     tile = requestTileFromSource(tilesource,ix,iy,iz,ext,True)
-                elif tilesource.type == TYPE_TMS_FLIPPED:
+                elif tilesource['type'] == TYPE_TMS_FLIPPED:
                     tile = requestTileFromSource(tilesource,ix,iyf,iz,ext,True)
             except HTTPError, err:
                 error_file = settings.LOG_ERRORS_ROOT+os.sep+"requests_tiles_"+now.strftime('%Y-%m-%d')+"_errors.txt"
