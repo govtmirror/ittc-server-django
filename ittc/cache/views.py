@@ -924,9 +924,8 @@ def _requestTile(request, tileservice=None, tilesource=None, tileorigin=None, z=
         iy = int(y)
         iz = int(z)
 
-        if tileservice:
-            if tileservice['type'] == TYPE_BING:
-                u = tms_to_quadkey(ix, iy, iz)
+        if tilesource['type'] == TYPE_BING:
+            u = tms_to_quadkey(ix, iy, iz)
 
     iy, iyf = getYValues(tileservice,tilesource,ix,iy,iz)
 
