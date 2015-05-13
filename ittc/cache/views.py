@@ -455,7 +455,7 @@ def info(request):
         #pyrabbit_client = pyrabbit.api.Client(settings.BROKER_DOMAIN+':'+settings.BROKER_PORT, settings.BROKER_USER, settings.BROKER_PASSWORD)
         for q in queues:
             q['messages'] = 0
-    else:
+    except:
         print "Could not generate queues.  Is celery or RabbitMQ offline?"
 
 
