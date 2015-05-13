@@ -207,6 +207,11 @@ PROXY_URL = '/proxy/?url='
 
 # Celery Settings
 CELERY_RESULT_BACKEND = 'cache+memcached://127.0.0.1:11213/'
+BROKER_PORT='5672'
+BROKER_DOMAIN='localhost'
+BROKER_USER='guest'
+BROKER_PASSWORD='guest'
+BROKER_URL = 'amqp://'+BROKER_USER+':'+BROKER_PASSWORD+'@'+BROKER_DOMAIN+':'+BROKER_PORT+'//'
 BROKER_URL = 'amqp://guest:guest@localhost:5672//'
 CELERY_CACHE_BACKEND = 'celery_results'
 CELERY_DEFAULT_QUEUE = 'default'

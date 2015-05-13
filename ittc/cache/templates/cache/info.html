@@ -36,6 +36,7 @@ var formatDate = function(d)
       <ul class="nav nav-tabs" data-tabs="tabs">
         <li class="active"><a href="#caches" aria-controls="caches" data-toggle="tab"><i class=""></i>Caches</a></li>
         <li class=""><a href="#heuristics" aria-controls="heuristics" data-toggle="tab"><i class=""></i>Heuristics</a></li>
+        <li class=""><a href="#queues" aria-controls="queues" data-toggle="tab"><i class=""></i>Queues</a></li>
         <li class=""><a href="#hosts" aria-controls="hosts" data-toggle="tab"><i class=""></i>Allowed Hosts</a></li>
       </ul>
       <div class="tab-content">
@@ -90,6 +91,31 @@ var formatDate = function(d)
                     <td>{{ heuristic.enabled }}</td>
                     <td>{{ heuristic.name }}</td>
                     <td>{{ heuristic.description }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="queues" class="tab-pane">
+          <div>
+            <div >
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <th>Name</th>
+                  <th>Routing Key</th>
+                  <th>Durable</th>
+                  <th>Messages</th>
+                </thead>
+                <tbody>
+                  {% for queue in queues %}
+                  <tr>
+                    <td>{{ queue.name }}</td>
+                    <td>{{ queue.routing_key }}</td>
+                    <td>{{ queue.durable }}</td>
+                    <td>{{ queue.ttl }}</td>
+                    <td>{{ queue.messages }}</td>
                   </tr>
                   {% endfor %}
                 </tbody>

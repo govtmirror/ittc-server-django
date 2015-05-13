@@ -438,11 +438,33 @@ def info(request):
         'description': h['description']
     })
 
+    # Build Queues List
+    queues =  []
+    try:
+        import celery
+        for key, raw_queues in celery.current_app.control.inspect().active_queues().items():
+            for q in raw_queues:
+                queues.append({
+                    'name': getValue(q, u'name', fallback=''),
+                    'routing_key': getValue(q, u'routing_key', fallback=''),
+                    'durable': getValue(q, u'durable', fallback=False),
+                    'ttl': getValue(q[u'queue_arguments'], u'x-message-ttl', fallback=-1)
+                })
+
+        #import pyrabbit.api
+        #pyrabbit_client = pyrabbit.api.Client(settings.BROKER_DOMAIN+':'+settings.BROKER_PORT, settings.BROKER_USER, settings.BROKER_PASSWORD)
+        for q in queues:
+            q['messages'] = 0
+    else:
+        print "Could not generate queues.  Is celery or RabbitMQ offline?"
+
+
     context_dict = {
-        'origins': TileOrigin.objects.all().order_by('name','type'),
-        'sources': TileSource.objects.all().order_by('name','type'),
+        'origins': getTileOrigins(),
+        'sources': getTileSources(),
         'caches': caches,
         'heuristics': heuristics,
+        'queues': queues,
         'hosts': settings.PROXY_ALLOWED_HOSTS
     }
     return render_to_response(
