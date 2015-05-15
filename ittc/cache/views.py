@@ -474,6 +474,7 @@ def info(request):
         'heuristics': heuristics,
         'queues': queues,
         'scheduled': scheduled,
+        'stats': settings.TILEJET_LIST_STATS,
         'hosts': settings.PROXY_ALLOWED_HOSTS
     }
     return render_to_response(

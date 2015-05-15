@@ -35,6 +35,7 @@ var formatDate = function(d)
     <div id="origins" class="col-md-8">
       <ul class="nav nav-tabs" data-tabs="tabs">
         <li class="active"><a href="#caches" aria-controls="caches" data-toggle="tab"><i class=""></i>Caches</a></li>
+        <li class=""><a href="#stats" aria-controls="stats" data-toggle="tab"><i class=""></i>Stats</a></li>
         <li class=""><a href="#heuristics" aria-controls="heuristics" data-toggle="tab"><i class=""></i>Heuristics</a></li>
         <li class=""><a href="#queues" aria-controls="queues" data-toggle="tab"><i class=""></i>Queues</a></li>
         <li class=""><a href="#scheduled" aria-controls="scheduled" data-toggle="tab"><i class=""></i>Scheduled</a></li>
@@ -70,6 +71,28 @@ var formatDate = function(d)
                     <td>{{ cache.minzoom }}</td>
                     <td>{{ cache.maxzoom }}</td>
                     <td><a target="_blank" href="{{ cache.link_memcached }}">Memcached</a></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="stats" class="tab-pane">
+          <div>
+            <div >
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <th>Name</th>
+                  <th>Collection</th>
+                  <th>Attributes</th>
+                </thead>
+                <tbody>
+                  {% for stat in stats %}
+                  <tr>
+                    <td>{{ stat.name }}</td>
+                    <td>{{ stat.collection }}</td>
+                    <td>{{ stat.attributes }}</td>
                   </tr>
                   {% endfor %}
                 </tbody>
