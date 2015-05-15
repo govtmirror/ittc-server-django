@@ -458,6 +458,14 @@ def info(request):
     except:
         print "Could not generate queues.  Is celery or RabbitMQ offline?"
 
+    # Build Schedules Tasks
+    scheduled = []
+    try:
+        import celery
+        s = beat.Scheduler(app=celery.current_app)
+        scheduled = s.schedule.keys()
+    except:
+        print "Could not build scheduled tasks.  Is celery beat running?"
 
     context_dict = {
         'origins': getTileOrigins(),
@@ -465,6 +473,7 @@ def info(request):
         'caches': caches,
         'heuristics': heuristics,
         'queues': queues,
+        'scheduled': scheduled,
         'hosts': settings.PROXY_ALLOWED_HOSTS
     }
     return render_to_response(
