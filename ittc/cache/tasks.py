@@ -262,11 +262,11 @@ def taskUpdateStats():
             window = getValue(desc,'window')
             query = None
             if window:
-                td = window.timedelta
+                td = window['delta']
                 mintime = now - datetime.timedelta(**td)
-                minvalue = mintime.strftime(LOG_FIELD_FORMATS['mintime']) 
+                minvalue = mintime.strftime(LOG_FIELD_FORMATS[window['attribute']]) 
                 query = {window['attribute']: {"$gte": minvalue}}
-                print "Query is"
+                print "Query:"
                 print query
 
             print desc
