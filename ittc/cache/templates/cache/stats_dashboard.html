@@ -93,7 +93,7 @@
           {% endif %}
         </div>
       </div>
-      <div id="last60minutes" class="tab-pane active">
+      <div id="last60minutes" class="tab-pane">
         <div class="col-md-8">
           <div><h4>Tile Requests by Minute For Last 60 Minutes</h4></div>
           <div id="chart_last60minutes"></div>
@@ -101,7 +101,7 @@
         <div class="col-md-4">
         </div>
       </div>
-      <div id="last24hours" class="tab-pane active">
+      <div id="last24hours" class="tab-pane">
         <div class="col-md-8">
           <div><h4>Tile Requests by Hour For Last 24 Hours</h4></div>
           <div id="chart_last24hours"></div>
@@ -476,7 +476,9 @@
   d3.json("{% url 'stats_json' %}", function(error, stats)
   {
     initPieChart(pieChart, stats)
-    initLineChart(lineChart, stats)
+    initLineChartDates(lineChartDates, stats)
+    initLineChartLast60Minutes(lineChartLast60Minutes, stats)
+    initLineChartLast24Hours(lineChartLast24Hours, stats)
     initColumnChart(columnChart, stats)
     
 
