@@ -265,7 +265,7 @@ def taskUpdateStats():
                 td = window.timedelta
                 mintime = now - datetime.timedelta(**td)
                 minvalue = mintime.strftime(LOG_FIELD_FORMATS['mintime']) 
-                query = {{window['attribute']: {"$gte": minvalue}}
+                query = {window['attribute']: {"$gte": minvalue}}
                 print "Query is"
                 print query
 
