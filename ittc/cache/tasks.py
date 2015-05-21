@@ -16,6 +16,8 @@ from ittc.source.utils import getTileSources, requestTileFromSource
 from tilejetstats.mongodb import getStat, getStats
 from tilejetcache.cache import getTileFromCache, commit_to_cache
 
+from tilejetlogs.base import LOG_FIELD_FORMATS
+
 import os
 import datetime
 
@@ -257,10 +259,19 @@ def taskUpdateStats():
         for desc in settings.TILEJET_LIST_STATS:
             name = desc['name']
             attrs = desc['attributes']
+            window = desc['window']
+            query = None
+            if window:
+                td = window.timedelta
+                mintime = now - datetime.timedelta(**td)
+                minvalue = mintime.strftime(LOG_FIELD_FORMATS['mintime']) 
+                query = {{window['attribute']: {"$gte": minvalue}}
+                print "Query is"
+                print query
 
             print desc
             if len(attrs) == 0:
-                for doc in getStats(db[desc['collection']],[]):
+                for doc in getStats(db[desc['collection']],[],query=query):
                     stats[name] = doc['value']
 
             elif len(attrs) > 0:
