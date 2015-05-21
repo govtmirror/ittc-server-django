@@ -9,7 +9,7 @@ from celery import shared_task
 
 from tilejetutil.tilemath import tms_to_bbox, flip_y
 
-from ittc.utils import bbox_intersects_source, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, commit_to_file
+from ittc.utils import bbox_intersects_source, TYPE_TMS, TYPE_TMS_FLIPPED, TYPE_BING, TYPE_WMS, commit_to_file, getValue
 from ittc.source.models import TileSource
 from ittc.source.utils import getTileSources, requestTileFromSource
 
@@ -259,7 +259,7 @@ def taskUpdateStats():
         for desc in settings.TILEJET_LIST_STATS:
             name = desc['name']
             attrs = desc['attributes']
-            window = desc['window']
+            window = getValue(desc,'window')
             query = None
             if window:
                 td = window.timedelta
