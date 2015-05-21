@@ -260,6 +260,7 @@ def taskUpdateStats():
             name = desc['name']
             attrs = desc['attributes']
             window = getValue(desc,'window')
+            #minvalue = None
             query = None
             if window:
                 td = window['delta']
@@ -276,7 +277,7 @@ def taskUpdateStats():
 
             elif len(attrs) > 0:
                 stats[name] = {}
-                docs = getStats(db[desc['collection']],[])
+                docs = getStats(db[desc['collection']],[],query=query)
                 for doc in docs:
                     v = doc['value']
                     obj = stats[name]
