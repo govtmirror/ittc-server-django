@@ -179,7 +179,7 @@
             return 3;
       });
   }
-  var _initLineChart = function(data,attr,xLabel,yLabel)
+  var _initLineChart = function(lineChart,data,attr,xLabel,yLabel)
   {
     var ndx = crossfilter(data);
     var dim  = ndx.dimension(function(d) {return d[attr];});
@@ -245,7 +245,7 @@
       }
     }
 
-    _initLineChart(data_by_date,"date","Date","Tile Request");
+    _initLineChart(lineChart,data_by_date,"date","Date","Tile Request");
 
   };
   var initLineChartLast60Minutes = function(lineChart, stats)
@@ -280,7 +280,7 @@
       }
     }
 
-    _initLineChart(data_by_minute, "minute", "Minute", "Tile Request");
+    _initLineChart(lineChart,data_by_minute, "minute", "Minute", "Tile Request");
 
   };
 
@@ -316,7 +316,7 @@
       }
     }
 
-    _initLineChart(data_by_hour,"hour","Hour","Tile Request");
+    _initLineChart(lineChart,data_by_hour,"hour","Hour","Tile Request");
 
   };
 
